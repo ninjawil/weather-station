@@ -127,6 +127,16 @@ def get_ds18b20_temp(device_id):
 
 
 #=======================================================================
+# READ DATA FROM DHT22
+#=======================================================================
+def get_dht22_data(device_id):
+	
+	
+		
+	return temp_c, humidity
+
+
+#=======================================================================
 # OUTPUT
 #=======================================================================
 def output_data(device_id, temp):
@@ -220,7 +230,7 @@ def main():
 			
 		if '--help' in sys.argv:
 			print('usage: ./wstation.py {command}')
-			print(\n)
+			print('\n')
 			print('--outsensor=OFF    - disables outside temperature monitoring')
 			print('--thingspeak=OFF - disable update to ThingSpeak')
 			print('--LEDtime=ON     - enables printing of LED toggle time')
