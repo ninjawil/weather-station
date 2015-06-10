@@ -193,7 +193,7 @@ def thingspeak_update_channel(channel, field_data):
     conn = httplib.HTTPConnection(GLOBAL_thingspeak_host_addr)
     conn.request('POST', '/update', params, headers)
     response = conn.getresponse()
-    print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status))
+    print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status)+'\n')
     data = response.read()
     conn.close()
  
@@ -277,6 +277,16 @@ def main():
     
     thingspeak_data = [0,0,0,0,0,0,0,0]
     
+    sensors         = []
+    
+    if GLOBAL_out_sensor_enable == True:
+        sensors.append('outside temp')
+
+    if GLOBAL_in_sensor_enable == True:
+        sensors.append('inside temp')
+        sensors.append('inside hum')
+
+    
     #Main code
     try:
         while True:
@@ -284,23 +294,21 @@ def main():
             #Get outside temperature
             if GLOBAL_out_sensor_enable == True:
                 outside_temp = get_ds18b20_temp(GLOBAL_out_temp_sensor_ref)
-                
+                thingspeak_data[GLOBAL_out_temp_TS_field-1] = outside_temp
+            
             #Get inside temperature and humidity
             if GLOBAL_in_sensor_enable == True:
                 inside = get_dht22_data()
+                thingspeak_data[GLOBAL_in_temp_TS_field-1] = inside['temp']
+                thingspeak_data[GLOBAL_in_hum_TS_field-1] = inside['hum']
+                
+            #Display data on screen
+            output_data(sensors, thingspeak_data)
                 
             #Send data to thingspeak
             if GLOBAL_thingspeak_enable_update == True:
-                thingspeak_data[GLOBAL_out_temp_TS_field-1] = outside_temp
-                thingspeak_data[GLOBAL_in_temp_TS_field-1] = inside['temp']
-                thingspeak_data[GLOBAL_in_hum_TS_field-1] = inside['hum']
-                print(thingspeak_data)
                 thingspeak_update_channel(GLOBAL_thingspeak_write_api_key, thingspeak_data)
-                
-            #Display data on screen
-            sensors = ['outside temp', 'inside temp', 'inside hum']
-            output_data(sensors, thingspeak_data)
-            
+                            
             #Delay to give update rate
             time.sleep(GLOBAL_update_rate)
     
