@@ -154,12 +154,24 @@ def output_data(sensors, data):
     #Check passed data is correct
     if len(sensors) <= len(data):
         
+        #Print date and time
         print(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
         
         field = 0
         
+        # Display each sensor data
         for i in sensors:
-            print(i+'\t'+str(data[field])) #+u'\u00b0C')
+            
+            #Check for unit
+            if 'temp' in i:
+                unit = u'\u00b0C'
+            else:
+                unit = '%'
+            
+            #Print sensor data
+            print(i+'\t'+str(data[field])+unit)
+            
+            #Next data field
             field += 1
     
  
@@ -286,7 +298,7 @@ def main():
                 thingspeak_update_channel(GLOBAL_thingspeak_write_api_key, thingspeak_data)
                 
             #Display data on screen
-            sensors = [GLOBAL_out_temp_sensor_ref, GLOBAL_in_sensor_ref]
+            sensors = ['outside temp', 'inside temp', 'inside hum']
             output_data(sensors, thingspeak_data)
             
             #Delay to give update rate
