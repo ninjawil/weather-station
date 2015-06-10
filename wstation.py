@@ -193,7 +193,7 @@ def thingspeak_update_channel(channel, field_data):
     conn = httplib.HTTPConnection(GLOBAL_thingspeak_host_addr)
     conn.request('POST', '/update', params, headers)
     response = conn.getresponse()
-    print(response.status, response.reason)
+    print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status))
     data = response.read()
     conn.close()
  
