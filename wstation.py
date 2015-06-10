@@ -65,7 +65,7 @@ GLOBAL_out_temp_sensor_ref  = '28-0414705bceff'
 GLOBAL_out_temp_TS_field    = GLOBAL_thingspeak_field_1
 
 GLOBAL_in_sensor_enable     = True
-GLOBAL_in_temp_sensor_ref   = 'DHT22'
+GLOBAL_in_sensor_ref        = 'DHT22'
 GLOBAL_in_sensor_pin        = GLOBAL_Pin_11
 GLOBAL_in_temp_TS_field     = GLOBAL_thingspeak_field_2
 GLOBAL_in_hum_TS_field      = GLOBAL_thingspeak_field_3
@@ -85,6 +85,9 @@ GLOBAL_next_call            = time.time()
 def setup():
     
     #Set up DHT22
+    global s
+    global GLOBAL_in_sensor_pin
+    
     s = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
     
     
@@ -135,6 +138,8 @@ def get_ds18b20_temp(device_id):
 # READ DATA FROM DHT22
 #=======================================================================
 def get_dht22_data():
+    
+    global s
     
     s.trigger()
         
@@ -212,6 +217,7 @@ def main():
     
     global GLOBAL_out_sensor_enable
     global GLOBAL_in_sensor_enable
+    global GLOBAL_in_sensor_ref
     global GLOBAL_in_hum_sensor_enable
     global GLOBAL_thingspeak_enable_update
     global GLOBAL_update_rate
@@ -266,11 +272,11 @@ def main():
             #Send data to thingspeak
             if GLOBAL_thingspeak_enable_update == True:
                 thingspeak_data[GLOBAL_out_temp_TS_field-1] = outside_temp
-                thingspeak_data[GLOBAL_in_temp_TS_field-1] = inside_temp
-                thingspeak_data[GLOBAL_in_hum_TS_field-1] = inside_humidity
+                thingspeak_data[GLOBAL_in_temp_TS_field-1] = inside['temp']
+                thingspeak_data[GLOBAL_in_hum_TS_field-1] = inside['hum']
                 print(thingspeak_data)
                 thingspeak_update_channel(GLOBAL_thingspeak_write_api_key, thingspeak_data)
-                    
+                
             #Delay to give update rate
             time.sleep(GLOBAL_update_rate)
     
