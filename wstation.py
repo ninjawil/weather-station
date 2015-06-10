@@ -149,9 +149,19 @@ def get_dht22_data():
 #=======================================================================
 # OUTPUT
 #=======================================================================
-def output_data(device_id, temp):
+def output_data(sensors, data):
     
-    print(device_id+': \t'+datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')+'\t'+str(temp)+u'\u00b0C')
+    #Check passed data is correct
+    if len(sensors) <= len(data):
+        
+        print(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+        
+        field = 0
+        
+        for i in sensors:
+            print(i+'\t'+str(data[field])) #+u'\u00b0C')
+            field += 1
+    
  
     
 #=======================================================================
@@ -262,12 +272,10 @@ def main():
             #Get outside temperature
             if GLOBAL_out_sensor_enable == True:
                 outside_temp = get_ds18b20_temp(GLOBAL_out_temp_sensor_ref)
-                output_data(GLOBAL_out_temp_sensor_ref, outside_temp)
                 
             #Get inside temperature and humidity
             if GLOBAL_in_sensor_enable == True:
                 inside = get_dht22_data()
-                output_data(GLOBAL_in_sensor_ref, inside['temp'])
                 
             #Send data to thingspeak
             if GLOBAL_thingspeak_enable_update == True:
@@ -277,6 +285,10 @@ def main():
                 print(thingspeak_data)
                 thingspeak_update_channel(GLOBAL_thingspeak_write_api_key, thingspeak_data)
                 
+            #Display data on screen
+            sensors = [GLOBAL_out_temp_sensor_ref, GLOBAL_in_sensor_ref]
+            output_data(sensors, thingspeak_data)
+            
             #Delay to give update rate
             time.sleep(GLOBAL_update_rate)
     
