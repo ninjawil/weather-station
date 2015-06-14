@@ -80,9 +80,9 @@ GLOBAL_next_call            = time.time()
 
 
 #=======================================================================
-# SETUP DEVICE
+# SETUP HARDWARE
 #=======================================================================
-def setup():
+def setup_hardware():
     
     #Set up DHT22
     global s
@@ -149,7 +149,7 @@ def get_dht22_data():
 
 
 #=======================================================================
-# OUTPUT
+# OUTPUT DATA TO SCREEN
 #=======================================================================
 def output_data(sensors, data):
     
@@ -228,9 +228,13 @@ def toggle_LED():
 # EXIT ROUTINE
 #=======================================================================
 def exit_code():
+    
+    global s
         
     #Set pins to OFF state
     pi.write(GLOBAL_LED_pin, 0)
+
+    s.cancel()
     
     print('\nExiting program...')
    
@@ -275,13 +279,14 @@ def main():
             sys.exit(0)
     
     
-    #Set up variables   
-    setup()
+    #Set up hardware   
+    setup_hardware()
     
+    #Set up variables
     outside_temp    = 0
     inside          = {'temp':0 , 'hum':0}
     
-    thingspeak_data = []
+    sensor_data     = []
     sensors         = []
     
     if GLOBAL_out_sensor_enable == True:
@@ -293,12 +298,12 @@ def main():
 
     #Prepare thingspeak data to match sensor number
     for i in range(0, len(sensors)):
-        thingspeak_data.append(0)
+        sensor_data.append(0)
 
     if GLOBAL_thingspeak_enable_update == True:
         print('Thingspeak set up:')
         print(sensors)
-        print(thingspeak_data)
+        print(sensor_data)
 
     
     #Main code
@@ -308,20 +313,20 @@ def main():
             #Get outside temperature
             if GLOBAL_out_sensor_enable == True:
                 outside_temp = get_ds18b20_temp(GLOBAL_out_temp_sensor_ref)
-                thingspeak_data[GLOBAL_out_temp_TS_field-1] = outside_temp
+                sensor_data[GLOBAL_out_temp_TS_field-1] = outside_temp
             
             #Get inside temperature and humidity
             if GLOBAL_in_sensor_enable == True:
                 inside = get_dht22_data()
-                thingspeak_data[GLOBAL_in_temp_TS_field-1] = inside['temp']
-                thingspeak_data[GLOBAL_in_hum_TS_field-1] = inside['hum']
+                sensor_data[GLOBAL_in_temp_TS_field-1] = inside['temp']
+                sensor_data[GLOBAL_in_hum_TS_field-1] = inside['hum']
                 
             #Display data on screen
-            output_data(sensors, thingspeak_data)
+            output_data(sensors, sensor_data)
                 
             #Send data to thingspeak
             if GLOBAL_thingspeak_enable_update == True:
-                thingspeak_update_channel(GLOBAL_thingspeak_write_api_key, thingspeak_data)
+                thingspeak_update_channel(GLOBAL_thingspeak_write_api_key, sensor_data)
                             
             #Delay to give update rate
             time.sleep(GLOBAL_update_rate)
