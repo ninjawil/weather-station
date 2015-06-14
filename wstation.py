@@ -267,10 +267,12 @@ def main():
             
         if '--help' in sys.argv:
             print('usage: ./wstation.py {command}')
-            print('\n')
-            print('--outsensor=OFF    - disables outside temperature monitoring')
-            print('--thingspeak=OFF - disable update to ThingSpeak')
-            print('--LEDtime=ON     - enables printing of LED toggle time')
+            print('')
+            print('   --outsensor=OFF    - disables outside temperature monitoring')
+            print('   --insensor=OFF     - disables inside temperature monitoring')
+            print('   --thingspeak=OFF   - disable update to ThingSpeak')
+            print('   --LEDtime=ON       - enables printing of LED toggle time')
+            sys.exit(0)
     
     
     #Set up variables   
