@@ -142,7 +142,9 @@ def get_dht22_data():
     global s
     
     s.trigger()
-        
+
+    time.sleep(0.2) #Do not over poll DHT22
+
     return {'temp':s.temperature(), 'hum':s.humidity()}
 
 
