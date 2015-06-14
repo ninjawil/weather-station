@@ -275,8 +275,7 @@ def main():
     outside_temp    = 0
     inside          = {'temp':0 , 'hum':0}
     
-    thingspeak_data = [0,0,0,0,0,0,0,0]
-    
+    thingspeak_data = []
     sensors         = []
     
     if GLOBAL_out_sensor_enable == True:
@@ -285,6 +284,12 @@ def main():
     if GLOBAL_in_sensor_enable == True:
         sensors.append('inside temp')
         sensors.append('inside hum')
+
+    #Prepare thingspeak data to match sensor number
+    for i in range(0, len(sensors)):
+        thingspeak_data.append(0)
+
+    print(thingspeak_data)
 
     
     #Main code
