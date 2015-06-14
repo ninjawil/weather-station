@@ -155,7 +155,9 @@ def output_data(sensors, data):
     
     #Check passed data is correct
     if len(sensors) <= len(data):
-        
+
+        print('')
+
         #Print date and time
         print(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
         
@@ -195,7 +197,7 @@ def thingspeak_update_channel(channel, field_data):
     conn = httplib.HTTPConnection(GLOBAL_thingspeak_host_addr)
     conn.request('POST', '/update', params, headers)
     response = conn.getresponse()
-    print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status)+'\n')
+    print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status))
     data = response.read()
     conn.close()
  
@@ -291,7 +293,10 @@ def main():
     for i in range(0, len(sensors)):
         thingspeak_data.append(0)
 
-    print(thingspeak_data)
+    if GLOBAL_thingspeak_enable_update == True:
+        print('Thingspeak set up:')
+        print(sensors)
+        print(thingspeak_data)
 
     
     #Main code
