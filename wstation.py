@@ -40,7 +40,7 @@ else:
 
 
 # --- System set up ---
-GLOBAL_update_rate          = 0.025 * 60  # seconds
+GLOBAL_update_rate          = 3 # seconds
 GLOBAL_w1_device_path       = '/sys/bus/w1/devices/'
 
 
@@ -123,6 +123,7 @@ def get_ds18b20_temp(device_id):
     #If unsuccessful first read loop until temperature acquired
     while lines[0].strip()[-3:] != 'YES':
         time.sleep(0.2)
+        print('Failed to read DS18B20. Trying again...')
         lines = w1_slave_read(device_id)
         
     temp_output = lines[1].find('t=')
@@ -159,7 +160,7 @@ def output_data(sensors, data):
         print('')
 
         #Print date and time
-        print(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+        print(datetime.datetime.now())
         
         field = 0
         
@@ -305,6 +306,7 @@ def main():
         print(sensors)
         print(sensor_data)
 
+    next_reading = time.time()
     
     #Main code
     try:
@@ -329,7 +331,11 @@ def main():
                 thingspeak_update_channel(GLOBAL_thingspeak_write_api_key, sensor_data)
                             
             #Delay to give update rate
-            time.sleep(GLOBAL_update_rate)
+            next_reading += GLOBAL_update_rate
+            sleep_length = next_reading - time.time()
+            print(sleep_length)
+            if sleep_length > 0:
+                time.sleep(sleep_length)
     
     except KeyboardInterrupt:
         exit_code()
