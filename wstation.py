@@ -178,7 +178,7 @@ def output_data(sensors, data):
             #Check for unit
             if 'temp' in i:
                 unit = u'\u00b0C'
-            else:
+            elif 'hum' in i:
                 unit = '%'
 
             #Print sensor data
