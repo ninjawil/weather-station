@@ -180,6 +180,8 @@ def output_data(sensors, data):
                 unit = u'\u00b0C'
             elif 'hum' in i:
                 unit = '%'
+            else:
+                unit = ''
 
             #Print sensor data
             print(i+'\t'+str(data[field])+unit)
