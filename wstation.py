@@ -332,6 +332,7 @@ def main():
         print(sensors)
         print(sensor_data)
 
+
     #Main code
     try:
         while True:
@@ -362,7 +363,7 @@ def main():
             #Delay to give update rate
             next_reading += GLOBAL_update_rate
             sleep_length = next_reading - time.time()
-            #print(sleep_length)
+            print(sleep_length)
             if sleep_length > 0:
                 time.sleep(sleep_length)
 
