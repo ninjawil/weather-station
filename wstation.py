@@ -44,6 +44,7 @@ else:
 # --- System set up ---
 GLOBAL_update_rate          = 3 # seconds
 GLOBAL_w1_device_path       = '/sys/bus/w1/devices/'
+GLOBAL_screen_output        = False
 
 
 # --- Set up thingspeak ----
@@ -196,6 +197,8 @@ def output_data(sensors, data):
 # UPDATE THINGSPEAK CHANNEL
 #=======================================================================
 def thingspeak_update_channel(channel, field_data):
+    
+    global GLOBAL_screen_output
 
     #Create POST data
     data_to_send = {}
@@ -209,7 +212,10 @@ def thingspeak_update_channel(channel, field_data):
     conn = httplib.HTTPConnection(GLOBAL_thingspeak_host_addr)
     conn.request('POST', '/update', params, headers)
     response = conn.getresponse()
-    print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status))
+    
+    if GLOBAL_screen_output == True:
+        print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status))
+    
     data = response.read()
     conn.close()
 
@@ -276,6 +282,7 @@ def main():
     global GLOBAL_update_rate
     global GLOBAL_LED_display_time
     global GLOBAL_door_sensor_enable
+    global GLOBAL_screen_output
 
 
     #Check and action passed arguments
@@ -292,6 +299,9 @@ def main():
 
         if '--LEDtime=ON' in sys.argv:
             GLOBAL_LED_display_time = True
+            
+        if '--display=ON' in sys.argv:
+            GLOBAL_screen_output = True
 
         if '--help' in sys.argv:
             print('usage: ./wstation.py {command}')
@@ -328,7 +338,7 @@ def main():
     for i in range(0, len(sensors)):
         sensor_data.append(0)
 
-    if GLOBAL_thingspeak_enable_update == True:
+    if GLOBAL_thingspeak_enable_update == True and GLOBAL_screen_output == True:
         print('Thingspeak set up:')
         print(sensors)
         print(sensor_data)
@@ -356,7 +366,8 @@ def main():
                 sensor_data[GLOBAL_in_hum_TS_field-1] = inside['hum']
 
             #Display data on screen
-            output_data(sensors, sensor_data)
+            if GLOBAL_screen_output == True:
+                output_data(sensors, sensor_data)
 
             #Send data to thingspeak
             if GLOBAL_thingspeak_enable_update == True:
@@ -365,7 +376,7 @@ def main():
             #Delay to give update rate
             next_reading += GLOBAL_update_rate
             sleep_length = next_reading - time.time()
-            print(sleep_length)
+            #print(sleep_length)
             if sleep_length > 0:
                 time.sleep(sleep_length)
 
