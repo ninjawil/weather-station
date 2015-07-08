@@ -34,7 +34,7 @@ GLOBAL_BROADCOM_REF     = True
 if GLOBAL_BROADCOM_REF == True:
     GLOBAL_Pin_11   = 17
     GLOBAL_Pin_12   = 18
-    GLOBAL_Pin_13   = 21
+    GLOBAL_Pin_13   = 27
 else:
     GLOBAL_Pin_11   = 11
     GLOBAL_Pin_12   = 12
@@ -73,7 +73,7 @@ GLOBAL_in_temp_TS_field     = GLOBAL_thingspeak_field_2
 GLOBAL_in_hum_TS_field      = GLOBAL_thingspeak_field_3
 
 GLOBAL_door_sensor_enable   = True
-GLOBAL_door_sensor_pin      = GLOBAL_Pin_11
+GLOBAL_door_sensor_pin      = GLOBAL_Pin_13
 GLOBAL_door_TS_field        = GLOBAL_thingspeak_field_4
 
 
@@ -93,6 +93,7 @@ def setup_hardware():
     #Set up DHT22
     global s
     global GLOBAL_in_sensor_pin
+    global GLOBAL_door_sensor_pin
 
     s = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
 
@@ -219,7 +220,7 @@ def thingspeak_update_channel(channel, field_data):
 def get_door_status():
 
     global GLOBAL_door_sensor_pin
-        
+            
     return pi.read(GLOBAL_door_sensor_pin)
     
     
@@ -332,6 +333,7 @@ def main():
         print(sensors)
         print(sensor_data)
 
+    next_reading = time.time()
 
     #Main code
     try:
