@@ -355,9 +355,7 @@ def main():
     setup_hardware()
 
     #Set up variables
-    outside_temp    = 0
     inside          = {'temp':0 , 'hum':0}
-    door_open       = 0
     
     #convert from minutes to no. of tasks
     GLOBAL_rain_tick_meas_time = (GLOBAL_rain_tick_meas_time * 60) / GLOBAL_update_rate
@@ -408,13 +406,11 @@ def main():
 
             #Check door status
             if GLOBAL_door_sensor_enable:
-                door_open = get_door_status()                
-                sensor_data[GLOBAL_door_TS_field-1] = door_open
+                sensor_data[GLOBAL_door_TS_field-1] = get_door_status()
                 
             #Get outside temperature
             if GLOBAL_out_sensor_enable:
-                outside_temp = get_ds18b20_temp(GLOBAL_out_temp_sensor_ref)
-                sensor_data[GLOBAL_out_temp_TS_field-1] = outside_temp
+                sensor_data[GLOBAL_out_temp_TS_field-1] = get_ds18b20_temp(GLOBAL_out_temp_sensor_ref)
                 
             #Get inside temperature and humidity
             if GLOBAL_in_sensor_enable:
