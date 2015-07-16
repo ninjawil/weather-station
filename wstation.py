@@ -183,8 +183,9 @@ def get_dht22_data():
     global s
 
     s.trigger()
-
-    time.sleep(0.2) #Do not over poll DHT22
+    
+    #Do not over poll DHT22
+    time.sleep(0.2) 
 
     return {'temp':s.temperature(), 'hum':s.humidity()}
 
@@ -357,7 +358,9 @@ def main():
     outside_temp    = 0
     inside          = {'temp':0 , 'hum':0}
     door_open       = 0
-    GLOBAL_rain_tick_meas_time = (GLOBAL_rain_tick_meas_time * 60) / GLOBAL_update_rate #convert from minutes to no. of tasks
+    
+    #convert from minutes to no. of tasks
+    GLOBAL_rain_tick_meas_time = (GLOBAL_rain_tick_meas_time * 60) / GLOBAL_update_rate
     GLOBAL_rain_tick_count = 0
     GLOBAL_rain_task_count = 0
     
