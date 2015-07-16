@@ -340,7 +340,7 @@ def main():
                 
             #Get outside temperature
             if GLOBAL_out_sensor_enable == True:
-                outside_temp = get_ds18b20_temp(GLOBAL_w1_device_path, GLOBAL_out_temp_sensor_ref)
+                outside_temp = DS18B20.get_temp(GLOBAL_w1_device_path, GLOBAL_out_temp_sensor_ref)
                 sensor_data[GLOBAL_out_temp_TS_field-1] = outside_temp
                 
             #Get inside temperature and humidity
