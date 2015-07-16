@@ -36,7 +36,7 @@ pi = pigpio.pi()
 # --- Set up GPIO referencing----
 GLOBAL_BROADCOM_REF     = True
 
-if GLOBAL_BROADCOM_REF == True:
+if GLOBAL_BROADCOM_REF:
     GLOBAL_Pin_11   = 17
     GLOBAL_Pin_12   = 18
     GLOBAL_Pin_13   = 27
@@ -121,7 +121,7 @@ def setup_hardware():
     pi.set_mode(GLOBAL_door_sensor_pin, pigpio.INPUT)
     
     #Set up LED flashing thread
-    pi.set_mode(GLOBAL_LED_pin, pigpio.OUTPUT) #Set up LED pin out
+    pi.set_mode(GLOBAL_LED_pin, pigpio.OUTPUT)
     timerThread = threading.Thread(target=toggle_LED)
     timerThread.daemon = True
     timerThread.start()
