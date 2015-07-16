@@ -13,7 +13,7 @@ import os, sys, threading
 import time, datetime
 import httplib, urllib
 import pigpio, DHT22
-import DS18B20
+import DS18B20, thingspeak
 
 
 #=======================================================================
@@ -177,34 +177,6 @@ def output_data(sensors, data):
 
             #Next data field
             field += 1
-
-
-
-#=======================================================================
-# UPDATE THINGSPEAK CHANNEL
-#=======================================================================
-def thingspeak_update_channel(channel, field_data):
-    
-    global GLOBAL_screen_output
-
-    #Create POST data
-    data_to_send = {}
-    data_to_send['key'] = channel
-    for i in range(0, len(field_data)):
-        data_to_send['field'+str(i+1)] = field_data[i]
-
-    params = urllib.urlencode(data_to_send)
-    headers = {'Content-type': 'application/x-www-form-urlencoded','Accept': 'text/plain'}
-
-    conn = httplib.HTTPConnection(GLOBAL_thingspeak_host_addr)
-    conn.request('POST', '/update', params, headers)
-    response = conn.getresponse()
-    
-    if GLOBAL_screen_output == True:
-        print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status))
-    
-    data = response.read()
-    conn.close()
 
 
 #=======================================================================
@@ -383,7 +355,7 @@ def main():
 
             #Send data to thingspeak
             if GLOBAL_thingspeak_enable_update == True:
-                thingspeak_update_channel(GLOBAL_thingspeak_host_addr, GLOBAL_thingspeak_write_api_key, sensor_data, GLOBAL_screen_output)
+                thingspeak.update_channel(GLOBAL_thingspeak_host_addr, GLOBAL_thingspeak_write_api_key, sensor_data, GLOBAL_screen_output)
 
             #Delay to give update rate
             next_reading += GLOBAL_update_rate
