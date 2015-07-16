@@ -9,7 +9,7 @@
 #=======================================================================
 # Import modules
 #=======================================================================
-import os, sys, threading
+import os, sys, threading, getopt
 import time, datetime
 import httplib, urllib
 import pigpio, DHT22
@@ -49,9 +49,9 @@ GLOBAL_screen_output        = False
 
 
 # --- Set up thingspeak ----
-GLOBAL_thingspeak_enable_update     = True
+GLOBAL_thingspeak_enable_update     = False
 GLOBAL_thingspeak_host_addr         = 'api.thingspeak.com:80'
-GLOBAL_thingspeak_write_api_key     = '30SNTCFLNJEI3937'
+GLOBAL_thingspeak_write_api_key     = ''
 
 GLOBAL_thingspeak_field_1   = 1
 GLOBAL_thingspeak_field_2   = 2
@@ -317,6 +317,8 @@ def main():
 
     #Check and action passed arguments
     if len(sys.argv) > 1:
+        
+        opts, args = getopt.getopt(argv,"a:",["TS_api_key="])
 
         if '--outsensor=OFF' in sys.argv:
             GLOBAL_enable_out_temp_sensor = False
@@ -327,8 +329,13 @@ def main():
         if '--rainsensor=OFF' in sys.argv:
             GLOBAL_rain_sensor_enable = False
 
-        if '--thingspeak=OFF' in sys.argv:
-            GLOBAL_thingspeak_enable_update = False
+        #if '--thingspeak=' in sys.argv:
+        #    GLOBAL_thingspeak_enable_update = True
+        #    api_index = sys.argv.index('--thingspeak=')
+        #    GLOBAL_thingspeak_write_api_key = sys.argv[api_index]
+        
+        if opt in ("-a", "--TS_api_key"):
+            api_index = arg
 
         if '--LEDtime=ON' in sys.argv:
             GLOBAL_LED_display_time = True
