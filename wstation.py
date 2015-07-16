@@ -240,7 +240,7 @@ def thingspeak_update_channel(channel, field_data):
     conn.request('POST', '/update', params, headers)
     response = conn.getresponse()
     
-    if GLOBAL_screen_output == True:
+    if GLOBAL_screen_output:
         print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status))
     
     data = response.read()
@@ -266,7 +266,7 @@ def toggle_LED():
     global GLOBAL_next_call
     global GLOBAL_LED_display_time
 
-    if GLOBAL_LED_display_time == True:
+    if GLOBAL_LED_display_time:
         print(datetime.datetime.now())
 
     #Prepare next thread time
@@ -363,24 +363,24 @@ def main():
 
 
     #Prepare sensor list
-    if GLOBAL_out_sensor_enable == True:
+    if GLOBAL_out_sensor_enable:
         sensors.append('outside temp')
 
-    if GLOBAL_in_sensor_enable == True:
+    if GLOBAL_in_sensor_enable:
         sensors.append('inside temp')
         sensors.append('inside hum')
         
-    if GLOBAL_door_sensor_enable == True:
+    if GLOBAL_door_sensor_enable:
         sensors.append('door open')
         
-    if GLOBAL_rain_sensor_enable == True:
+    if GLOBAL_rain_sensor_enable:
         sensors.append('rainfall')
 
     #Prepare thingspeak data to match sensor number
     for i in range(0, len(sensors)):
         sensor_data.append(0)
 
-    if GLOBAL_thingspeak_enable_update == True and GLOBAL_screen_output == True:
+    if GLOBAL_thingspeak_enable_update and GLOBAL_screen_output:
         print('Thingspeak set up:')
         print(sensors)
         print(sensor_data)
@@ -392,7 +392,7 @@ def main():
         while True:
             
             #Get rain fall measurement
-            if GLOBAL_out_sensor_enable == True:
+            if GLOBAL_out_sensor_enable:
                 if GLOBAL_rain_task_count == GLOBAL_rain_tick_meas_time:
                     sensor_data[GLOBAL_rain_TS_field-1] = GLOBAL_rain_tick_count * GLOBAL_rain_tick_measure
                     GLOBAL_rain_tick_count = 0
@@ -402,27 +402,27 @@ def main():
                     print(GLOBAL_rain_task_count)
 
             #Check door status
-            if GLOBAL_door_sensor_enable == True:
+            if GLOBAL_door_sensor_enable:
                 door_open = get_door_status()                
                 sensor_data[GLOBAL_door_TS_field-1] = door_open
                 
             #Get outside temperature
-            if GLOBAL_out_sensor_enable == True:
+            if GLOBAL_out_sensor_enable:
                 outside_temp = get_ds18b20_temp(GLOBAL_out_temp_sensor_ref)
                 sensor_data[GLOBAL_out_temp_TS_field-1] = outside_temp
                 
             #Get inside temperature and humidity
-            if GLOBAL_in_sensor_enable == True:
+            if GLOBAL_in_sensor_enable:
                 inside = get_dht22_data()
                 sensor_data[GLOBAL_in_temp_TS_field-1] = inside['temp']
                 sensor_data[GLOBAL_in_hum_TS_field-1] = inside['hum']
 
             #Display data on screen
-            if GLOBAL_screen_output == True:
+            if GLOBAL_screen_output:
                 output_data(sensors, sensor_data)
 
             #Send data to thingspeak
-            if GLOBAL_thingspeak_enable_update == True:
+            if GLOBAL_thingspeak_enable_update:
                 thingspeak_update_channel(GLOBAL_thingspeak_write_api_key, sensor_data)
 
             #Delay to give update rate
