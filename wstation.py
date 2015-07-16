@@ -142,12 +142,10 @@ def w1_slave_read(device_id):
 
     device_id = GLOBAL_w1_device_path+device_id+'/w1_slave'
 
-    f=open(device_id,'r')
-    lines=f.readlines()
-    f.close()
+    with open(device_id,'r') as f:
+        lines=f.readlines()
 
     return lines
-
 
 
 #=======================================================================
