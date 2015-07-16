@@ -11,7 +11,6 @@
 #=======================================================================
 import os, sys, threading
 import time, datetime
-import httplib, urllib
 import pigpio, DHT22
 import DS18B20, thingspeak
 
