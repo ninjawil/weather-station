@@ -232,7 +232,7 @@ def thingspeak_update_channel(channel, field_data):
     data_to_send['key'] = channel
     for i in range(0, len(field_data)):
         data_to_send['field'+str(i+1)] = field_data[i]
-
+        
     params = urllib.urlencode(data_to_send)
     headers = {'Content-type': 'application/x-www-form-urlencoded','Accept': 'text/plain'}
 
@@ -377,8 +377,7 @@ def main():
         sensors.append('rainfall')
 
     #Prepare thingspeak data to match sensor number
-    for i in range(0, len(sensors)):
-        sensor_data.append(0)
+    sensor_data = [0 for i in sensors]
 
     if GLOBAL_thingspeak_enable_update and GLOBAL_screen_output:
         print('Thingspeak set up:')
