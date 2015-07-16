@@ -22,9 +22,9 @@ os.system('modprobe w1-therm')
 #=======================================================================
 # READ RAW DATA FROM W1 SLAVE
 #=======================================================================
-def w1_slave_read(device_id):
+def w1_slave_read(w1_device_path, device_id):
 
-    device_id = GLOBAL_w1_device_path+device_id+'/w1_slave'
+    device_id = w1_device_path+device_id+'/w1_slave'
 
     f=open(device_id,'r')
     lines=f.readlines()
@@ -36,9 +36,9 @@ def w1_slave_read(device_id):
 #=======================================================================
 # READ DATA FROM DS18B20
 #=======================================================================
-def get_ds18b20_temp(device_id):
+def get_ds18b20_temp(w1_device_path, device_id):
 
-    lines = w1_slave_read(device_id)
+    lines = w1_slave_read(w1_device_path, device_id)
 
     #If unsuccessful first read loop until temperature acquired
     while lines[0].strip()[-3:] != 'YES':
