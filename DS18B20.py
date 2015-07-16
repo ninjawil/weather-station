@@ -36,7 +36,7 @@ def w1_slave_read(w1_device_path, device_id):
 #=======================================================================
 # READ DATA FROM DS18B20
 #=======================================================================
-def get_ds18b20_temp(w1_device_path, device_id):
+def get_temp(w1_device_path, device_id):
 
     lines = w1_slave_read(w1_device_path, device_id)
 
