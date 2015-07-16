@@ -9,10 +9,15 @@
 #=======================================================================
 # Import modules
 #=======================================================================
-import os, sys, threading
-import time, datetime
-import httplib, urllib
-import pigpio, DHT22
+import os
+import sys
+import threading
+import time
+import datetime
+import httplib
+import urllib
+import pigpio
+import DHT22
 
 
 #=======================================================================
