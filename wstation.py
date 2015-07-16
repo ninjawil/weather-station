@@ -106,12 +106,12 @@ GLOBAL_next_call            = time.time()
 def setup_hardware():
 
     #Set up DHT22
-    global s
+    global DHT22_sensor
     global GLOBAL_in_sensor_pin
     global GLOBAL_door_sensor_pin
     global GLOBAL_rain_sensor_pin
     
-    s = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
+    DHT22_sensor = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
 
     #Set up rain sensor input pin
     pi.set_mode(GLOBAL_rain_sensor_pin, pigpio.INPUT)
@@ -180,9 +180,9 @@ def get_ds18b20_temp(device_id):
 #=======================================================================
 def get_dht22_data():
 
-    global s
+    global DHT22_sensor
 
-    s.trigger()
+    DHT22_sensor.trigger()
     
     #Do not over poll DHT22
     time.sleep(0.2) 
@@ -289,12 +289,12 @@ def toggle_LED():
 #=======================================================================
 def exit_code():
 
-    global s
+    global DHT22_sensor
 
     #Set pins to OFF state
     pi.write(GLOBAL_LED_pin, 0)
 
-    s.cancel()
+    DHT22_sensor.cancel()
 
     print('\nExiting program...')
 
