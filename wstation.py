@@ -207,7 +207,7 @@ def get_dht22_data():
     #Do not over poll DHT22
     time.sleep(0.2) 
 
-    return {'temp':s.temperature(), 'hum':s.humidity()}
+    return {'temp':DHT22_sensor.temperature(), 'hum':DHT22_sensor.humidity()}
 
 
 #===============================================================================
