@@ -9,7 +9,7 @@
 #=======================================================================
 # Import modules
 #=======================================================================
-import os, sys, threading, getopt
+import os, sys, threading
 import time, datetime
 import httplib, urllib
 import pigpio, DHT22
