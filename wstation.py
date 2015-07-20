@@ -23,9 +23,6 @@ import DHT22
 #===============================================================================
 # LOAD DRIVERS
 #===============================================================================
-os.system('modprobe w1-gpio')
-os.system('modprobe w1-therm')
-
 pi = pigpio.pi()
 
 
@@ -161,56 +158,6 @@ def count_rain_ticks(gpio, level, tick):
     
 
 #===============================================================================
-# READ RAW DATA FROM W1 SLAVE
-#===============================================================================
-def w1_slave_read(device_id):
-
-    device_id = GLOBAL_w1_device_path+device_id+'/w1_slave'
-
-    with open(device_id,'r') as f:
-        lines=f.readlines()
-
-    return lines
-
-
-#===============================================================================
-# READ DATA FROM DS18B20
-#===============================================================================
-def get_ds18b20_temp(device_id):
-
-    lines = w1_slave_read(device_id)
-
-    #If unsuccessful first read loop until temperature acquired
-    while lines[0].strip()[-3:] != 'YES':
-        time.sleep(0.2)
-        print('Failed to read DS18B20. Trying again...')
-        lines = w1_slave_read(device_id)
-
-    temp_output = lines[1].find('t=')
-
-    if temp_output != -1:
-        temp_string = lines[1].strip()[temp_output+2:]
-        temp_c = float(temp_string) / 1000.0
-
-    return temp_c
-
-
-#===============================================================================
-# READ DATA FROM DHT22
-#===============================================================================
-def get_dht22_data():
-
-    global DHT22_sensor
-
-    DHT22_sensor.trigger()
-    
-    #Do not over poll DHT22
-    time.sleep(0.2) 
-
-    return {'temp':DHT22_sensor.temperature(), 'hum':DHT22_sensor.humidity()}
-
-
-#===============================================================================
 # OUTPUT DATA TO SCREEN
 #===============================================================================
 def output_data(sensors, data):
@@ -241,33 +188,6 @@ def output_data(sensors, data):
 
             #Next data field
             field += 1
-
-
-#===============================================================================
-# UPDATE THINGSPEAK CHANNEL
-#===============================================================================
-def thingspeak_update_channel(channel, field_data):
-    
-    global GLOBAL_screen_output
-
-    #Create POST data
-    data_to_send = {}
-    data_to_send['key'] = channel
-    for i in range(0, len(field_data)):
-        data_to_send['field'+str(i+1)] = field_data[i]
-        
-    params = urllib.urlencode(data_to_send)
-    headers = {'Content-type': 'application/x-www-form-urlencoded','Accept': 'text/plain'}
-
-    conn = httplib.HTTPConnection(GLOBAL_thingspeak_host_addr)
-    conn.request('POST', '/update', params, headers)
-    response = conn.getresponse()
-    
-    if GLOBAL_screen_output:
-        print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status))
-    
-    data = response.read()
-    conn.close()
 
 
 #===============================================================================
@@ -432,7 +352,7 @@ def main():
                 
             #Get outside temperature
             if GLOBAL_out_sensor_enable:
-                sensor_data[GLOBAL_out_temp_TS_field-1] = get_ds18b20_temp(GLOBAL_out_temp_sensor_ref)
+                sensor_data[GLOBAL_out_temp_TS_field-1] = DS18B20.get_temp(GLOBAL_w1_device_path, GLOBAL_out_temp_sensor_ref)
                 
             #Get inside temperature and humidity
             if GLOBAL_in_sensor_enable:
@@ -446,7 +366,7 @@ def main():
 
             #Send data to thingspeak
             if GLOBAL_thingspeak_enable_update:
-                thingspeak_update_channel(GLOBAL_thingspeak_write_api_key, sensor_data)
+                thingspeak.update_channel(GLOBAL_thingspeak_host_addr, GLOBAL_thingspeak_write_api_key, sensor_data, GLOBAL_screen_output)
 
             #Delay to give update rate
             next_reading += GLOBAL_update_rate
