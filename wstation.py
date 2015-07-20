@@ -122,7 +122,22 @@ def count_rain_ticks(gpio, level, tick):
     GLOBAL_rain_tick_count += 1
     print(GLOBAL_rain_tick_count)
     time.sleep(0.1) #debounce
+ 
     
+#===============================================================================
+# READ DATA FROM DHT22
+#===============================================================================
+def get_dht22_data():
+
+    global DHT22_sensor
+
+    DHT22_sensor.trigger()
+    
+    #Do not over poll DHT22
+    time.sleep(0.2) 
+
+    return {'temp':DHT22_sensor.temperature(), 'hum':DHT22_sensor.humidity()}
+
 
 #===============================================================================
 # OUTPUT DATA TO SCREEN
