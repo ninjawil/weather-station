@@ -56,7 +56,8 @@ GLOBAL_screen_output        = False
 # --- Set up thingspeak ----
 GLOBAL_thingspeak_enable_update     = True
 GLOBAL_thingspeak_host_addr         = 'api.thingspeak.com:80'
-GLOBAL_thingspeak_write_api_key     = '30SNTCFLNJEI3937'
+GLOBAL_thingspeak_api_key_filename  = 'thingspeak.txt'
+GLOBAL_thingspeak_write_api_key     = ''
 
 # --- Set up sensors ----
 GLOBAL_out_sensor_enable    = True
@@ -116,6 +117,37 @@ def setup_hardware():
     timerThread.daemon = True
     timerThread.start()
 
+
+#=======================================================================
+# LOAD THINGSPEAK API KEY
+#=======================================================================
+def thingspeak_get_write_api_key(filename)
+
+    error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
+    
+    try:
+        f = open(filename, 'r')
+        
+    except error_to_catch:
+    
+        print('No thingspeak write api key found.')
+    
+        entry_incorrect = True
+        while entry_incorrect:
+            api_key = input('Please enter the write key: ')
+            answer = input('Is this correct? Y/N >')
+            if answer in ('y', 'Y'):
+                entry_incorrect = False
+    
+        with open(filename, 'w') as f:
+            f.write(api_key)
+
+    else:
+        api_key = f.read()
+    
+    f.close()
+    
+    return api_key
 
 #=======================================================================
 # EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
@@ -343,6 +375,10 @@ def main():
 
     #Set up hardware
     setup_hardware()
+    
+    #Read thingspeak write api key from file
+    if GLOBAL_thingspeak_enable_update:
+        GLOBAL_thingspeak_write_api_key = thingspeak_get_write_api_key(GLOBAL_thingspeak_api_key_filename)
 
     #Set up variables
     inside          = {'temp':0 , 'hum':0}
