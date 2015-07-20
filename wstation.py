@@ -118,7 +118,7 @@ def setup_hardware():
 #===============================================================================
 # LOAD THINGSPEAK API KEY
 #===============================================================================
-def thingspeak_get_write_api_key(filename)
+def thingspeak_get_write_api_key(filename):
 
     error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
     
@@ -141,10 +141,12 @@ def thingspeak_get_write_api_key(filename)
 
     else:
         api_key = f.read()
+        print('Thingspeak api key loaded... ok')
     
     f.close()
     
     return api_key
+
 
 #===============================================================================
 # EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
@@ -363,6 +365,7 @@ def main():
             print('   --rainsensor=OFF   - disables rainfall monitoring')
             print('   --thingspeak=OFF   - disable update to ThingSpeak')
             print('   --LEDtime=ON       - enables printing of LED toggle time')
+            print('   --display=ON       - outputs data to screen')
             sys.exit(0)
 
 
