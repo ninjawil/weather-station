@@ -18,6 +18,8 @@ import httplib
 import urllib
 import pigpio
 import DHT22
+import DS18B20
+import thingspeak
 
 
 #===============================================================================
