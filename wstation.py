@@ -113,39 +113,6 @@ def setup_hardware():
 
 
 #===============================================================================
-# LOAD THINGSPEAK API KEY
-#===============================================================================
-def thingspeak_get_write_api_key(filename):
-
-    error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
-    
-    try:
-        f = open(filename, 'r')
-        
-    except error_to_catch:
-    
-        print('No thingspeak write api key found.')
-    
-        entry_incorrect = True
-        while entry_incorrect:
-            api_key = raw_input('Please enter the write key: ')
-            answer = raw_input('Is this correct? Y/N >')
-            if answer in ('y', 'Y'):
-                entry_incorrect = False
-    
-        with open(filename, 'w') as f:
-            f.write(api_key)
-
-    else:
-        api_key = f.read()
-        print('Thingspeak api key loaded: ' + api_key)
-    
-    f.close()
-    
-    return api_key
-
-
-#===============================================================================
 # EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
 #===============================================================================
 def count_rain_ticks(gpio, level, tick):
@@ -294,7 +261,7 @@ def main():
     
     #Read thingspeak write api key from file
     if GLOBAL_thingspeak_enable_update:
-        GLOBAL_thingspeak_write_api_key = thingspeak_get_write_api_key(GLOBAL_thingspeak_api_key_filename)
+        GLOBAL_thingspeak_write_api_key = thingspeak.get_write_api_key(GLOBAL_thingspeak_api_key_filename)
 
     #Set up variables
     inside          = {'temp':0 , 'hum':0}

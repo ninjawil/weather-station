@@ -9,7 +9,8 @@
 #=======================================================================
 # Import modules
 #=======================================================================
-import httplib, urllib
+import httplib
+import urllib
 
 
 #=======================================================================
@@ -35,3 +36,35 @@ def update_channel(host_addr, channel, field_data, screen_output):
     
     data = response.read()
     conn.close()
+
+#===============================================================================
+# LOAD THINGSPEAK API KEY
+#===============================================================================
+def get_write_api_key(filename):
+
+    error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
+    
+    try:
+        f = open(filename, 'r')
+        
+    except error_to_catch:
+    
+        print('No thingspeak write api key found.')
+    
+        entry_incorrect = True
+        while entry_incorrect:
+            api_key = raw_input('Please enter the write key: ')
+            answer = raw_input('Is this correct? Y/N >')
+            if answer in ('y', 'Y'):
+                entry_incorrect = False
+    
+        with open(filename, 'w') as f:
+            f.write(api_key)
+
+    else:
+        api_key = f.read()
+        print('Thingspeak api key loaded: ' + api_key)
+    
+    f.close()
+    
+    return api_key
