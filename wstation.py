@@ -49,8 +49,9 @@ GLOBAL_screen_output        = False
 
 
 # --- Set up thingspeak ----
-GLOBAL_thingspeak_enable_update     = False
+GLOBAL_thingspeak_enable_update     = True
 GLOBAL_thingspeak_host_addr         = 'api.thingspeak.com:80'
+GLOBAL_thingspeak_api_key_filename  = 'thingspeak.txt'
 GLOBAL_thingspeak_write_api_key     = ''
 
 GLOBAL_thingspeak_field_1   = 1
@@ -121,6 +122,37 @@ def setup_hardware():
     timerThread.daemon = True
     timerThread.start()
 
+
+#=======================================================================
+# LOAD THINGSPEAK API KEY
+#=======================================================================
+def thingspeak_get_write_api_key(filename)
+
+    error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
+    
+    try:
+        f = open(filename, 'r')
+        
+    except error_to_catch:
+    
+        print('No thingspeak write api key found.')
+    
+        entry_incorrect = True
+        while entry_incorrect:
+            api_key = input('Please enter the write key: ')
+            answer = input('Is this correct? Y/N >')
+            if answer in ('y', 'Y'):
+                entry_incorrect = False
+    
+        with open(filename, 'w') as f:
+            f.write(api_key)
+
+    else:
+        api_key = f.read()
+    
+    f.close()
+    
+    return api_key
 
 #=======================================================================
 # EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
@@ -329,11 +361,9 @@ def main():
         if '--rainsensor=OFF' in sys.argv:
             GLOBAL_rain_sensor_enable = False
 
-        #if '--thingspeak=' in sys.argv:
-        #    GLOBAL_thingspeak_enable_update = True
-        #    api_index = sys.argv.index('--thingspeak=')
-        #    GLOBAL_thingspeak_write_api_key = sys.argv[api_index]
-        
+        if '--thingspeak=OFF' in sys.argv:
+            GLOBAL_thingspeak_enable_update = False
+
         if opt in ("-a", "--TS_api_key"):
             api_index = arg
 
@@ -356,6 +386,10 @@ def main():
 
     #Set up hardware
     setup_hardware()
+    
+    #Read thingspeak write api key from file
+    if GLOBAL_thingspeak_enable_update:
+        GLOBAL_thingspeak_write_api_key = thingspeak_get_write_api_key(GLOBAL_thingspeak_api_key_filename)
 
     #Set up variables
     outside_temp    = 0
