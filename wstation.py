@@ -131,8 +131,8 @@ def thingspeak_get_write_api_key(filename):
     
         entry_incorrect = True
         while entry_incorrect:
-            api_key = input('Please enter the write key: ')
-            answer = input('Is this correct? Y/N >')
+            api_key = raw_input('Please enter the write key: ')
+            answer = raw_input('Is this correct? Y/N >')
             if answer in ('y', 'Y'):
                 entry_incorrect = False
     
@@ -141,7 +141,7 @@ def thingspeak_get_write_api_key(filename):
 
     else:
         api_key = f.read()
-        print('Thingspeak api key loaded... ok')
+        print('Thingspeak api key loaded: ' + api_key)
     
     f.close()
     
