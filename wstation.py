@@ -349,8 +349,6 @@ def main():
 
     #Check and action passed arguments
     if len(sys.argv) > 1:
-        
-        opts, args = getopt.getopt(argv,"a:",["TS_api_key="])
 
         if '--outsensor=OFF' in sys.argv:
             GLOBAL_enable_out_temp_sensor = False
@@ -363,9 +361,6 @@ def main():
 
         if '--thingspeak=OFF' in sys.argv:
             GLOBAL_thingspeak_enable_update = False
-
-        if opt in ("-a", "--TS_api_key"):
-            api_index = arg
 
         if '--LEDtime=ON' in sys.argv:
             GLOBAL_LED_display_time = True
