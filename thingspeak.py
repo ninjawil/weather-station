@@ -47,14 +47,16 @@ def update_channel(host_addr, channel, field_data, screen_output):
         data_to_send['field'+str(i+1)] = field_data[i]
 
     params = urllib.urlencode(data_to_send)
-    headers = {'Content-type': 'application/x-www-form-urlencoded','Accept': 'text/plain'}
+    headers = {'Content-type': 'application/x-www-form-urlencoded',
+               'Accept': 'text/plain'}
 
     conn = httplib.HTTPConnection(host_addr)
     conn.request('POST', '/update', params, headers)
     response = conn.getresponse()
     
     if screen_output == True:
-        print('Data sent to thingspeak: ' + response.reason + '\t status: ' + str(response.status))
+        print('Data sent to thingspeak: ' 
+              + response.reason + '\t status: ' + str(response.status))
     
     data = response.read()
     conn.close()
