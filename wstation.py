@@ -68,30 +68,24 @@ else:
 # --- System set up ---
 GLOBAL_update_rate          = 5 # seconds
 GLOBAL_w1_device_path       = '/sys/bus/w1/devices/'
-GLOBAL_screen_output        = False
 
 # --- Set up thingspeak ----
-GLOBAL_thingspeak_enable_update     = True
 GLOBAL_thingspeak_host_addr         = 'api.thingspeak.com:80'
 GLOBAL_thingspeak_api_key_filename  = 'thingspeak.txt'
 GLOBAL_thingspeak_write_api_key     = ''
 
 # --- Set up sensors ----
-GLOBAL_out_sensor_enable    = True
 GLOBAL_out_temp_sensor_ref  = '28-0414705bceff'
 GLOBAL_out_temp_TS_field    = 1
 
-GLOBAL_in_sensor_enable     = True
 GLOBAL_in_sensor_ref        = 'DHT22'
 GLOBAL_in_sensor_pin        = GLOBAL_Pin_11
 GLOBAL_in_temp_TS_field     = 2
 GLOBAL_in_hum_TS_field      = 3
 
-GLOBAL_door_sensor_enable   = True
 GLOBAL_door_sensor_pin      = GLOBAL_Pin_14
 GLOBAL_door_TS_field        = 4
 
-GLOBAL_rain_sensor_enable   = True
 GLOBAL_rain_sensor_pin      = GLOBAL_Pin_13
 GLOBAL_rain_TS_field        = 5
 GLOBAL_rain_tick_measure    = 1.5 #millimeters
@@ -100,7 +94,6 @@ GLOBAL_rain_tick_count      = 0
 GLOBAL_rain_task_count      = 0
 
 # --- Set up flashing LED ----
-GLOBAL_LED_display_time     = False
 GLOBAL_LED_pin              = GLOBAL_Pin_12
 GLOBAL_LED_flash_rate       = 1  # seconds
 GLOBAL_next_call            = time.time()
@@ -198,40 +191,45 @@ def toggle_LED():
 #===============================================================================
 def main():
 
-    global GLOBAL_out_sensor_enable
-    global GLOBAL_in_sensor_enable
     global GLOBAL_in_sensor_ref
     global GLOBAL_in_hum_sensor_enable
-    global GLOBAL_door_sensor_enable
-    global GLOBAL_rain_sensor_enable
     global GLOBAL_rain_tick_count
     global GLOBAL_rain_tick_meas_time
-    global GLOBAL_thingspeak_enable_update
     global GLOBAL_update_rate
-    global GLOBAL_LED_display_time
     global GLOBAL_screen_output
-
 
     #Check and action passed arguments
     if len(sys.argv) > 1:
 
         if '--outsensor=OFF' in sys.argv:
-            GLOBAL_enable_out_temp_sensor = False
+            out_sensor_enable = False
+        else:
+            out_sensor_enable = True
 
         if '--insensor=OFF' in sys.argv:
-            GLOBAL_in_sensor_enable = False
-
+            in_sensor_enable = False
+        else:
+            in_sensor_enable = True
+            
         if '--rainsensor=OFF' in sys.argv:
-            GLOBAL_rain_sensor_enable = False
+            rain_sensor_enable = False
+        else:
+            rain_sensor_enable = True
 
         if '--thingspeak=OFF' in sys.argv:
-            GLOBAL_thingspeak_enable_update = False
+            thingspeak_enable_update = False
+        else:
+            thingspeak_enable_update = True
 
         if '--LEDtime=ON' in sys.argv:
             GLOBAL_LED_display_time = True
+        else:
+            GLOBAL_LED_display_time = False
             
         if '--display=ON' in sys.argv:
-            GLOBAL_screen_output = True
+            screen_output = True
+        else:
+            screen_output = False
 
         if '--help' in sys.argv:
             print('usage: ./wstation.py {command}')
@@ -276,7 +274,7 @@ def main():
     timerThread.start()
     
     #Read thingspeak write api key from file
-    if GLOBAL_thingspeak_enable_update:
+    if thingspeak_enable_update:
         GLOBAL_thingspeak_write_api_key = thingspeak.get_write_api_key(
                                             GLOBAL_thingspeak_api_key_filename)
     
@@ -292,23 +290,23 @@ def main():
     DEBOUNCE_MICROS = 1000000 * DEBOUNCE_MICROS # convert from seconds to microseconds
 
     #Prepare sensor list
-    if GLOBAL_out_sensor_enable:
+    if out_sensor_enable:
         sensors.append('outside temp')
 
-    if GLOBAL_in_sensor_enable:
+    if in_sensor_enable:
         sensors.append('inside temp')
         sensors.append('inside hum')
         
-    if GLOBAL_door_sensor_enable:
+    if door_sensor_enable:
         sensors.append('door open')
         
-    if GLOBAL_rain_sensor_enable:
+    if rain_sensor_enable:
         sensors.append('rainfall')
 
     #Prepare thingspeak data to match sensor number
     sensor_data = [0 for i in sensors]
 
-    if GLOBAL_thingspeak_enable_update and GLOBAL_screen_output:
+    if thingspeak_enable_update and screen_output:
         print('Thingspeak set up:')
         print(sensors)
         print(sensor_data)
@@ -320,7 +318,7 @@ def main():
         while True:
             
             #Get rain fall measurement
-            if GLOBAL_out_sensor_enable:
+            if out_sensor_enable:
                 if GLOBAL_rain_task_count == GLOBAL_rain_tick_meas_time:
                     sensor_data[GLOBAL_rain_TS_field-1] = GLOBAL_rain_tick_count * GLOBAL_rain_tick_measure
                     GLOBAL_rain_tick_count = 0
@@ -330,31 +328,31 @@ def main():
                     print(GLOBAL_rain_task_count)
 
             #Check door status
-            if GLOBAL_door_sensor_enable:
+            if door_sensor_enable:
                 sensor_data[GLOBAL_door_TS_field-1] = get_door_status(GLOBAL_door_sensor_pin)
                 
             #Get outside temperature
-            if GLOBAL_out_sensor_enable:
+            if out_sensor_enable:
                 sensor_data[GLOBAL_out_temp_TS_field-1] = DS18B20.get_temp(
                                                             GLOBAL_w1_device_path, 
                                                             GLOBAL_out_temp_sensor_ref)
                 
             #Get inside temperature and humidity
-            if GLOBAL_in_sensor_enable:
+            if in_sensor_enable:
                 DHT22_sensor.trigger()
                 time.sleep(0.2)  #Do not over poll DHT22
                 sensor_data[GLOBAL_in_temp_TS_field-1] = DHT22_sensor.temperature()
                 sensor_data[GLOBAL_in_hum_TS_field-1] = DHT22_sensor.humidity()
 
             #Display data on screen
-            if GLOBAL_screen_output:
+            if screen_output:
                 output_data(sensors, sensor_data)
 
             #Send data to thingspeak
-            if GLOBAL_thingspeak_enable_update:
+            if thingspeak_enable_update:
                 thingspeak.update_channel(GLOBAL_thingspeak_host_addr, 
                                           GLOBAL_thingspeak_write_api_key, 
-                                          sensor_data, GLOBAL_screen_output)
+                                          sensor_data, screen_output)
 
             #Delay to give update rate
             next_reading += GLOBAL_update_rate
