@@ -72,7 +72,6 @@ GLOBAL_w1_device_path       = '/sys/bus/w1/devices/'
 # --- Set up thingspeak ----
 GLOBAL_thingspeak_host_addr         = 'api.thingspeak.com:80'
 GLOBAL_thingspeak_api_key_filename  = 'thingspeak.txt'
-GLOBAL_thingspeak_write_api_key     = ''
 
 # --- Set up sensors ----
 GLOBAL_out_temp_sensor_ref  = '28-0414705bceff'
@@ -198,33 +197,34 @@ def main():
     global GLOBAL_update_rate
 
     #Set initial variable values
-    rain_sensor_enable = True
-    out_sensor_enable = True
-    in_sensor_enable = True
-    thingspeak_enable_update = True
-    GLOBAL_LED_display_time = False
-    screen_output = False
+    rain_sensor_enable           = True
+    out_sensor_enable            = True
+    in_sensor_enable             = True
+    thingspeak_enable_update     = True
+    GLOBAL_LED_display_time      = False
+    screen_output                = False
+    thingspeak_write_api_key     = ''
 
     #Check and action passed arguments
     if len(sys.argv) > 1:
         if '--outsensor=OFF' in sys.argv:
             out_sensor_enable = False
-
+            
         if '--insensor=OFF' in sys.argv:
             in_sensor_enable = False
-
+            
         if '--rainsensor=OFF' in sys.argv:
             rain_sensor_enable = False
-
+            
         if '--thingspeak=OFF' in sys.argv:
             thingspeak_enable_update = False
-
+            
         if '--LEDtime=ON' in sys.argv:
             GLOBAL_LED_display_time = True
-
+            
         if '--display=ON' in sys.argv:
             screen_output = True
-
+            
         if '--help' in sys.argv:
             print('usage: ./wstation.py {command}')
             print('')
@@ -262,7 +262,7 @@ def main():
     
     #Read thingspeak write api key from file
     if thingspeak_enable_update:
-        GLOBAL_thingspeak_write_api_key = thingspeak.get_write_api_key(
+        thingspeak_write_api_key = thingspeak.get_write_api_key(
                                             GLOBAL_thingspeak_api_key_filename)
     
     #convert from minutes to no. of tasks
@@ -335,7 +335,7 @@ def main():
             #Send data to thingspeak
             if thingspeak_enable_update:
                 thingspeak.update_channel(GLOBAL_thingspeak_host_addr, 
-                                          GLOBAL_thingspeak_write_api_key, 
+                                          thingspeak_write_api_key, 
                                           sensor_data, screen_output)
 
             #Delay to give update rate
