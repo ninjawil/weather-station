@@ -124,7 +124,9 @@ def setup_hardware():
 
     #Set up rain sensor input pin
     pi.set_mode(GLOBAL_rain_sensor_pin, pigpio.INPUT)
-    rain_gauge = pi.callback(GLOBAL_rain_sensor_pin, pigpio.RISING_EDGE, count_rain_ticks)
+    rain_gauge = pi.callback(GLOBAL_rain_sensor_pin, 
+                             pigpio.RISING_EDGE, 
+                             count_rain_ticks)
 
     #Set up door sensor input pin
     pi.set_mode(GLOBAL_door_sensor_pin, pigpio.INPUT)
@@ -286,12 +288,24 @@ def main():
         if '--help' in sys.argv:
             print('usage: ./wstation.py {command}')
             print('')
-            print('   --outsensor=OFF    - disables outside temperature monitoring')
-            print('   --insensor=OFF     - disables inside temperature monitoring')
-            print('   --rainsensor=OFF   - disables rainfall monitoring')
-            print('   --thingspeak=OFF   - disable update to ThingSpeak')
-            print('   --LEDtime=ON       - enables printing of LED toggle time')
-            print('   --display=ON       - outputs data to screen')
+            print('   --outsensor=OFF    ',
+                  '- disables outside temperature monitoring')
+                  
+            print('   --insensor=OFF     ',
+                  '- disables inside temperature monitoring')
+                  
+            print('   --rainsensor=OFF   ',
+                  '- disables rainfall monitoring')
+                  
+            print('   --thingspeak=OFF   ',
+                  '- disable update to ThingSpeak')
+                  
+            print('   --LEDtime=ON       ',
+                  '- enables printing of LED toggle time')
+                  
+            print('   --display=ON       ',
+                  '- outputs data to screen')
+                  
             sys.exit(0)
 
 
@@ -300,7 +314,8 @@ def main():
     
     #Read thingspeak write api key from file
     if GLOBAL_thingspeak_enable_update:
-        GLOBAL_thingspeak_write_api_key = thingspeak.get_write_api_key(GLOBAL_thingspeak_api_key_filename)
+        GLOBAL_thingspeak_write_api_key = thingspeak.get_write_api_key(
+                                            GLOBAL_thingspeak_api_key_filename)
 
     #Set up variables
     inside          = {'temp':0 , 'hum':0}
@@ -358,7 +373,9 @@ def main():
                 
             #Get outside temperature
             if GLOBAL_out_sensor_enable:
-                sensor_data[GLOBAL_out_temp_TS_field-1] = DS18B20.get_temp(GLOBAL_w1_device_path, GLOBAL_out_temp_sensor_ref)
+                sensor_data[GLOBAL_out_temp_TS_field-1] = DS18B20.get_temp(
+                                                            GLOBAL_w1_device_path, 
+                                                            GLOBAL_out_temp_sensor_ref)
                 
             #Get inside temperature and humidity
             if GLOBAL_in_sensor_enable:
@@ -372,7 +389,9 @@ def main():
 
             #Send data to thingspeak
             if GLOBAL_thingspeak_enable_update:
-                thingspeak.update_channel(GLOBAL_thingspeak_host_addr, GLOBAL_thingspeak_write_api_key, sensor_data, GLOBAL_screen_output)
+                thingspeak.update_channel(GLOBAL_thingspeak_host_addr, 
+                                          GLOBAL_thingspeak_write_api_key, 
+                                          sensor_data, GLOBAL_screen_output)
 
             #Delay to give update rate
             next_reading += GLOBAL_update_rate
