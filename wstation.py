@@ -108,7 +108,8 @@ GLOBAL_LED_pin              = GLOBAL_Pin_12
 GLOBAL_LED_flash_rate       = 1  # seconds
 GLOBAL_next_call            = time.time()
 
-
+DEBOUNCE_MICROS = 0.5 #seconds
+last_rising_edge = None
 
 #===============================================================================
 # EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
@@ -116,11 +117,21 @@ GLOBAL_next_call            = time.time()
 def count_rain_ticks(gpio, level, tick):
     
     global GLOBAL_rain_tick_count
+    global last_rising_edge
     
-    GLOBAL_rain_tick_count += 1
-    print(GLOBAL_rain_tick_count)
-    time.sleep(0.1) #debounce
- 
+    pulse = False
+    
+    if last_rising_edge is not None:
+        if pigpio.tickDiff(last_rising_edge, tick) > DEBOUNCE_MICROS:
+            pulse = True
+    else:
+        pulse = True
+
+   if pulse:
+        last_rising_edge = tick  
+        GLOBAL_rain_tick_count += 1
+        print(GLOBAL_rain_tick_count)  
+  
  
 #===============================================================================
 # OUTPUT DATA TO SCREEN
@@ -282,6 +293,8 @@ def main():
     #Prepare variables
     sensor_data     = []
     sensors         = []
+    
+    DEBOUNCE_MICROS = 1000000 * DEBOUNCE_MICROS # convert from seconds to microseconds
 
     #Prepare sensor list
     if GLOBAL_out_sensor_enable:
