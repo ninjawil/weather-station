@@ -31,13 +31,10 @@
 #===============================================================================
 # Import modules
 #===============================================================================
-import os
 import sys
 import threading
 import time
 import datetime
-import httplib
-import urllib
 import pigpio
 import DHT22
 import DS18B20
