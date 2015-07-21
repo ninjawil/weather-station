@@ -109,34 +109,6 @@ GLOBAL_LED_flash_rate       = 1  # seconds
 GLOBAL_next_call            = time.time()
 
 
-#===============================================================================
-# SETUP HARDWARE
-#===============================================================================
-def setup_hardware():
-
-    #Set up DHT22
-    global DHT22_sensor
-    global GLOBAL_in_sensor_pin
-    global GLOBAL_door_sensor_pin
-    global GLOBAL_rain_sensor_pin
-    
-    DHT22_sensor = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
-
-    #Set up rain sensor input pin
-    pi.set_mode(GLOBAL_rain_sensor_pin, pigpio.INPUT)
-    rain_gauge = pi.callback(GLOBAL_rain_sensor_pin, 
-                             pigpio.RISING_EDGE, 
-                             count_rain_ticks)
-
-    #Set up door sensor input pin
-    pi.set_mode(GLOBAL_door_sensor_pin, pigpio.INPUT)
-    
-    #Set up LED flashing thread
-    pi.set_mode(GLOBAL_LED_pin, pigpio.OUTPUT)
-    timerThread = threading.Thread(target=toggle_LED)
-    timerThread.daemon = True
-    timerThread.start()
-
 
 #===============================================================================
 # EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
@@ -231,21 +203,6 @@ def toggle_LED():
 
 
 #===============================================================================
-# EXIT ROUTINE
-#===============================================================================
-def exit_code():
-
-    global DHT22_sensor
-
-    #Set pins to OFF state
-    pi.write(GLOBAL_LED_pin, 0)
-
-    DHT22_sensor.cancel()
-
-    print('\nExiting program...')
-
-
-#===============================================================================
 # MAIN
 #===============================================================================
 def main():
@@ -310,7 +267,22 @@ def main():
 
 
     #Set up hardware
-    setup_hardware()
+    DHT22_sensor = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
+
+    #Set up rain sensor input pin
+    pi.set_mode(GLOBAL_rain_sensor_pin, pigpio.INPUT)
+    rain_gauge = pi.callback(GLOBAL_rain_sensor_pin, 
+                             pigpio.RISING_EDGE, 
+                             count_rain_ticks)
+
+    #Set up door sensor input pin
+    pi.set_mode(GLOBAL_door_sensor_pin, pigpio.INPUT)
+    
+    #Set up LED flashing thread
+    pi.set_mode(GLOBAL_LED_pin, pigpio.OUTPUT)
+    timerThread = threading.Thread(target=toggle_LED)
+    timerThread.daemon = True
+    timerThread.start()
     
     #Read thingspeak write api key from file
     if GLOBAL_thingspeak_enable_update:
@@ -400,8 +372,18 @@ def main():
             if sleep_length > 0:
                 time.sleep(sleep_length)
 
+
     except KeyboardInterrupt:
-        exit_code()
+        
+        print('\nExiting program...')
+        
+        #Set pins to OFF state
+        pi.write(GLOBAL_LED_pin, 0)
+
+        #Stop processes
+        DHT22_sensor.cancel()
+        rain_gauge.cancel()
+        
         sys.exit(0)
 
 
