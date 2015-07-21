@@ -159,7 +159,6 @@ def output_data(sensors, data):
 # DOOR SENSOR
 #===============================================================================
 def get_door_status(door_sensor_pin):
-            
     return pi.read(door_sensor_pin)
     
 
@@ -191,7 +190,6 @@ def toggle_LED():
 def main():
 
     global GLOBAL_in_sensor_ref
-    global GLOBAL_in_hum_sensor_enable
     global GLOBAL_rain_tick_count
     global GLOBAL_rain_tick_meas_time
     global GLOBAL_update_rate
@@ -203,8 +201,35 @@ def main():
     thingspeak_enable_update     = True
     GLOBAL_LED_display_time      = False
     screen_output                = False
+    
     thingspeak_write_api_key     = ''
+    
+    sensor_data                  = []
+    sensors                      = []
+    
+    GLOBAL_rain_tick_count       = 0
+    GLOBAL_rain_task_count       = 0
+    
+    #convert from seconds to microseconds
+    DEBOUNCE_MICROS = 1000000 * DEBOUNCE_MICROS 
 
+    #convert from minutes to no. of tasks
+    GLOBAL_rain_tick_meas_time = (GLOBAL_rain_tick_meas_time * 60) / GLOBAL_update_rate
+    
+    #Prepare sensor list
+    if out_sensor_enable:
+        sensors.append('outside temp')
+    if in_sensor_enable:
+        sensors.append('inside temp')
+        sensors.append('inside hum')
+    if door_sensor_enable:
+        sensors.append('door open')
+    if rain_sensor_enable:
+        sensors.append('rainfall')
+
+    #Prepare thingspeak data to match sensor number
+    sensor_data = [0 for i in sensors]
+    
     #Check and action passed arguments
     if len(sys.argv) > 1:
         if '--outsensor=OFF' in sys.argv:
@@ -264,31 +289,6 @@ def main():
     if thingspeak_enable_update:
         thingspeak_write_api_key = thingspeak.get_write_api_key(
                                             GLOBAL_thingspeak_api_key_filename)
-    
-    #convert from minutes to no. of tasks
-    GLOBAL_rain_tick_meas_time = (GLOBAL_rain_tick_meas_time * 60) / GLOBAL_update_rate
-    GLOBAL_rain_tick_count = 0
-    GLOBAL_rain_task_count = 0
-    
-    #Prepare variables
-    sensor_data     = []
-    sensors         = []
-    
-    DEBOUNCE_MICROS = 1000000 * DEBOUNCE_MICROS # convert from seconds to microseconds
-
-    #Prepare sensor list
-    if out_sensor_enable:
-        sensors.append('outside temp')
-    if in_sensor_enable:
-        sensors.append('inside temp')
-        sensors.append('inside hum')
-    if door_sensor_enable:
-        sensors.append('door open')
-    if rain_sensor_enable:
-        sensors.append('rainfall')
-
-    #Prepare thingspeak data to match sensor number
-    sensor_data = [0 for i in sensors]
 
     if thingspeak_enable_update and screen_output:
         print('Thingspeak set up:')
