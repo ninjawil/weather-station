@@ -169,11 +169,9 @@ def output_data(sensors, data):
 #===============================================================================
 # DOOR SENSOR
 #===============================================================================
-def get_door_status():
-
-    global GLOBAL_door_sensor_pin
+def get_door_status(door_sensor_pin):
             
-    return pi.read(GLOBAL_door_sensor_pin)
+    return pi.read(door_sensor_pin)
     
 
 #===============================================================================
@@ -336,7 +334,7 @@ def main():
 
             #Check door status
             if GLOBAL_door_sensor_enable:
-                sensor_data[GLOBAL_door_TS_field-1] = get_door_status()
+                sensor_data[GLOBAL_door_TS_field-1] = get_door_status(GLOBAL_door_sensor_pin)
                 
             #Get outside temperature
             if GLOBAL_out_sensor_enable:
