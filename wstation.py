@@ -196,64 +196,51 @@ def main():
     global GLOBAL_rain_tick_count
     global GLOBAL_rain_tick_meas_time
     global GLOBAL_update_rate
-    global GLOBAL_screen_output
+
+    #Set initial variable values
+    rain_sensor_enable = True
+    out_sensor_enable = True
+    in_sensor_enable = True
+    thingspeak_enable_update = True
+    GLOBAL_LED_display_time = False
+    screen_output = False
 
     #Check and action passed arguments
     if len(sys.argv) > 1:
-
         if '--outsensor=OFF' in sys.argv:
             out_sensor_enable = False
-        else:
-            out_sensor_enable = True
 
         if '--insensor=OFF' in sys.argv:
             in_sensor_enable = False
-        else:
-            in_sensor_enable = True
-            
+
         if '--rainsensor=OFF' in sys.argv:
             rain_sensor_enable = False
-        else:
-            rain_sensor_enable = True
 
         if '--thingspeak=OFF' in sys.argv:
             thingspeak_enable_update = False
-        else:
-            thingspeak_enable_update = True
 
         if '--LEDtime=ON' in sys.argv:
             GLOBAL_LED_display_time = True
-        else:
-            GLOBAL_LED_display_time = False
-            
+
         if '--display=ON' in sys.argv:
             screen_output = True
-        else:
-            screen_output = False
 
         if '--help' in sys.argv:
             print('usage: ./wstation.py {command}')
             print('')
             print('   --outsensor=OFF    ',
                   '- disables outside temperature monitoring')
-                  
             print('   --insensor=OFF     ',
                   '- disables inside temperature monitoring')
-                  
             print('   --rainsensor=OFF   ',
                   '- disables rainfall monitoring')
-                  
             print('   --thingspeak=OFF   ',
                   '- disable update to ThingSpeak')
-                  
             print('   --LEDtime=ON       ',
                   '- enables printing of LED toggle time')
-                  
             print('   --display=ON       ',
                   '- outputs data to screen')
-                  
             sys.exit(0)
-
 
     #Set up inside temp and humidity sensor
     DHT22_sensor = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
@@ -292,14 +279,11 @@ def main():
     #Prepare sensor list
     if out_sensor_enable:
         sensors.append('outside temp')
-
     if in_sensor_enable:
         sensors.append('inside temp')
         sensors.append('inside hum')
-        
     if door_sensor_enable:
         sensors.append('door open')
-        
     if rain_sensor_enable:
         sensors.append('rainfall')
 
