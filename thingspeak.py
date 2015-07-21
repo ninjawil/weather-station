@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------
 #
-# Controls weatherstation
+# Interfaces to thingspeak
 #
 # The MIT License (MIT)
 #
