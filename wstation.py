@@ -251,7 +251,7 @@ def main():
             sys.exit(0)
 
 
-    #Set up hardware
+    #Set up inside temp and humidity sensor
     DHT22_sensor = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
 
     #Set up rain sensor input pin
@@ -273,18 +273,15 @@ def main():
     if GLOBAL_thingspeak_enable_update:
         GLOBAL_thingspeak_write_api_key = thingspeak.get_write_api_key(
                                             GLOBAL_thingspeak_api_key_filename)
-
-    #Set up variables
-    inside          = {'temp':0 , 'hum':0}
     
     #convert from minutes to no. of tasks
     GLOBAL_rain_tick_meas_time = (GLOBAL_rain_tick_meas_time * 60) / GLOBAL_update_rate
     GLOBAL_rain_tick_count = 0
     GLOBAL_rain_task_count = 0
     
+    #Prepare variables
     sensor_data     = []
     sensors         = []
-
 
     #Prepare sensor list
     if GLOBAL_out_sensor_enable:
