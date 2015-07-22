@@ -100,6 +100,7 @@ GLOBAL_next_call            = time.time()
 DEBOUNCE_MICROS = 0.5 #seconds
 last_rising_edge = None
 
+
 #===============================================================================
 # EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
 #===============================================================================
@@ -116,7 +117,7 @@ def count_rain_ticks(gpio, level, tick):
     else:
         pulse = True
 
-   if pulse:
+    if pulse:
         last_rising_edge = tick  
         GLOBAL_rain_tick_count += 1
         print(GLOBAL_rain_tick_count)  
@@ -193,6 +194,9 @@ def main():
     global GLOBAL_rain_tick_count
     global GLOBAL_rain_tick_meas_time
     global GLOBAL_update_rate
+    global DEBOUNCE_MICROS
+    global GLOBAL_LED_display_time
+
 
     #Set initial variable values
     rain_sensor_enable           = True
@@ -201,6 +205,7 @@ def main():
     thingspeak_enable_update     = True
     GLOBAL_LED_display_time      = False
     screen_output                = False
+    door_sensor_enable           = True
     
     thingspeak_write_api_key     = ''
     
@@ -215,20 +220,6 @@ def main():
 
     #convert from minutes to no. of tasks
     GLOBAL_rain_tick_meas_time = (GLOBAL_rain_tick_meas_time * 60) / GLOBAL_update_rate
-    
-    #Prepare sensor list
-    if out_sensor_enable:
-        sensors.append('outside temp')
-    if in_sensor_enable:
-        sensors.append('inside temp')
-        sensors.append('inside hum')
-    if door_sensor_enable:
-        sensors.append('door open')
-    if rain_sensor_enable:
-        sensors.append('rainfall')
-
-    #Prepare thingspeak data to match sensor number
-    sensor_data = [0 for i in sensors]
     
     #Check and action passed arguments
     if len(sys.argv) > 1:
@@ -266,18 +257,27 @@ def main():
             print('   --display=ON       ',
                   '- outputs data to screen')
             sys.exit(0)
+  
+   #Prepare sensor list
+    if out_sensor_enable:
+        sensors.append('outside temp')
+    if in_sensor_enable:
+        sensors.append('inside temp')
+        sensors.append('inside hum')
+    if door_sensor_enable:
+        sensors.append('door open')
+    if rain_sensor_enable:
+        sensors.append('rainfall')
+        
+    #Prepare thingspeak data to match sensor number
+    sensor_data = [0 for i in sensors]
 
-    #Set up inside temp and humidity sensor
-    DHT22_sensor = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
-
-    #Set up rain sensor input pin
+    #Set up pin outs
     pi.set_mode(GLOBAL_rain_sensor_pin, pigpio.INPUT)
-    rain_gauge = pi.callback(GLOBAL_rain_sensor_pin, 
-                             pigpio.RISING_EDGE, 
-                             count_rain_ticks)
-
-    #Set up door sensor input pin
     pi.set_mode(GLOBAL_door_sensor_pin, pigpio.INPUT)
+    DHT22_sensor = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
+    rain_gauge = pi.callback(GLOBAL_rain_sensor_pin, pigpio.RISING_EDGE, 
+                             count_rain_ticks)
     
     #Set up LED flashing thread
     pi.set_mode(GLOBAL_LED_pin, pigpio.OUTPUT)
@@ -290,12 +290,15 @@ def main():
         thingspeak_write_api_key = thingspeak.get_write_api_key(
                                             GLOBAL_thingspeak_api_key_filename)
 
+    #Display thingspeak settings
     if thingspeak_enable_update and screen_output:
         print('Thingspeak set up:')
         print(sensors)
         print(sensor_data)
 
+    #Set next loop time
     next_reading = time.time()
+
 
     #Main code
     try:
