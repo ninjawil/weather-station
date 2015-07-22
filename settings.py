@@ -58,20 +58,27 @@ THINGSPEAK_HOST_ADDR         = 'api.thingspeak.com:80'
 THINGSPEAK_API_KEY_FILENAME  = 'thingspeak.txt'
 
 
-# --- Set up sensors ----
+# --- Set up outside DS18B20 sensor ----
 OUT_TEMP_SENSOR_REF  = '28-0414705bceff'
 OUT_TEMP_TS_FIELD    = 1
 
+
+# --- Set up inside DHT22 sensor ----
 IN_SENSOR_REF        = 'DHT22'
 IN_SENSOR_PIN        = PIN_11
 IN_TEMP_TS_FIELD     = 2
 IN_HUM_TS_FIELD      = 3
 
+
+# --- Set up door reed switch ----
 DOOR_SENSOR_PIN      = PIN_13
 DOOR_TS_FIELD        = 4
 
+
+# --- Set up rain fall reed switch ----
 RAIN_SENSOR_PIN      = PIN_15
 RAIN_TS_FIELD        = 5
+
 
 # --- Set up flashing LED ----
 LED_PIN              = PIN_12

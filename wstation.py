@@ -53,7 +53,7 @@ pi = pigpio.pi()
 #===============================================================================
 
 RAIN_TICK_MEASURE    = 1.5 #millimeters
-RAIN_TICK_MEAS_TIME  = 0.05 #minutes
+RAIN_TICK_MEAS_TIME  = 0.5 #minutes
 rain_tick_count      = 0
 rain_task_count      = 0
 
@@ -82,7 +82,8 @@ def count_rain_ticks(gpio, level, tick):
     if pulse:
         last_rising_edge = tick  
         rain_tick_count += 1
-        print(rain_tick_count)  
+        print('Rain tick count: %d' % rain_tick_count)
+        print("pulse at {}".format(tick))
   
  
 #===============================================================================
@@ -186,22 +187,16 @@ def main():
     if len(sys.argv) > 1:
         if '--outsensor=OFF' in sys.argv:
             out_sensor_enable = False
-            
         if '--insensor=OFF' in sys.argv:
             in_sensor_enable = False
-            
         if '--rainsensor=OFF' in sys.argv:
             rain_sensor_enable = False
-            
         if '--thingspeak=OFF' in sys.argv:
             thingspeak_enable_update = False
-            
         if '--LEDtime=ON' in sys.argv:
             led_display_time = True
-            
         if '--display=ON' in sys.argv:
-            screen_output = True
-            
+            screen_output = True 
         if '--help' in sys.argv:
             print('usage: ./wstation.py {command}')
             print('')
@@ -273,7 +268,7 @@ def main():
                     rain_task_count = 0
                 else:
                     rain_task_count += 1
-                    print(rain_task_count)
+                    print('%d / %d' % (rain_task_count, RAIN_TICK_MEAS_TIME))
 
             #Check door status
             if door_sensor_enable:
