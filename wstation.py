@@ -52,50 +52,50 @@ pi = pigpio.pi()
 #===============================================================================
 
 # --- Set up GPIO referencing----
-GLOBAL_BROADCOM_REF     = True
+BROADCOM_REF     = True
 
-if GLOBAL_BROADCOM_REF:
-    GLOBAL_Pin_11   = 17
-    GLOBAL_Pin_12   = 18
-    GLOBAL_Pin_13   = 27
-    GLOBAL_Pin_14   = 27
+if BROADCOM_REF:
+    PIN_11   = 17
+    PIN_12   = 18
+    PIN_13   = 27
+    PIN_14   = 27
 else:
-    GLOBAL_Pin_11   = 11
-    GLOBAL_Pin_12   = 12
-    GLOBAL_Pin_13   = 13
-    GLOBAL_Pin_14   = 14
+    PIN_11   = 11
+    PIN_12   = 12
+    PIN_13   = 13
+    PIN_14   = 14
 
 # --- System set up ---
-GLOBAL_update_rate          = 5 # seconds
-GLOBAL_w1_device_path       = '/sys/bus/w1/devices/'
+UPDATE_RATE          = 5 # seconds
+W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 
 # --- Set up thingspeak ----
-GLOBAL_thingspeak_host_addr         = 'api.thingspeak.com:80'
-GLOBAL_thingspeak_api_key_filename  = 'thingspeak.txt'
+THINGSPEAK_HOST_ADDR         = 'api.thingspeak.com:80'
+THINGSPEAK_API_KEY_FILENAME  = 'thingspeak.txt'
 
 # --- Set up sensors ----
-GLOBAL_out_temp_sensor_ref  = '28-0414705bceff'
-GLOBAL_out_temp_TS_field    = 1
+OUT_TEMP_SENSOR_REF  = '28-0414705bceff'
+OUT_TEMP_TS_FIELD    = 1
 
-GLOBAL_in_sensor_ref        = 'DHT22'
-GLOBAL_in_sensor_pin        = GLOBAL_Pin_11
-GLOBAL_in_temp_TS_field     = 2
-GLOBAL_in_hum_TS_field      = 3
+IN_SENSOR_REF        = 'DHT22'
+IN_SENSOR_PIN        = PIN_11
+IN_TEMP_TS_FIELD     = 2
+IN_HUM_TS_FIELD      = 3
 
-GLOBAL_door_sensor_pin      = GLOBAL_Pin_14
-GLOBAL_door_TS_field        = 4
+DOOR_SENSOR_PIN      = PIN_14
+DOOR_TS_FIELD        = 4
 
-GLOBAL_rain_sensor_pin      = GLOBAL_Pin_13
-GLOBAL_rain_TS_field        = 5
-GLOBAL_rain_tick_measure    = 1.5 #millimeters
-GLOBAL_rain_tick_meas_time  = 0.5 #minutes
-GLOBAL_rain_tick_count      = 0
-GLOBAL_rain_task_count      = 0
+RAIN_SENSOR_PIN      = PIN_13
+RAIN_TS_FIELD        = 5
+RAIN_TICK_MEASURE    = 1.5 #millimeters
+RAIN_TICK_MEAS_TIME  = 0.5 #minutes
+rain_tick_count      = 0
+rain_task_count      = 0
 
 # --- Set up flashing LED ----
-GLOBAL_LED_pin              = GLOBAL_Pin_12
-GLOBAL_LED_flash_rate       = 1  # seconds
-GLOBAL_next_call            = time.time()
+LED_PIN              = PIN_12
+LED_FLASH_RATE       = 1  # seconds
+led_thread_next_call     = time.time()
 
 DEBOUNCE_MICROS = 0.5 #seconds
 last_rising_edge = None
@@ -106,7 +106,7 @@ last_rising_edge = None
 #===============================================================================
 def count_rain_ticks(gpio, level, tick):
     
-    global GLOBAL_rain_tick_count
+    global rain_tick_count
     global last_rising_edge
     
     pulse = False
@@ -119,8 +119,8 @@ def count_rain_ticks(gpio, level, tick):
 
     if pulse:
         last_rising_edge = tick  
-        GLOBAL_rain_tick_count += 1
-        print(GLOBAL_rain_tick_count)  
+        rain_tick_count += 1
+        print(rain_tick_count)  
   
  
 #===============================================================================
@@ -168,21 +168,21 @@ def get_door_status(door_sensor_pin):
 #===============================================================================
 def toggle_LED():
 
-    global GLOBAL_next_call
-    global GLOBAL_LED_display_time
+    global led_thread_next_call
+    global led_display_time
 
-    if GLOBAL_LED_display_time:
+    if led_display_time:
         print(datetime.datetime.now())
 
     #Prepare next thread time
-    GLOBAL_next_call = GLOBAL_next_call + GLOBAL_LED_flash_rate
-    threading.Timer( GLOBAL_next_call - time.time(), toggle_LED ).start()
+    led_thread_next_call = led_thread_next_call + LED_FLASH_RATE
+    threading.Timer( led_thread_next_call - time.time(), toggle_LED ).start()
 
     #Toggle LED
-    if pi.read(GLOBAL_LED_pin) == 0:
-        pi.write(GLOBAL_LED_pin, 1)
+    if pi.read(LED_PIN) == 0:
+        pi.write(LED_PIN, 1)
     else:
-        pi.write(GLOBAL_LED_pin, 0)
+        pi.write(LED_PIN, 0)
 
 
 #===============================================================================
@@ -190,12 +190,13 @@ def toggle_LED():
 #===============================================================================
 def main():
 
-    global GLOBAL_in_sensor_ref
-    global GLOBAL_rain_tick_count
-    global GLOBAL_rain_tick_meas_time
-    global GLOBAL_update_rate
+    global IN_SENSOR_REF
+    global RAIN_TICK_MEAS_TIME
+    global UPDATE_RATE
     global DEBOUNCE_MICROS
-    global GLOBAL_LED_display_time
+    
+    global led_display_time
+    global rain_tick_count
 
 
     #Set initial variable values
@@ -203,7 +204,7 @@ def main():
     out_sensor_enable            = True
     in_sensor_enable             = True
     thingspeak_enable_update     = True
-    GLOBAL_LED_display_time      = False
+    led_display_time             = False
     screen_output                = False
     door_sensor_enable           = True
     
@@ -212,14 +213,14 @@ def main():
     sensor_data                  = []
     sensors                      = []
     
-    GLOBAL_rain_tick_count       = 0
-    GLOBAL_rain_task_count       = 0
+    rain_tick_count       = 0
+    rain_task_count       = 0
     
     #convert from seconds to microseconds
     DEBOUNCE_MICROS = 1000000 * DEBOUNCE_MICROS 
 
     #convert from minutes to no. of tasks
-    GLOBAL_rain_tick_meas_time = (GLOBAL_rain_tick_meas_time * 60) / GLOBAL_update_rate
+    RAIN_TICK_MEAS_TIME = (RAIN_TICK_MEAS_TIME * 60) / UPDATE_RATE
     
     #Check and action passed arguments
     if len(sys.argv) > 1:
@@ -236,7 +237,7 @@ def main():
             thingspeak_enable_update = False
             
         if '--LEDtime=ON' in sys.argv:
-            GLOBAL_LED_display_time = True
+            led_display_time = True
             
         if '--display=ON' in sys.argv:
             screen_output = True
@@ -273,14 +274,14 @@ def main():
     sensor_data = [0 for i in sensors]
 
     #Set up pin outs
-    pi.set_mode(GLOBAL_rain_sensor_pin, pigpio.INPUT)
-    pi.set_mode(GLOBAL_door_sensor_pin, pigpio.INPUT)
-    DHT22_sensor = DHT22.sensor(pi, GLOBAL_in_sensor_pin)
-    rain_gauge = pi.callback(GLOBAL_rain_sensor_pin, pigpio.RISING_EDGE, 
+    pi.set_mode(RAIN_SENSOR_PIN, pigpio.INPUT)
+    pi.set_mode(DOOR_SENSOR_PIN, pigpio.INPUT)
+    DHT22_sensor = DHT22.sensor(pi, IN_SENSOR_PIN)
+    rain_gauge = pi.callback(RAIN_SENSOR_PIN, pigpio.RISING_EDGE, 
                              count_rain_ticks)
     
     #Set up LED flashing thread
-    pi.set_mode(GLOBAL_LED_pin, pigpio.OUTPUT)
+    pi.set_mode(LED_PIN, pigpio.OUTPUT)
     timerThread = threading.Thread(target=toggle_LED)
     timerThread.daemon = True
     timerThread.start()
@@ -288,7 +289,7 @@ def main():
     #Read thingspeak write api key from file
     if thingspeak_enable_update:
         thingspeak_write_api_key = thingspeak.get_write_api_key(
-                                            GLOBAL_thingspeak_api_key_filename)
+                                            THINGSPEAK_API_KEY_FILENAME)
 
     #Display thingspeak settings
     if thingspeak_enable_update and screen_output:
@@ -306,30 +307,30 @@ def main():
             
             #Get rain fall measurement
             if out_sensor_enable:
-                if GLOBAL_rain_task_count == GLOBAL_rain_tick_meas_time:
-                    sensor_data[GLOBAL_rain_TS_field-1] = GLOBAL_rain_tick_count * GLOBAL_rain_tick_measure
-                    GLOBAL_rain_tick_count = 0
-                    GLOBAL_rain_task_count = 0
+                if rain_task_count == RAIN_TICK_MEAS_TIME:
+                    sensor_data[RAIN_TS_FIELD-1] = rain_tick_count * RAIN_TICK_MEASURE
+                    rain_tick_count = 0
+                    rain_task_count = 0
                 else:
-                    GLOBAL_rain_task_count += 1
-                    print(GLOBAL_rain_task_count)
+                    rain_task_count += 1
+                    print(rain_task_count)
 
             #Check door status
             if door_sensor_enable:
-                sensor_data[GLOBAL_door_TS_field-1] = get_door_status(GLOBAL_door_sensor_pin)
+                sensor_data[DOOR_TS_FIELD-1] = get_door_status(DOOR_SENSOR_PIN)
                 
             #Get outside temperature
             if out_sensor_enable:
-                sensor_data[GLOBAL_out_temp_TS_field-1] = DS18B20.get_temp(
-                                                            GLOBAL_w1_device_path, 
-                                                            GLOBAL_out_temp_sensor_ref)
+                sensor_data[OUT_TEMP_TS_FIELD-1] = DS18B20.get_temp(
+                                                            W1_DEVICE_PATH, 
+                                                            OUT_TEMP_SENSOR_REF)
                 
             #Get inside temperature and humidity
             if in_sensor_enable:
                 DHT22_sensor.trigger()
                 time.sleep(0.2)  #Do not over poll DHT22
-                sensor_data[GLOBAL_in_temp_TS_field-1] = DHT22_sensor.temperature()
-                sensor_data[GLOBAL_in_hum_TS_field-1] = DHT22_sensor.humidity()
+                sensor_data[IN_TEMP_TS_FIELD-1] = DHT22_sensor.temperature()
+                sensor_data[IN_HUM_TS_FIELD-1] = DHT22_sensor.humidity()
 
             #Display data on screen
             if screen_output:
@@ -337,12 +338,12 @@ def main():
 
             #Send data to thingspeak
             if thingspeak_enable_update:
-                thingspeak.update_channel(GLOBAL_thingspeak_host_addr, 
+                thingspeak.update_channel(THINGSPEAK_HOST_ADDR, 
                                           thingspeak_write_api_key, 
                                           sensor_data, screen_output)
 
             #Delay to give update rate
-            next_reading += GLOBAL_update_rate
+            next_reading += UPDATE_RATE
             sleep_length = next_reading - time.time()
             #print(sleep_length)
             if sleep_length > 0:
@@ -354,7 +355,7 @@ def main():
         print('\nExiting program...')
         
         #Set pins to OFF state
-        pi.write(GLOBAL_LED_pin, 0)
+        pi.write(LED_PIN, 0)
 
         #Stop processes
         DHT22_sensor.cancel()
