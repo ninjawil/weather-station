@@ -161,7 +161,7 @@ def main():
     out_sensor_enable            = True
     in_sensor_enable             = True
     thingspeak_enable_update     = True
-    screen_output                = False
+    screen_output                = True
     door_sensor_enable           = True
     
     thingspeak_write_api_key     = ''
@@ -188,8 +188,8 @@ def main():
             rain_sensor_enable = False
         if '--thingspeak=OFF' in sys.argv:
             thingspeak_enable_update = False
-        if '--display=ON' in sys.argv:
-            screen_output = True 
+        if '--quiet' in sys.argv:
+            screen_output = False 
         if '--help' in sys.argv:
             print('usage: ./wstation.py {command}')
             print('')
@@ -201,7 +201,7 @@ def main():
                   '- disables rainfall monitoring')
             print('   --thingspeak=OFF   ',
                   '- disable update to ThingSpeak')
-            print('   --display=ON       ',
+            print('   --quiet            ',
                   '- outputs data to screen')
             sys.exit(0)
   
