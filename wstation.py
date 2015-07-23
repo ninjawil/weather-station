@@ -132,10 +132,6 @@ def get_door_status(sensor_pin):
 def toggle_LED():
 
     global led_thread_next_call
-    global led_display_time
-
-    if led_display_time:
-        print(datetime.datetime.now())
 
     #Prepare next thread time
     led_thread_next_call = led_thread_next_call + settings.LED_FLASH_RATE
@@ -165,7 +161,6 @@ def main():
     out_sensor_enable            = True
     in_sensor_enable             = True
     thingspeak_enable_update     = True
-    led_display_time             = False
     screen_output                = False
     door_sensor_enable           = True
     
@@ -193,8 +188,6 @@ def main():
             rain_sensor_enable = False
         if '--thingspeak=OFF' in sys.argv:
             thingspeak_enable_update = False
-        if '--LEDtime=ON' in sys.argv:
-            led_display_time = True
         if '--display=ON' in sys.argv:
             screen_output = True 
         if '--help' in sys.argv:
@@ -208,8 +201,6 @@ def main():
                   '- disables rainfall monitoring')
             print('   --thingspeak=OFF   ',
                   '- disable update to ThingSpeak')
-            print('   --LEDtime=ON       ',
-                  '- enables printing of LED toggle time')
             print('   --display=ON       ',
                   '- outputs data to screen')
             sys.exit(0)
@@ -301,7 +292,6 @@ def main():
             #Delay to give update rate
             next_reading += settings.UPDATE_RATE
             sleep_length = next_reading - time.time()
-            #print(sleep_length)
             if sleep_length > 0:
                 time.sleep(sleep_length)
 
