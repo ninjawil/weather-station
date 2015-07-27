@@ -53,7 +53,7 @@ pi = pigpio.pi()
 #===============================================================================
 
 RAIN_TICK_MEASURE    = 1.5 #millimeters
-RAIN_TICK_MEAS_TIME  = 0.5 #minutes
+RAIN_TICK_MEAS_TIME  = 10 #minutes
 rain_tick_count      = 0
 rain_task_count      = 0
 
@@ -171,12 +171,11 @@ def main():
     
     rain_tick_count       = 0
     rain_task_count       = 0
+    rain_task_count_max   = (RAIN_TICK_MEAS_TIME * 60) / settings.UPDATE_RATE
     
     #convert from seconds to microseconds
     DEBOUNCE_MICROS = 1000000 * DEBOUNCE_MICROS 
 
-    #convert from minutes to no. of tasks
-    RAIN_TICK_MEAS_TIME = (RAIN_TICK_MEAS_TIME * 60) / settings.UPDATE_RATE
     
     #Check and action passed arguments
     if len(sys.argv) > 1:
@@ -222,12 +221,12 @@ def main():
     #Set up pin outs
     pi.set_mode(settings.RAIN_SENSOR_PIN, pigpio.INPUT)
     pi.set_mode(settings.DOOR_SENSOR_PIN, pigpio.INPUT)
+    pi.set_mode(settings.LED_PIN, pigpio.OUTPUT)
     DHT22_sensor = DHT22.sensor(pi, settings.IN_SENSOR_PIN)
     rain_gauge = pi.callback(settings.RAIN_SENSOR_PIN, pigpio.RISING_EDGE, 
                              count_rain_ticks)
     
     #Set up LED flashing thread
-    pi.set_mode(settings.LED_PIN, pigpio.OUTPUT)
     timerThread = threading.Thread(target=toggle_LED)
     timerThread.daemon = True
     timerThread.start()
@@ -253,7 +252,7 @@ def main():
             
             #Get rain fall measurement
             if out_sensor_enable:
-                if rain_task_count == RAIN_TICK_MEAS_TIME:
+                if rain_task_count == rain_task_count_max:
                     sensor_data[settings.RAIN_TS_FIELD-1] = rain_tick_count * RAIN_TICK_MEASURE
                     rain_tick_count = 0
                     rain_task_count = 0
