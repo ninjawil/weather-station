@@ -240,9 +240,10 @@ def main():
     ledThread.start()
     
     #Set up rain acc reset thread and reset precip accumulated variable
-    rainThread = threading.Thread(target=reset_rain_acc)
-    rainThread.daemon = True
-    rainThread.start()
+    if rain_sensor_enable:
+        rainThread = threading.Thread(target=reset_rain_acc)
+        rainThread.daemon = True
+        rainThread.start()
     
     #Read thingspeak write api key from file
     if thingspeak_enable_update:
