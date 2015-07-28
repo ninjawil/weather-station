@@ -123,6 +123,8 @@ def output_data(sensors, data):
                 unit = u'\u00b0C'
             elif 'hum' in i:
                 unit = '%'
+            elif 'precip' in i:
+                unit = 'mm'
             else:
                 unit = ''
 
