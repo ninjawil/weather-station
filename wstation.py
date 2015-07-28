@@ -51,15 +51,8 @@ pi = pigpio.pi()
 #===============================================================================
 # GLOBAL VARIABLES
 #===============================================================================
-
-RAIN_TICK_MEASURE    = 1.5 #millimeters
-RAIN_TICK_MEAS_TIME  = 10 #minutes
-rain_tick_count      = 0
-rain_task_count      = 0
-
 led_thread_next_call     = time.time()
-
-DEBOUNCE_MICROS = 0.5 #seconds
+rain_thread_next_call    = time.time()
 last_rising_edge = None
 
 
@@ -68,23 +61,44 @@ last_rising_edge = None
 #===============================================================================
 def count_rain_ticks(gpio, level, tick):
     
-    global rain_tick_count
+    global precip_tick_count
     global last_rising_edge
     
     pulse = False
     
     if last_rising_edge is not None:
-        if pigpio.tickDiff(last_rising_edge, tick) > DEBOUNCE_MICROS:
+        #check tick in microseconds
+        if pigpio.tickDiff(last_rising_edge, tick) > settings.DEBOUNCE_MICROS * 1000000:
             pulse = True
     else:
         pulse = True
 
     if pulse:
         last_rising_edge = tick  
-        rain_tick_count += 1
-        print('Rain tick count: %d' % rain_tick_count)
-        print("pulse at {}".format(tick))
+        precip_tick_count += 1
+        print('Rain tick count: %d' % precip_tick_count)
+ 
   
+#===============================================================================
+# RESET PRECIPITATION ACCUMULATED VARIABLE
+#===============================================================================
+def reset_rain_acc():
+
+    global rain_thread_next_call
+    global precip_accu
+    
+    #Prepare next thread time
+    now = datetime.datetime.now()
+    reset_time = now.replace(hour=settings.PRECIP_ACC_RESET_TIME[0], 
+                                minute=settings.PRECIP_ACC_RESET_TIME[1], 
+                                second=settings.PRECIP_ACC_RESET_TIME[2], 
+                                microsecond=settings.PRECIP_ACC_RESET_TIME[3])
+    rain_thread_next_call = rain_thread_next_call + (reset_time - now).total_seconds()
+    threading.Timer(rain_thread_next_call-time.time(), reset_rain_acc).start()
+
+    #reset precipitation accummulated
+    precip_accu = 0
+   
  
 #===============================================================================
 # OUTPUT DATA TO SCREEN
@@ -124,7 +138,7 @@ def output_data(sensors, data):
 #===============================================================================
 def get_door_status(sensor_pin):
     return pi.read(sensor_pin)
-    
+
 
 #===============================================================================
 # TOGGLE LED
@@ -135,7 +149,7 @@ def toggle_LED():
 
     #Prepare next thread time
     led_thread_next_call = led_thread_next_call + settings.LED_FLASH_RATE
-    threading.Timer( led_thread_next_call - time.time(), toggle_LED ).start()
+    threading.Timer(led_thread_next_call-time.time(), toggle_LED).start()
 
     #Toggle LED
     if pi.read(settings.LED_PIN) == 0:
@@ -149,12 +163,8 @@ def toggle_LED():
 #===============================================================================
 def main():
 
-    global RAIN_TICK_MEAS_TIME
-    global DEBOUNCE_MICROS
-    
-    global led_display_time
-    global rain_tick_count
-
+    global precip_tick_count
+    global precip_accu
 
     #Set initial variable values
     rain_sensor_enable           = True
@@ -169,14 +179,9 @@ def main():
     sensor_data                  = []
     sensors                      = []
     
-    rain_tick_count       = 0
-    rain_task_count       = 0
-    rain_task_count_max   = (RAIN_TICK_MEAS_TIME * 60) / settings.UPDATE_RATE
-    
-    #convert from seconds to microseconds
-    DEBOUNCE_MICROS = 1000000 * DEBOUNCE_MICROS 
+    precip_tick_count = 0
+    precip_accu       = 0
 
-    
     #Check and action passed arguments
     if len(sys.argv) > 1:
         if '--outsensor=OFF' in sys.argv:
@@ -219,17 +224,22 @@ def main():
     sensor_data = [0 for i in sensors]
 
     #Set up pin outs
-    pi.set_mode(settings.RAIN_SENSOR_PIN, pigpio.INPUT)
+    pi.set_mode(settings.PRECIP_SENSOR_PIN, pigpio.INPUT)
     pi.set_mode(settings.DOOR_SENSOR_PIN, pigpio.INPUT)
     pi.set_mode(settings.LED_PIN, pigpio.OUTPUT)
     DHT22_sensor = DHT22.sensor(pi, settings.IN_SENSOR_PIN)
-    rain_gauge = pi.callback(settings.RAIN_SENSOR_PIN, pigpio.RISING_EDGE, 
+    rain_gauge = pi.callback(settings.PRECIP_SENSOR_PIN, pigpio.RISING_EDGE, 
                              count_rain_ticks)
     
     #Set up LED flashing thread
-    timerThread = threading.Thread(target=toggle_LED)
-    timerThread.daemon = True
-    timerThread.start()
+    ledThread = threading.Thread(target=toggle_LED)
+    ledThread.daemon = True
+    ledThread.start()
+    
+    #Set up rain acc reset thread and reset precip accumulated variable
+    rainThread = threading.Thread(target=reset_rain_acc)
+    rainThread.daemon = True
+    rainThread.start()
     
     #Read thingspeak write api key from file
     if thingspeak_enable_update:
@@ -251,14 +261,11 @@ def main():
         while True:
             
             #Get rain fall measurement
-            if out_sensor_enable:
-                if rain_task_count == rain_task_count_max:
-                    sensor_data[settings.RAIN_TS_FIELD-1] = rain_tick_count * RAIN_TICK_MEASURE
-                    rain_tick_count = 0
-                    rain_task_count = 0
-                else:
-                    rain_task_count += 1
-                    print('%d / %d' % (rain_task_count, RAIN_TICK_MEAS_TIME))
+            if rain_sensor_enable:
+                sensor_data[settings.PRECIP_RATE_TS_FIELD-1] = precip_tick_count * settings.PRECIP_TICK_MEASURE
+                precip_accu += sensor_data[settings.PRECIP_RATE_TS_FIELD-1]
+                sensor_data[settings.PRECIP_ACCU_TS_FIELD-1] = precip_accu
+                precip_tick_count = 0
 
             #Check door status
             if door_sensor_enable:
