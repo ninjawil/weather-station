@@ -49,8 +49,9 @@ else:
 
 
 # --- System set up ---
-UPDATE_RATE          = 5 # seconds
+UPDATE_RATE          = 5*60 # seconds
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
+DEBOUNCE_MICROS      = 0.5 #seconds
 
 
 # --- Set up thingspeak ----
@@ -76,8 +77,11 @@ DOOR_TS_FIELD        = 4
 
 
 # --- Set up rain fall reed switch ----
-RAIN_SENSOR_PIN      = PIN_15
-RAIN_TS_FIELD        = 5
+PRECIP_SENSOR_PIN     = PIN_15
+PRECIP_RATE_TS_FIELD  = 5
+PRECIP_ACCU_TS_FIELD  = 6
+PRECIP_TICK_MEASURE   = 1.5 #millimeters
+PRECIP_ACC_RESET_TIME = [23,59,0,0] #hour, minute, second, microsecond
 
 
 # --- Set up flashing LED ----
