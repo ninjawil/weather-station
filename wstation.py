@@ -218,7 +218,8 @@ def main():
     if door_sensor_enable:
         sensors.append('door open')
     if rain_sensor_enable:
-        sensors.append('rainfall')
+        sensors.append('precip rate')
+        sensors.append('precip accu')
         
     #Prepare thingspeak data to match sensor number
     sensor_data = [0 for i in sensors]
