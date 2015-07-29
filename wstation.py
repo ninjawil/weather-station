@@ -78,7 +78,24 @@ def count_rain_ticks(gpio, level, tick):
         precip_tick_count += 1
         print('Rain tick count: %d' % precip_tick_count)
  
-  
+ 
+#===============================================================================
+# PREPARE RESET TIME
+#===============================================================================
+def prepare_reset_time(days_to_add):
+    
+    now = datetime.datetime.now()
+    reset_time = now.replace(hour=settings.PRECIP_ACC_RESET_TIME[0], 
+                                minute=settings.PRECIP_ACC_RESET_TIME[1], 
+                                second=settings.PRECIP_ACC_RESET_TIME[2], 
+                                microsecond=settings.PRECIP_ACC_RESET_TIME[3])
+    reset_time += datetime.timedelta(days=days_to_add)
+    
+    print('==> Next precip. acc. reset at '+str(reset_time))
+    
+    return (reset_time - now).total_seconds()
+    
+
 #===============================================================================
 # RESET PRECIPITATION ACCUMULATED VARIABLE
 #===============================================================================
@@ -87,13 +104,11 @@ def reset_rain_acc():
     global rain_thread_next_call
     global precip_accu
     
+    print('')
+    print('==> Accumulated Precipitation = 0.0mm')
+    
     #Prepare next thread time
-    now = datetime.datetime.now()
-    reset_time = now.replace(hour=settings.PRECIP_ACC_RESET_TIME[0], 
-                                minute=settings.PRECIP_ACC_RESET_TIME[1], 
-                                second=settings.PRECIP_ACC_RESET_TIME[2], 
-                                microsecond=settings.PRECIP_ACC_RESET_TIME[3])
-    rain_thread_next_call = rain_thread_next_call + (reset_time - now).total_seconds()
+    rain_thread_next_call += prepare_reset_time(1)
     threading.Timer(rain_thread_next_call-time.time(), reset_rain_acc).start()
 
     #reset precipitation accummulated
@@ -107,11 +122,6 @@ def output_data(sensors, data):
 
     #Check passed data is correct
     if len(sensors) <= len(data):
-
-        print('')
-
-        #Print date and time
-        print(datetime.datetime.now())
 
         field = 0
 
@@ -167,6 +177,7 @@ def main():
 
     global precip_tick_count
     global precip_accu
+    global rain_thread_next_call
 
     #Set initial variable values
     rain_sensor_enable           = True
@@ -241,7 +252,8 @@ def main():
     
     #Set up rain acc reset thread and reset precip accumulated variable
     if rain_sensor_enable:
-        rainThread = threading.Thread(target=reset_rain_acc)
+        rain_thread_next_call += prepare_reset_time(0)
+        rainThread = threading.Timer(rain_thread_next_call-time.time(), reset_rain_acc)
         rainThread.daemon = True
         rainThread.start()
     
@@ -264,6 +276,11 @@ def main():
     try:
         while True:
             
+            #Print loop start time
+            if screen_output:
+                print('')
+                print(datetime.datetime.now())
+
             #Get rain fall measurement
             if rain_sensor_enable:
                 sensor_data[settings.PRECIP_RATE_TS_FIELD-1] = precip_tick_count * settings.PRECIP_TICK_MEASURE
