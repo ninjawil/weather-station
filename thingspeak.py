@@ -41,8 +41,7 @@ class ThingspeakAcc():
     
     def __init__(self, acc_host_addr, key_file):
         self.host_addr = acc_host_addr
-        self.key_filename = key_file
-        self.api_key = get_write_api_key(self.key_filename)
+        self.api_key = get_write_api_key(key_file)
         
         
     #===================================================================
