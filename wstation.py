@@ -260,8 +260,7 @@ def main():
     #Set up thingpseak
     if thingspeak_enable_update:
         thingspeak_acc = thingspeak.ThingspeakAcc(settings.THINGSPEAK_HOST_ADDR, 
-                                                    settings.THINGSPEAK_API_KEY_FILENAME,
-                                                    screen_output)
+                                                    settings.THINGSPEAK_API_KEY_FILENAME)
 
     #Display thingspeak settings
     if thingspeak_enable_update and screen_output:
@@ -306,14 +305,16 @@ def main():
                 time.sleep(0.2)  #Do not over poll DHT22
                 sensor_data[settings.IN_TEMP_TS_FIELD-1] = DHT22_sensor.temperature()
                 sensor_data[settings.IN_HUM_TS_FIELD-1] = DHT22_sensor.humidity()
+   
+            #Send data to thingspeak
+            if thingspeak_enable_update:
+                response = thingspeak_acc.update_channel(sensor_data)
 
             #Display data on screen
             if screen_output:
                 output_data(sensors, sensor_data)
-
-            #Send data to thingspeak
-            if thingspeak_enable_update:
-                thingspeak_acc.update_channel(sensor_data)
+                print('Data sent to thingspeak: '+ response.reason 
+                        + '\t status: ' + str(response.status))
 
             #Delay to give update rate
             next_reading += settings.UPDATE_RATE
