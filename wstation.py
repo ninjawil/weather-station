@@ -257,10 +257,11 @@ def main():
         rainThread.daemon = True
         rainThread.start()
     
-    #Read thingspeak write api key from file
+    #Set up thingpseak
     if thingspeak_enable_update:
-        thingspeak_write_api_key = thingspeak.get_write_api_key(
-                                            settings.THINGSPEAK_API_KEY_FILENAME)
+        thingspeak_acc = thingspeak.ThingspeakAcc(settings.THINGSPEAK_HOST_ADDR, 
+                                                    settings.THINGSPEAK_API_KEY_FILENAME,
+                                                    screen_output)
 
     #Display thingspeak settings
     if thingspeak_enable_update and screen_output:
@@ -312,9 +313,7 @@ def main():
 
             #Send data to thingspeak
             if thingspeak_enable_update:
-                thingspeak.update_channel(settings.THINGSPEAK_HOST_ADDR, 
-                                          thingspeak_write_api_key, 
-                                          sensor_data, screen_output)
+                thingspeak_acc.update_channel(sensor_data)
 
             #Delay to give update rate
             next_reading += settings.UPDATE_RATE
