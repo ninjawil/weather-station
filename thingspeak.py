@@ -35,60 +35,73 @@ import httplib
 import urllib
 
 
-#=======================================================================
-# UPDATE THINGSPEAK CHANNEL
-#=======================================================================
-def update_channel(host_addr, channel, field_data, screen_output):
-
-    #Create POST data
-    data_to_send = {}
-    data_to_send['key'] = channel
-    for i in range(0, len(field_data)):
-        data_to_send['field'+str(i+1)] = field_data[i]
-
-    params = urllib.urlencode(data_to_send)
-    headers = {'Content-type': 'application/x-www-form-urlencoded',
-               'Accept': 'text/plain'}
-
-    conn = httplib.HTTPConnection(host_addr)
-    conn.request('POST', '/update', params, headers)
-    response = conn.getresponse()
+class ThingspeakAcc():
     
-    if screen_output == True:
-        print('Data sent to thingspeak: ' 
-              + response.reason + '\t status: ' + str(response.status))
+    '''Sets up thingspeak accounts'''
     
-    data = response.read()
-    conn.close()
-
-#===============================================================================
-# LOAD THINGSPEAK API KEY
-#===============================================================================
-def get_write_api_key(filename):
-
-    error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
-    
-    try:
-        f = open(filename, 'r')
+    def __init__(self, acc_host_addr, key_file, screen_print):
+        self.host_addr = acc_host_addr
+        self.screen_output = screen_print
+        self.key_filename = key_file
+        self.api_key = get_write_api_key(self.key_filename)
         
-    except error_to_catch:
-    
-        print('No thingspeak write api key found.')
-    
-        entry_incorrect = True
-        while entry_incorrect:
-            api_key = raw_input('Please enter the write key: ')
-            answer = raw_input('Is this correct? Y/N >')
-            if answer in ('y', 'Y'):
-                entry_incorrect = False
-    
-        with open(filename, 'w') as f:
-            f.write(api_key)
+        
+    #===================================================================
+    # UPDATE THINGSPEAK CHANNEL
+    #===================================================================
+    def update_channel(field_data):
+        
+        #Create POST data
+        data_to_send = {}
+        data_to_send['key'] = self.api_key
+        
+        for i in range(0, len(field_data)):
+            ata_to_send['field'+str(i+1)] = field_data[i]
+            
+        params = urllib.urlencode(data_to_send)
+        headers = {'Content-type': 'application/x-www-form-urlencoded',
+                    'Accept': 'text/plain'}
+                    
+        conn = httplib.HTTPConnection(self.host_addr)
+        conn.request('POST', '/update', params, headers)
+        response = conn.getresponse()
+        
+        if self.screen_output == True:
+            print('Data sent to thingspeak: ' 
+                    + response.reason + '\t status: ' + str(response.status))
+                    
+        data = response.read()
+        conn.close()
 
-    else:
-        api_key = f.read()
-        print('Thingspeak api key loaded: ' + api_key)
+
+    #===========================================================================
+    # LOAD THINGSPEAK API KEY
+    #===========================================================================
+    def get_write_api_key(filename):
     
-    f.close()
+        error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
+        
+        try:
+            f = open(filename, 'r')
+            
+        except error_to_catch:
+        
+            print('No thingspeak write api key found.')
+        
+            entry_incorrect = True
+            while entry_incorrect:
+                key = raw_input('Please enter the write key: ')
+                answer = raw_input('Is this correct? Y/N >')
+                if answer in ('y', 'Y'):
+                    entry_incorrect = False
+        
+            with open(filename, 'w') as f:
+                f.write(key)
     
-    return api_key
+        else:
+            key = f.read()
+            print('Thingspeak api key loaded: ' + key)
+        
+        f.close()
+        
+        return key
