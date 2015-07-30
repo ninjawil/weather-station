@@ -39,9 +39,8 @@ class ThingspeakAcc():
     
     '''Sets up thingspeak accounts'''
     
-    def __init__(self, acc_host_addr, key_file, screen_print):
+    def __init__(self, acc_host_addr, key_file):
         self.host_addr = acc_host_addr
-        self.screen_output = screen_print
         self.key_filename = key_file
         self.api_key = get_write_api_key(self.key_filename)
         
@@ -65,13 +64,11 @@ class ThingspeakAcc():
         conn = httplib.HTTPConnection(self.host_addr)
         conn.request('POST', '/update', params, headers)
         response = conn.getresponse()
-        
-        if self.screen_output == True:
-            print('Data sent to thingspeak: ' 
-                    + response.reason + '\t status: ' + str(response.status))
-                    
+
         data = response.read()
         conn.close()
+        
+        return response
 
 
     #===========================================================================
@@ -83,21 +80,16 @@ class ThingspeakAcc():
         
         try:
             f = open(filename, 'r')
-            
         except error_to_catch:
-        
             print('No thingspeak write api key found.')
-        
             entry_incorrect = True
             while entry_incorrect:
                 key = raw_input('Please enter the write key: ')
                 answer = raw_input('Is this correct? Y/N >')
                 if answer in ('y', 'Y'):
                     entry_incorrect = False
-        
             with open(filename, 'w') as f:
                 f.write(key)
-    
         else:
             key = f.read()
             print('Thingspeak api key loaded: ' + key)
