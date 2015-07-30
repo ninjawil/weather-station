@@ -157,11 +157,7 @@ def toggle_LED():
     threading.Timer(led_thread_next_call-time.time(), toggle_LED).start()
 
     #Toggle LED
-    if pi.read(settings.LED_PIN) == 0:
-        pi.write(settings.LED_PIN, 1)
-    else:
-        pi.write(settings.LED_PIN, 0)
-
+    pi.write(settings.LED_PIN, not(pi.read(settings.LED_PIN)))
 
 #===============================================================================
 # MAIN
