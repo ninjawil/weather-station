@@ -70,12 +70,14 @@ def count_rain_ticks(gpio, level, tick):
         #check tick in microseconds
         if pigpio.tickDiff(last_rising_edge, tick) > settings.DEBOUNCE_MICROS * 1000000:
             pulse = True
+
     else:
         pulse = True
 
     if pulse:
         last_rising_edge = tick  
         precip_tick_count += 1
+        
         print('Rain tick count: %d' % precip_tick_count)
  
  
@@ -231,7 +233,7 @@ def main():
     pi.set_mode(settings.DOOR_SENSOR_PIN, pigpio.INPUT)
     pi.set_mode(settings.LED_PIN, pigpio.OUTPUT)
     DHT22_sensor = DHT22.sensor(pi, settings.IN_SENSOR_PIN)
-    rain_gauge = pi.callback(settings.PRECIP_SENSOR_PIN, pigpio.RISING_EDGE, 
+    rain_gauge = pi.callback(settings.PRECIP_SENSOR_PIN, pigpio.FALLING_EDGE, 
                              count_rain_ticks)
     
     #Set up LED flashing thread
