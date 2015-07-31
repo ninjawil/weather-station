@@ -41,20 +41,20 @@ class ThingspeakAcc():
     
     def __init__(self, acc_host_addr, key_file):
         self.host_addr = acc_host_addr
-        self.api_key = get_write_api_key(key_file)
+        self.api_key = self.get_write_api_key(key_file)
         
         
     #===================================================================
     # UPDATE THINGSPEAK CHANNEL
     #===================================================================
-    def update_channel(field_data):
+    def update_channel(self, field_data):
         
         #Create POST data
         data_to_send = {}
         data_to_send['key'] = self.api_key
         
         for i in range(0, len(field_data)):
-            ata_to_send['field'+str(i+1)] = field_data[i]
+            data_to_send['field'+str(i+1)] = field_data[i]
             
         params = urllib.urlencode(data_to_send)
         headers = {'Content-type': 'application/x-www-form-urlencoded',
@@ -73,7 +73,7 @@ class ThingspeakAcc():
     #===========================================================================
     # LOAD THINGSPEAK API KEY
     #===========================================================================
-    def get_write_api_key(filename):
+    def get_write_api_key(self, filename):
     
         error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
         

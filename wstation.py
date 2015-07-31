@@ -259,7 +259,7 @@ def main():
     
     #Set up thingpseak
     if thingspeak_enable_update:
-        thingspeak_acc = thingspeak.ThingspeakAcc(settings.THINGSPEAK_HOST_ADDR, 
+        thingspeak_acc = thingspeak.ThingspeakAcc(settings.THINGSPEAK_HOST_ADDR,
                                                     settings.THINGSPEAK_API_KEY_FILENAME)
 
     #Display thingspeak settings
