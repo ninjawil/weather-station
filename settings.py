@@ -49,10 +49,10 @@ else:
 
 
 # --- System set up ---
-UPDATE_RATE          = 5 # seconds
+UPDATE_RATE          = 300 # seconds
 RRD_HEARTBEAT        = 2 # multiplier
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
-DEBOUNCE_MICROS      = 0.5 #seconds
+DEBOUNCE_MICROS      = 0.250 #seconds
 
 
 # --- RRDTool set up ---
@@ -111,7 +111,7 @@ PRECIP_ACCU_TS_FIELD  = 6
 PRECIP_ACCU_MIN       = -5
 PRECIP_ACCU_MAX       = 500
 PRECIP_ACCU_TYPE      = 'GAUGE'
-PRECIP_TICK_MEASURE   = 0.3 #millimeters
+PRECIP_TICK_MEASURE   = 0.5677 #millimeters per tick
 PRECIP_ACC_RESET_TIME = [23,59,0,0] #hour, minute, second, microsecond
 
 

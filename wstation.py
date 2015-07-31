@@ -71,12 +71,14 @@ def count_rain_ticks(gpio, level, tick):
         #check tick in microseconds
         if pigpio.tickDiff(last_rising_edge, tick) > settings.DEBOUNCE_MICROS * 1000000:
             pulse = True
+
     else:
         pulse = True
 
     if pulse:
         last_rising_edge = tick  
         precip_tick_count += 1
+        
         print('Rain tick count: %d' % precip_tick_count)
  
  
@@ -233,7 +235,7 @@ def main():
     pi.set_mode(settings.DOOR_SENSOR_PIN, pigpio.INPUT)
     pi.set_mode(settings.LED_PIN, pigpio.OUTPUT)
     DHT22_sensor = DHT22.sensor(pi, settings.IN_SENSOR_PIN)
-    rain_gauge = pi.callback(settings.PRECIP_SENSOR_PIN, pigpio.RISING_EDGE, 
+    rain_gauge = pi.callback(settings.PRECIP_SENSOR_PIN, pigpio.FALLING_EDGE, 
                              count_rain_ticks)
     
     #Set up LED flashing thread
@@ -248,10 +250,10 @@ def main():
         rainThread.daemon = True
         rainThread.start()
     
-    #Read thingspeak write api key from file
+    #Set up thingpseak
     if thingspeak_enable_update:
-        thingspeak_write_api_key = thingspeak.get_write_api_key(
-                                            settings.THINGSPEAK_API_KEY_FILENAME)
+        thingspeak_acc = thingspeak.ThingspeakAcc(settings.THINGSPEAK_HOST_ADDR,
+                                                    settings.THINGSPEAK_API_KEY_FILENAME)
 
     if rrdtool_enable_update:
         rrdtool.create(
@@ -298,16 +300,16 @@ def main():
                 time.sleep(0.2)  #Do not over poll DHT22
                 sensor_data[settings.IN_TEMP_TS_FIELD-1] = DHT22_sensor.temperature()
                 sensor_data[settings.IN_HUM_TS_FIELD-1] = DHT22_sensor.humidity()
+   
+            #Send data to thingspeak
+            if thingspeak_enable_update:
+                response = thingspeak_acc.update_channel(sensor_data)
 
             #Display data on screen
             if screen_output:
                 output_data(sensors, sensor_data)
-
-            #Send data to thingspeak
-            if thingspeak_enable_update:
-                thingspeak.update_channel(settings.THINGSPEAK_HOST_ADDR, 
-                                          thingspeak_write_api_key, 
-                                          sensor_data, screen_output)
+                print('Data sent to thingspeak: '+ response.reason 
+                        + '\t status: ' + str(response.status))
 
             #Delay to give update rate
             next_reading += settings.UPDATE_RATE
