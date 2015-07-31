@@ -40,6 +40,7 @@ import DHT22
 import DS18B20
 import thingspeak
 import settings
+import rrdtool
 
 
 #===============================================================================
@@ -175,6 +176,7 @@ def main():
     thingspeak_enable_update     = True
     screen_output                = True
     door_sensor_enable           = True
+    rrdtool_enable_update        = True
     
     thingspeak_write_api_key     = ''
     
@@ -250,6 +252,9 @@ def main():
     if thingspeak_enable_update:
         thingspeak_write_api_key = thingspeak.get_write_api_key(
                                             settings.THINGSPEAK_API_KEY_FILENAME)
+
+    if rrdtool_enable_update:
+        rrdtool.create(
 
     #Display thingspeak settings
     if thingspeak_enable_update and screen_output:
