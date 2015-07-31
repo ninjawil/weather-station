@@ -146,13 +146,6 @@ def output_data(sensors, data):
 
 
 #===============================================================================
-# DOOR SENSOR
-#===============================================================================
-def get_door_status(sensor_pin):
-    return pi.read(sensor_pin)
-
-
-#===============================================================================
 # TOGGLE LED
 #===============================================================================
 def toggle_LED():
@@ -164,11 +157,7 @@ def toggle_LED():
     threading.Timer(led_thread_next_call-time.time(), toggle_LED).start()
 
     #Toggle LED
-    if pi.read(settings.LED_PIN) == 0:
-        pi.write(settings.LED_PIN, 1)
-    else:
-        pi.write(settings.LED_PIN, 0)
-
+    pi.write(settings.LED_PIN, not(pi.read(settings.LED_PIN)))
 
 #===============================================================================
 # MAIN
@@ -290,8 +279,7 @@ def main():
 
             #Check door status
             if door_sensor_enable:
-                sensor_data[settings.DOOR_TS_FIELD-1] = get_door_status(
-                                                            settings.DOOR_SENSOR_PIN)
+                sensor_data[settings.DOOR_TS_FIELD-1] = pi.read(settings.DOOR_SENSOR_PIN)
                 
             #Get outside temperature
             if out_sensor_enable:
@@ -325,7 +313,8 @@ def main():
 
     except KeyboardInterrupt:
         
-        print('\nExiting program...')
+        if screen_output:
+            print('\nExiting program...')
         
         #Set pins to OFF state
         pi.write(settings.LED_PIN, 0)
