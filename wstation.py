@@ -121,31 +121,30 @@ def reset_rain_acc():
 #===============================================================================
 # OUTPUT DATA TO SCREEN
 #===============================================================================
-def output_data(sensors, data):
+def output_data(sensors):
+    
+    print("\n".join("{}: {}".format(k,v) for k,v in a.items()))
 
-    #Check passed data is correct
-    if len(sensors) <= len(data):
+    field = 0
 
-        field = 0
+    # Display each sensor data
+    for k,v in sensor.items():
 
-        # Display each sensor data
-        for i in sensors:
+        #Check for unit
+        if 'temp' in i:
+            unit = u'\u00b0C'
+        elif 'hum' in i:
+            unit = '%'
+        elif 'precip' in i:
+            unit = 'mm'
+        else:
+            unit = ''
 
-            #Check for unit
-            if 'temp' in i:
-                unit = u'\u00b0C'
-            elif 'hum' in i:
-                unit = '%'
-            elif 'precip' in i:
-                unit = 'mm'
-            else:
-                unit = ''
+        #Print sensor data
+        print(sensor.key()+'\t'+str(sensor[value])+unit)
 
-            #Print sensor data
-            print(i+'\t'+str(data[field])+unit)
-
-            #Next data field
-            field += 1
+        #Next data field
+        field += 1
 
 
 #===============================================================================
@@ -182,7 +181,7 @@ def main():
     
     thingspeak_write_api_key     = ''
     
-    sensor_data                  = []
+    #sensor_data                  = []
     sensors                      = []
     
     precip_tick_count = 0
@@ -217,19 +216,19 @@ def main():
   
    #Prepare sensor list
     if out_sensor_enable:
-        sensors.append(settings.OUT_TEMP_NAME)
+        sensors.append((settings.OUT_TEMP_NAME, settings.OUT_TEMP_TS_FIELD, 
+                        settings.OUT_TEMP_UNIT, 0))
     if in_sensor_enable:
-        sensors.append(settings.IN_TEMP_NAME)
-        sensors.append(settings.IN_HUM_NAME)
+        sensors.append((settings.IN_TEMP_NAME, settings.IN_TEMP_TS_FIELD, 
+                        settings.IN_TEMP_UNIT, 0))
+        sensors.append((settings.IN_HUM_NAME, settings.IN_HUM_TS_FIELD, 
+                        settings.IN_HUM_UNIT, 0))
     if door_sensor_enable:
-        sensors.append(settings.DOOR_NAME)
+        sensors[settings.DOOR_NAME] = 0
     if rain_sensor_enable:
-        sensors.append(settings.PRECIP_RATE_NAME)
-        sensors.append(settings.PRECIP_ACCU_NAME)
-        
-    #Prepare thingspeak data to match sensor number
-    sensor_data = [0 for i in sensors]
-    
+        sensors[settings.PRECIP_RATE_NAME] = 0
+        sensors[settings.PRECIP_ACCU_NAME] = 0
+
     #Prepare rrd data
     
     
@@ -265,8 +264,7 @@ def main():
     #Display thingspeak settings
     if thingspeak_enable_update and screen_output:
         print('Thingspeak set up:')
-        print(sensors)
-        print(sensor_data)
+        print("\n".join("{}: {}".format(k,v) for k,v in sensor.items()))
 
     #Set next loop time
     next_reading = time.time()
@@ -283,27 +281,27 @@ def main():
 
             #Get rain fall measurement
             if rain_sensor_enable:
-                sensor_data[settings.PRECIP_RATE_TS_FIELD-1] = precip_tick_count * settings.PRECIP_TICK_MEASURE
-                precip_accu += sensor_data[settings.PRECIP_RATE_TS_FIELD-1]
-                sensor_data[settings.PRECIP_ACCU_TS_FIELD-1] = precip_accu
+                sensors[settings.PRECIP_RATE_NAME] = precip_tick_count * settings.PRECIP_TICK_MEASURE
+                precip_accu += sensors[settings.PRECIP_RATE_NAME]
+                sensors[settings.PRECIP_ACCU_NAME] = precip_accu
                 precip_tick_count = 0
 
             #Check door status
             if door_sensor_enable:
-                sensor_data[settings.DOOR_TS_FIELD-1] = pi.read(settings.DOOR_SENSOR_PIN)
+                sensors[settings.DOOR_NAME] = pi.read(settings.DOOR_SENSOR_PIN)
                 
             #Get outside temperature
             if out_sensor_enable:
-                sensor_data[settings.OUT_TEMP_TS_FIELD-1] = DS18B20.get_temp(
-                                                            settings.W1_DEVICE_PATH, 
-                                                            settings.OUT_TEMP_SENSOR_REF)
+                sensors[settings.OUT_TEMP_NAME] = DS18B20.get_temp(
+                                                    settings.W1_DEVICE_PATH, 
+                                                    settings.OUT_TEMP_SENSOR_REF)
                 
             #Get inside temperature and humidity
             if in_sensor_enable:
                 DHT22_sensor.trigger()
                 time.sleep(0.2)  #Do not over poll DHT22
-                sensor_data[settings.IN_TEMP_TS_FIELD-1] = DHT22_sensor.temperature()
-                sensor_data[settings.IN_HUM_TS_FIELD-1] = DHT22_sensor.humidity()
+                sensors[settings.IN_TEMP_NAME] = DHT22_sensor.temperature()
+                sensors[settings.IN_HUM_NAME]  = DHT22_sensor.humidity()
    
             #Send data to thingspeak
             if thingspeak_enable_update:
@@ -311,7 +309,7 @@ def main():
 
             #Display data on screen
             if screen_output:
-                output_data(sensors, sensor_data)
+                output_data(sensors)
                 print('Data sent to thingspeak: '+ response.reason 
                         + '\t status: ' + str(response.status))
 

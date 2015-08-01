@@ -75,6 +75,7 @@ THINGSPEAK_API_KEY_FILENAME  = 'thingspeak.txt'
 
 # --- Set up outside DS18B20 sensor ----
 OUT_TEMP_NAME        = 'outside temp'
+OUT_TEMP_UNIT        = u'\u00b0C'
 OUT_TEMP_SENSOR_REF  = '28-0414705bceff'
 OUT_TEMP_TS_FIELD    = 1
 OUT_TEMP_MIN         = -50
