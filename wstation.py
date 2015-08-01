@@ -40,7 +40,7 @@ import DHT22
 import DS18B20
 import thingspeak
 import settings
-import rrdtool
+#import rrdtool
 
 
 #===============================================================================
@@ -217,18 +217,22 @@ def main():
   
    #Prepare sensor list
     if out_sensor_enable:
-        sensors.append('outside temp')
+        sensors.append(settings.OUT_TEMP_NAME)
     if in_sensor_enable:
-        sensors.append('inside temp')
-        sensors.append('inside hum')
+        sensors.append(settings.IN_TEMP_NAME)
+        sensors.append(settings.IN_HUM_NAME)
     if door_sensor_enable:
-        sensors.append('door open')
+        sensors.append(settings.DOOR_NAME)
     if rain_sensor_enable:
-        sensors.append('precip rate')
-        sensors.append('precip accu')
+        sensors.append(settings.PRECIP_RATE_NAME)
+        sensors.append(settings.PRECIP_ACCU_NAME)
         
     #Prepare thingspeak data to match sensor number
     sensor_data = [0 for i in sensors]
+    
+    #Prepare rrd data
+    
+    
 
     #Set up pin outs
     pi.set_mode(settings.PRECIP_SENSOR_PIN, pigpio.INPUT)
@@ -255,8 +259,8 @@ def main():
         thingspeak_acc = thingspeak.ThingspeakAcc(settings.THINGSPEAK_HOST_ADDR,
                                                     settings.THINGSPEAK_API_KEY_FILENAME)
 
-    if rrdtool_enable_update:
-        rrdtool.create(
+    #if rrdtool_enable_update:
+     #   rrdtool.create(
 
     #Display thingspeak settings
     if thingspeak_enable_update and screen_output:
