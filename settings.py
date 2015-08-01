@@ -49,7 +49,7 @@ else:
 
 
 # --- System set up ---
-UPDATE_RATE          = 300 # seconds
+UPDATE_RATE          = 5 # seconds
 RRD_HEARTBEAT        = 2 # multiplier
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
@@ -65,7 +65,7 @@ RRDTOOL_RRA          = ('AVERAGE',    5,  0.125,  # Consolidation type, Resoluti
                         'AVERAGE',  720,     93,
                         'AVERAGE', 1440,    365,
                         'MIN',     1440,    365,
-                        'MAX',     1440,    365,
+                        'MAX',     1440,    365)
                         
 
 # --- Set up thingspeak ----
