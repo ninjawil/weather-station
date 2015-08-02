@@ -31,6 +31,7 @@
 #===============================================================================
 # Import modules
 #===============================================================================
+import os
 import sys
 import threading
 import time
@@ -91,9 +92,7 @@ def prepare_reset_time(days_to_add):
                                 second=s.PRECIP_ACC_RESET_TIME[2], 
                                 microsecond=s.PRECIP_ACC_RESET_TIME[3])
     reset_time += datetime.timedelta(days=days_to_add)
-    
-    print('Next precip. acc. reset at '+str(reset_time))
-    
+        
     return (reset_time - now).total_seconds()
     
 
@@ -105,9 +104,6 @@ def reset_rain_acc():
     global rain_thread_next_call
     global precip_accu
     
-    print('')
-    print('Accumulated Precipitation = 0.0mm')
-    
     #Prepare next thread time
     rain_thread_next_call += prepare_reset_time(1)
     threading.Timer(rain_thread_next_call-time.time(), reset_rain_acc).start()
@@ -117,15 +113,39 @@ def reset_rain_acc():
    
  
 #===============================================================================
-# OUTPUT DATA TO SCREEN
+# DRAW SCREEN
 #===============================================================================
-def output_data(sensors):
+def draw_screen(thingspeak_enable_update, key, sensors):
     
-    print('  Field\tName\t\tValue\tUnit')
-    print('  ---------------------------------------')
+    os.system('clear')
+    
+    print('Next precip. acc. reset at '+ str(s.PRECIP_ACC_RESET_TIME))
+
+    row_count = 3
+        
+    if thingspeak_enable_update:
+        print('\nThingspeak write api key: '+key)
+        print('\nThingspeak field set up:')
+        print('  Field\tName\t\tValue\tUnit')
+        print('  ---------------------------------------')
+        row_count = 6
+        for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
+            row_count += 1
+            print('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
+                    '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
+            
+    header ='\nDate\t\tTime\t\t'
+    header_names = ''
     for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-        print('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
-                '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
+        header_names = header_names + key +'\t'
+    header = header + header_names + 'TS Send'
+    print(header)
+    print('=' * (len(header) + 5 * header.count('\t')))
+    row_count += 3
+    
+    rows, columns = os.popen('stty size', 'r').read().split()
+    
+    return(int(rows) - row_count)
 
 
 #===============================================================================
@@ -260,20 +280,9 @@ def main():
     #if rrdtool_enable_update:
      #   rrdtool.create(
 
-    #Display thingspeak settings
-    if thingspeak_enable_update and screen_output:
-        print('\nThingspeak set up:')
-        output_data(sensors)
-
-    #Draw header
+    #Draw screen
     if screen_output:
-        header ='\nDate\t\tTime\t\t'
-        header_names = ''
-        for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-            header_names = header_names + key +'\t'
-        header = header + header_names + 'TS Send'
-        print(header)
-        print('=' * (len(header) + 5 * header.count('\t')))
+        rows = draw_screen(thingspeak_enable_update, thingspeak_acc.api_key, sensors)
 
     #Set next loop time
     next_reading = time.time()
@@ -285,6 +294,10 @@ def main():
             
             #Print loop start time
             if screen_output:
+                rows -= 1
+                if rows < 0:
+                    rows = draw_screen(thingspeak_enable_update, 
+                                        thingspeak_acc.api_key, sensors)
                 print(datetime.datetime.now().strftime('%Y-%m-%d\t%H:%M:%S')),
 
             #Get rain fall measurement
@@ -311,17 +324,26 @@ def main():
                 sensors[s.IN_TEMP_NAME][s.VALUE] = DHT22_sensor.temperature()
                 sensors[s.IN_HUM_NAME][s.VALUE]  = DHT22_sensor.humidity()
    
+            #Display data on screen
+            if screen_output:
+                for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
+                    if key == s.DOOR_NAME:
+                        if value[s.VALUE]:
+                            print('\tOPEN\t'),
+                        else:
+                            print('\tCLOSED\t'),
+                    else:
+                        print('\t{:2.2f} '.format(value[s.VALUE]) + value[s.UNIT]),
+                    
             #Send data to thingspeak
             if thingspeak_enable_update:
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     sensor_data[value[s.TS_FIELD]] = value[s.VALUE]
                 response = thingspeak_acc.update_channel(sensor_data)
-
-            #Display data on screen
-            if screen_output:
-                for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-                    print('\t' + str(value[s.VALUE]) + '\t'),
-                print('\t' + response.reason)
+                if screen_output:
+                    print('\t' + response.reason)
+            elif screen_output:
+                print('\tN/A')
 
             #Delay to give update rate
             next_reading += s.UPDATE_RATE

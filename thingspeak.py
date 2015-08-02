@@ -91,7 +91,6 @@ class ThingspeakAcc():
                 f.write(key)
         else:
             key = f.read()
-            print('Thingspeak api key loaded: ' + key)
         
         f.close()
         
