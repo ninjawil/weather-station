@@ -265,6 +265,16 @@ def main():
         print('\nThingspeak set up:')
         output_data(sensors)
 
+    #Draw header
+    if screen_output:
+        header ='\nDate\t\tTime\t\t'
+        header_names = ''
+        for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
+            header_names = header_names + key +'\t'
+        header = header + header_names + 'TS Send'
+        print(header)
+        print('=' * (len(header) + 5 * header.count('\t')))
+
     #Set next loop time
     next_reading = time.time()
 
@@ -275,8 +285,7 @@ def main():
             
             #Print loop start time
             if screen_output:
-                print('')
-                print(datetime.datetime.now())
+                print(datetime.datetime.now().strftime('%Y-%m-%d\t%H:%M:%S')),
 
             #Get rain fall measurement
             if rain_sensor_enable:
@@ -310,10 +319,9 @@ def main():
 
             #Display data on screen
             if screen_output:
-                print('')
-                output_data(sensors)
-                print('\nData sent to thingspeak: '+ response.reason 
-                        + '\t status: ' + str(response.status))
+                for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
+                    print('\t' + str(value[s.VALUE]) + '\t'),
+                print('\t' + response.reason)
 
             #Delay to give update rate
             next_reading += s.UPDATE_RATE
