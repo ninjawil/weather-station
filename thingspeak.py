@@ -53,9 +53,9 @@ class ThingspeakAcc():
         data_to_send = {}
         data_to_send['key'] = self.api_key
         
-        for i in range(0, len(field_data)):
-            data_to_send['field'+str(i+1)] = field_data[i]
-            
+        for key, value in sorted(field_data.items()):
+            data_to_send['field'+str(key)] = value
+                    
         params = urllib.urlencode(data_to_send)
         headers = {'Content-type': 'application/x-www-form-urlencoded',
                     'Accept': 'text/plain'}

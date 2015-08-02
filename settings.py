@@ -53,6 +53,9 @@ UPDATE_RATE          = 5 # seconds
 RRD_HEARTBEAT        = 2 # multiplier
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
+TS_FIELD             = 0
+UNIT                 = 1
+VALUE                = 2
 
 
 # --- RRDTool set up ---
@@ -83,14 +86,16 @@ OUT_TEMP_MAX         = 50
 OUT_TEMP_TYPE        = 'GAUGE'
 
 # --- Set up inside DHT22 sensor ----
-IN_TEMP_NAME        = 'inside temp'
 IN_SENSOR_REF        = 'DHT22'
 IN_SENSOR_PIN        = PIN_11
+IN_TEMP_NAME        = 'inside temp'
+IN_TEMP_UNIT        = u'\u00b0C'
 IN_TEMP_TS_FIELD     = 2
 IN_TEMP_MIN          = -50
 IN_TEMP_MAX          = 100
 IN_TEMP_TYPE         = 'GAUGE'
 IN_HUM_NAME          = 'inside humidity'
+IN_HUM_UNIT          = '%'
 IN_HUM_TS_FIELD      = 3
 IN_HUM_MIN           = -1
 IN_HUM_MAX           = 101
@@ -99,6 +104,7 @@ IN_HUM_TYPE          = 'GAUGE'
 
 # --- Set up door reed switch ----
 DOOR_NAME            = 'door open'
+DOOR_UNIT            = ''
 DOOR_SENSOR_PIN      = PIN_13
 DOOR_TS_FIELD        = 4
 DOOR_MIN             = -1
@@ -109,11 +115,13 @@ DOOR_TYPE            = 'GAUGE'
 # --- Set up rain fall reed switch ----
 PRECIP_SENSOR_PIN     = PIN_15
 PRECIP_RATE_NAME      = 'precip. rate'
+PRECIP_RATE_UNIT      = 'mm'
 PRECIP_RATE_TS_FIELD  = 5
 PRECIP_RATE_MIN       = -5
 PRECIP_RATE_MAX       = 50
 PRECIP_RATE_TYPE      = 'GAUGE'
 PRECIP_ACCU_NAME      = 'precip. acc'
+PRECIP_ACCU_UNIT      = 'mm'
 PRECIP_ACCU_TS_FIELD  = 6
 PRECIP_ACCU_MIN       = -5
 PRECIP_ACCU_MAX       = 500

@@ -39,7 +39,7 @@ import pigpio
 import DHT22
 import DS18B20
 import thingspeak
-import settings
+import settings as s
 #import rrdtool
 
 
@@ -69,7 +69,7 @@ def count_rain_ticks(gpio, level, tick):
     
     if last_rising_edge is not None:
         #check tick in microseconds
-        if pigpio.tickDiff(last_rising_edge, tick) > settings.DEBOUNCE_MICROS * 1000000:
+        if pigpio.tickDiff(last_rising_edge, tick) > s.DEBOUNCE_MICROS * 1000000:
             pulse = True
 
     else:
@@ -78,9 +78,7 @@ def count_rain_ticks(gpio, level, tick):
     if pulse:
         last_rising_edge = tick  
         precip_tick_count += 1
-        
-        print('Rain tick count: %d' % precip_tick_count)
- 
+
  
 #===============================================================================
 # PREPARE RESET TIME
@@ -88,13 +86,13 @@ def count_rain_ticks(gpio, level, tick):
 def prepare_reset_time(days_to_add):
     
     now = datetime.datetime.now()
-    reset_time = now.replace(hour=settings.PRECIP_ACC_RESET_TIME[0], 
-                                minute=settings.PRECIP_ACC_RESET_TIME[1], 
-                                second=settings.PRECIP_ACC_RESET_TIME[2], 
-                                microsecond=settings.PRECIP_ACC_RESET_TIME[3])
+    reset_time = now.replace(hour=s.PRECIP_ACC_RESET_TIME[0], 
+                                minute=s.PRECIP_ACC_RESET_TIME[1], 
+                                second=s.PRECIP_ACC_RESET_TIME[2], 
+                                microsecond=s.PRECIP_ACC_RESET_TIME[3])
     reset_time += datetime.timedelta(days=days_to_add)
     
-    print('==> Next precip. acc. reset at '+str(reset_time))
+    print('Next precip. acc. reset at '+str(reset_time))
     
     return (reset_time - now).total_seconds()
     
@@ -108,7 +106,7 @@ def reset_rain_acc():
     global precip_accu
     
     print('')
-    print('==> Accumulated Precipitation = 0.0mm')
+    print('Accumulated Precipitation = 0.0mm')
     
     #Prepare next thread time
     rain_thread_next_call += prepare_reset_time(1)
@@ -123,28 +121,11 @@ def reset_rain_acc():
 #===============================================================================
 def output_data(sensors):
     
-    print("\n".join("{}: {}".format(k,v) for k,v in a.items()))
-
-    field = 0
-
-    # Display each sensor data
-    for k,v in sensor.items():
-
-        #Check for unit
-        if 'temp' in i:
-            unit = u'\u00b0C'
-        elif 'hum' in i:
-            unit = '%'
-        elif 'precip' in i:
-            unit = 'mm'
-        else:
-            unit = ''
-
-        #Print sensor data
-        print(sensor.key()+'\t'+str(sensor[value])+unit)
-
-        #Next data field
-        field += 1
+    print('  Field\tName\t\tValue\tUnit')
+    print('  ---------------------------------------')
+    for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
+        print('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
+                '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
 
 
 #===============================================================================
@@ -155,11 +136,11 @@ def toggle_LED():
     global led_thread_next_call
 
     #Prepare next thread time
-    led_thread_next_call = led_thread_next_call + settings.LED_FLASH_RATE
+    led_thread_next_call = led_thread_next_call + s.LED_FLASH_RATE
     threading.Timer(led_thread_next_call-time.time(), toggle_LED).start()
 
     #Toggle LED
-    pi.write(settings.LED_PIN, not(pi.read(settings.LED_PIN)))
+    pi.write(s.LED_PIN, not(pi.read(s.LED_PIN)))
 
 #===============================================================================
 # MAIN
@@ -181,8 +162,8 @@ def main():
     
     thingspeak_write_api_key     = ''
     
-    #sensor_data                  = []
-    sensors                      = []
+    sensors                      = {}
+    sensor_data                  = {}
     
     precip_tick_count = 0
     precip_accu       = 0
@@ -216,29 +197,47 @@ def main():
   
    #Prepare sensor list
     if out_sensor_enable:
-        sensors.append((settings.OUT_TEMP_NAME, settings.OUT_TEMP_TS_FIELD, 
-                        settings.OUT_TEMP_UNIT, 0))
+        sensors[s.OUT_TEMP_NAME] = [0,0,0]
+        sensors[s.OUT_TEMP_NAME][s.TS_FIELD] = s.OUT_TEMP_TS_FIELD 
+        sensors[s.OUT_TEMP_NAME][s.VALUE] = 0
+        sensors[s.OUT_TEMP_NAME][s.UNIT] = s.OUT_TEMP_UNIT
+                
     if in_sensor_enable:
-        sensors.append((settings.IN_TEMP_NAME, settings.IN_TEMP_TS_FIELD, 
-                        settings.IN_TEMP_UNIT, 0))
-        sensors.append((settings.IN_HUM_NAME, settings.IN_HUM_TS_FIELD, 
-                        settings.IN_HUM_UNIT, 0))
-    if door_sensor_enable:
-        sensors[settings.DOOR_NAME] = 0
-    if rain_sensor_enable:
-        sensors[settings.PRECIP_RATE_NAME] = 0
-        sensors[settings.PRECIP_ACCU_NAME] = 0
+        sensors[s.IN_TEMP_NAME] = [0,0,0]
+        sensors[s.IN_TEMP_NAME][s.TS_FIELD] = s.IN_TEMP_TS_FIELD 
+        sensors[s.IN_TEMP_NAME][s.VALUE] = 0
+        sensors[s.IN_TEMP_NAME][s.UNIT] = s.IN_TEMP_UNIT
+        sensors[s.IN_HUM_NAME] = [0,0,0]
+        sensors[s.IN_HUM_NAME][s.TS_FIELD] = s.IN_HUM_TS_FIELD 
+        sensors[s.IN_HUM_NAME][s.VALUE] = 0
+        sensors[s.IN_HUM_NAME][s.UNIT] = s.IN_HUM_UNIT
 
+    if door_sensor_enable:
+        sensors[s.DOOR_NAME] = [0,0,0]
+        sensors[s.DOOR_NAME][s.TS_FIELD] = s.DOOR_TS_FIELD 
+        sensors[s.DOOR_NAME][s.VALUE] = 0
+        sensors[s.DOOR_NAME][s.UNIT] = s.DOOR_UNIT
+
+    if rain_sensor_enable:
+        sensors[s.PRECIP_RATE_NAME] = [0,0,0]
+        sensors[s.PRECIP_RATE_NAME][s.TS_FIELD] = s.PRECIP_RATE_TS_FIELD 
+        sensors[s.PRECIP_RATE_NAME][s.VALUE] = 0
+        sensors[s.PRECIP_RATE_NAME][s.UNIT] = s.PRECIP_RATE_UNIT
+        sensors[s.PRECIP_ACCU_NAME] = [0,0,0]
+        sensors[s.PRECIP_ACCU_NAME][s.TS_FIELD] = s.PRECIP_ACCU_TS_FIELD 
+        sensors[s.PRECIP_ACCU_NAME][s.VALUE] = 0
+        sensors[s.PRECIP_ACCU_NAME][s.UNIT] = s.PRECIP_ACCU_UNIT                        
+ 
     #Prepare rrd data
     
     
 
     #Set up pin outs
-    pi.set_mode(settings.PRECIP_SENSOR_PIN, pigpio.INPUT)
-    pi.set_mode(settings.DOOR_SENSOR_PIN, pigpio.INPUT)
-    pi.set_mode(settings.LED_PIN, pigpio.OUTPUT)
-    DHT22_sensor = DHT22.sensor(pi, settings.IN_SENSOR_PIN)
-    rain_gauge = pi.callback(settings.PRECIP_SENSOR_PIN, pigpio.FALLING_EDGE, 
+    pi.set_mode(s.PRECIP_SENSOR_PIN, pigpio.INPUT)
+    pi.set_mode(s.DOOR_SENSOR_PIN, pigpio.INPUT)
+    pi.set_mode(s.LED_PIN, pigpio.OUTPUT)
+    DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
+    rain_gauge = pi.callback(s.PRECIP_SENSOR_PIN, pigpio.FALLING_EDGE, 
                              count_rain_ticks)
     
     #Set up LED flashing thread
@@ -255,16 +254,16 @@ def main():
     
     #Set up thingpseak
     if thingspeak_enable_update:
-        thingspeak_acc = thingspeak.ThingspeakAcc(settings.THINGSPEAK_HOST_ADDR,
-                                                    settings.THINGSPEAK_API_KEY_FILENAME)
+        thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
+                                                    s.THINGSPEAK_API_KEY_FILENAME)
 
     #if rrdtool_enable_update:
      #   rrdtool.create(
 
     #Display thingspeak settings
     if thingspeak_enable_update and screen_output:
-        print('Thingspeak set up:')
-        print("\n".join("{}: {}".format(k,v) for k,v in sensor.items()))
+        print('\nThingspeak set up:')
+        output_data(sensors)
 
     #Set next loop time
     next_reading = time.time()
@@ -281,40 +280,43 @@ def main():
 
             #Get rain fall measurement
             if rain_sensor_enable:
-                sensors[settings.PRECIP_RATE_NAME] = precip_tick_count * settings.PRECIP_TICK_MEASURE
-                precip_accu += sensors[settings.PRECIP_RATE_NAME]
-                sensors[settings.PRECIP_ACCU_NAME] = precip_accu
+                sensors[s.PRECIP_RATE_NAME][s.VALUE] = precip_tick_count * s.PRECIP_TICK_MEASURE
+                precip_accu += sensors[s.PRECIP_RATE_NAME][s.VALUE]
+                sensors[s.PRECIP_ACCU_NAME][s.VALUE] = precip_accu
                 precip_tick_count = 0
 
             #Check door status
             if door_sensor_enable:
-                sensors[settings.DOOR_NAME] = pi.read(settings.DOOR_SENSOR_PIN)
+                sensors[s.DOOR_NAME][s.VALUE] = pi.read(s.DOOR_SENSOR_PIN)
                 
             #Get outside temperature
             if out_sensor_enable:
-                sensors[settings.OUT_TEMP_NAME] = DS18B20.get_temp(
-                                                    settings.W1_DEVICE_PATH, 
-                                                    settings.OUT_TEMP_SENSOR_REF)
+                sensors[s.OUT_TEMP_NAME][s.VALUE] = DS18B20.get_temp(
+                                                            s.W1_DEVICE_PATH, 
+                                                            s.OUT_TEMP_SENSOR_REF)
                 
             #Get inside temperature and humidity
             if in_sensor_enable:
                 DHT22_sensor.trigger()
                 time.sleep(0.2)  #Do not over poll DHT22
-                sensors[settings.IN_TEMP_NAME] = DHT22_sensor.temperature()
-                sensors[settings.IN_HUM_NAME]  = DHT22_sensor.humidity()
+                sensors[s.IN_TEMP_NAME][s.VALUE] = DHT22_sensor.temperature()
+                sensors[s.IN_HUM_NAME][s.VALUE]  = DHT22_sensor.humidity()
    
             #Send data to thingspeak
             if thingspeak_enable_update:
+                for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
+                    sensor_data[value[s.TS_FIELD]] = value[s.VALUE]
                 response = thingspeak_acc.update_channel(sensor_data)
 
             #Display data on screen
             if screen_output:
+                print('')
                 output_data(sensors)
-                print('Data sent to thingspeak: '+ response.reason 
+                print('\nData sent to thingspeak: '+ response.reason 
                         + '\t status: ' + str(response.status))
 
             #Delay to give update rate
-            next_reading += settings.UPDATE_RATE
+            next_reading += s.UPDATE_RATE
             sleep_length = next_reading - time.time()
             if sleep_length > 0:
                 time.sleep(sleep_length)
@@ -326,7 +328,7 @@ def main():
             print('\nExiting program...')
         
         #Set pins to OFF state
-        pi.write(settings.LED_PIN, 0)
+        pi.write(s.LED_PIN, 0)
 
         #Stop processes
         DHT22_sensor.cancel()
