@@ -41,7 +41,7 @@ import DHT22
 import DS18B20
 import thingspeak
 import settings as s
-import rrdtool
+import RRDtool
 
 
 #===============================================================================
@@ -201,7 +201,7 @@ def main():
     sensors                      = {}
     rows                         = 0
 
-    #Check and action passed arguments
+    # --- Check and action passed arguments ---
     if len(sys.argv) > 1:
         if '--outsensor=OFF' in sys.argv:
             out_sensor_enable = False
@@ -233,14 +233,14 @@ def main():
             sys.exit(0)
 
 
-    #Set up LED hardware and thread
+    # ---Set up LED hardware and thread ---
     pi.set_mode(s.LED_PIN, pigpio.OUTPUT)
     ledThread = threading.Thread(target=toggle_LED)
     ledThread.daemon = True
     ledThread.start()
 
     
-   #Set up outside temperature sensor
+   # --- Set up outside temperature sensor ---
     if out_sensor_enable:
         #Add to sensor list
         sensors[s.OUT_TEMP_NAME] = [0,0,0]
@@ -249,7 +249,7 @@ def main():
         sensors[s.OUT_TEMP_NAME][s.UNIT] = s.OUT_TEMP_UNIT
 
 
-    #Set up inside temperature sensor
+    # --- Set up inside temperature sensor ---
     if in_sensor_enable:
         #Add to sensor list
         sensors[s.IN_TEMP_NAME] = [0,0,0]
@@ -265,7 +265,7 @@ def main():
         DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
 
     
-    #Set up door sensor
+    # --- Set up door sensor ---
     if door_sensor_enable:
         #Add to sensor list
         sensors[s.DOOR_NAME] = [0,0,0]
@@ -277,7 +277,7 @@ def main():
         pi.set_mode(s.DOOR_SENSOR_PIN, pigpio.INPUT)
 
 
-    #Set up rain sensor
+    # --- Set up rain sensor ---
     if rain_sensor_enable:
         #Set up inital values for variables
         precip_tick_count            = 0
@@ -306,7 +306,7 @@ def main():
         rainThread.start()
 
  
-    #Set up rrd data and tool
+    # --- Set up rrd data and tool ---
     if rrdtool_enable_update:
         #Set up inital values for variables
         rrd_data_sources = []
@@ -362,13 +362,12 @@ def main():
                             rra_files[1:]))
         
         for i in rrdtool_set:
-            rrdtool.create(i)
+            rrd[i] = RRDtool.create(i)
 
     
-    #Set up thingpseak
+    #--- Set up thingspeak account ---
     if thingspeak_enable_update:
         #Set up inital values for variables
-        sensor_data                  = {}
         thingspeak_write_api_key     = ''
         
         #Set up thingspeak account
@@ -376,15 +375,15 @@ def main():
                                                     s.THINGSPEAK_API_KEY_FILENAME)
 
 
-    #Set next loop time
+    # --- Set next loop time ---
     next_reading = time.time()
 
 
-    #Main code
+    # ========== Main code ==========
     try:
         while True:
             
-            #Print loop start time
+            # --- Print loop start time ---
             if screen_output:
                 rows -= 1
                 if rows <= 0:
@@ -395,31 +394,31 @@ def main():
                                         rrdtool_set)
                 print(datetime.datetime.now().strftime('%Y-%m-%d\t%H:%M:%S')),
 
-            #Get rain fall measurement
+            # --- Get rain fall measurement ---
             if rain_sensor_enable:
                 sensors[s.PRECIP_RATE_NAME][s.VALUE] = precip_tick_count * s.PRECIP_TICK_MEASURE
                 precip_accu += sensors[s.PRECIP_RATE_NAME][s.VALUE]
                 sensors[s.PRECIP_ACCU_NAME][s.VALUE] = precip_accu
                 precip_tick_count = 0
 
-            #Check door status
+            # --- Check door status ---
             if door_sensor_enable:
                 sensors[s.DOOR_NAME][s.VALUE] = pi.read(s.DOOR_SENSOR_PIN)
                 
-            #Get outside temperature
+            # --- Get outside temperature ---
             if out_sensor_enable:
                 sensors[s.OUT_TEMP_NAME][s.VALUE] = DS18B20.get_temp(
                                                             s.W1_DEVICE_PATH, 
                                                             s.OUT_TEMP_SENSOR_REF)
                 
-            #Get inside temperature and humidity
+            # --- Get inside temperature and humidity ---
             if in_sensor_enable:
                 DHT22_sensor.trigger()
                 time.sleep(0.2)  #Do not over poll DHT22
                 sensors[s.IN_TEMP_NAME][s.VALUE] = DHT22_sensor.temperature()
                 sensors[s.IN_HUM_NAME][s.VALUE]  = DHT22_sensor.humidity()
    
-            #Display data on screen
+            # --- Display data on screen ---
             if screen_output:
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     if key == s.DOOR_NAME:
@@ -430,8 +429,10 @@ def main():
                     else:
                         print('\t{:2.2f} '.format(value[s.VALUE]) + value[s.UNIT]),
                     
-            #Send data to thingspeak
+            # --- Send data to thingspeak ---
             if thingspeak_enable_update:
+                #Create dictionary with field as key and value
+                sensor_data = {}
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     sensor_data[value[s.TS_FIELD]] = value[s.VALUE]
                 response = thingspeak_acc.update_channel(sensor_data)
@@ -439,8 +440,16 @@ def main():
                     print('\t' + response.reason)
             elif screen_output:
                 print('\tN/A')
+                
+            # --- Add data to RRD ---
+            if rrdtool_enable_update:
+                sensor_data = []
+                for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
+                    sensor_data.append((key, value[s.VALUE]))
+                rrd[0].update(s.RRDTOOL_RRD_FILE_FAST, sensor_data[:-1])
+                rrd[1].update(s.RRDTOOL_RRD_FILE_SLOW, sensor_data[-1:])
 
-            #Delay to give update rate
+            # --- Delay to give update rate ---
             next_reading += s.UPDATE_RATE
             sleep_length = next_reading - time.time()
             if sleep_length > 0:
