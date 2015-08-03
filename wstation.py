@@ -31,7 +31,6 @@
 #===============================================================================
 # Import modules
 #===============================================================================
-import os
 import sys
 import threading
 import time
@@ -40,6 +39,7 @@ import pigpio
 import DHT22
 import DS18B20
 import thingspeak
+import screen_op
 import settings as s
 import RRDtool
 
@@ -111,60 +111,7 @@ def reset_rain_acc():
     #reset precipitation accummulated
     precip_accu = 0
    
- 
-#===============================================================================
-# DRAW SCREEN
-#===============================================================================
-def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
-    
-    os.system('clear')
-    
-    display_string = []
-    
-    display_string.append('WEATHER STATION')
-    display_string.append('')
-    display_string.append('Next precip. acc. reset at '+ str(s.PRECIP_ACC_RESET_TIME))
-
-    #Display thingspeak field data set up
-    if thingspeak_enable:
-        display_string.append('')
-        display_string.append('Thingspeak write api key: '+key)
-        display_string.append('')
-        display_string.append('Thingspeak field set up:')
-        display_string.append('  Field\tName\t\tValue\tUnit')
-        display_string.append('  ---------------------------------------')
-        for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-            display_string.append('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
-                                    '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
-    
-    #Display RRDtool set up
-    if rrd_enable:
-        display_string.append('')
-        display_string.append('RRDtool set up:')
-        for i in range(0,len(rrd_set)):
-            display_string += rrd_set[i]
-            display_string.append('')
-
-    #Create table header
-    display_string.append('')
-    header ='Date\t\tTime\t\t'
-    header_names = ''
-    for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-        header_names = header_names + key +'\t'
-    header = header + header_names + 'TS Send'
-    display_string.append(header)
-    display_string.append('=' * (len(header) + 5 * header.count('\t')))
- 
-    #Find the total number of rows on screen
-    rows, columns = os.popen('stty size', 'r').read().split()
-    
-    #Draw screen
-    print('\n'.join(display_string))
-    
-    #Return number of rows left for data
-    return(int(rows) - len(display_string))
-
-
+   
 #===============================================================================
 # TOGGLE LED
 #===============================================================================
