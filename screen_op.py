@@ -34,7 +34,27 @@
 import os
 import settings as s
 
- 
+
+#===============================================================================
+# DRAW HELP MENU
+#===============================================================================
+def help_menu():
+    print('usage: ./wstation.py {command}')
+    print('')
+    print('   --outsensor=OFF    ',
+          '- disables outside temperature monitoring')
+    print('   --insensor=OFF     ',
+          '- disables inside temperature monitoring')
+    print('   --rainsensor=OFF   ',
+          '- disables rainfall monitoring')
+    print('   --thingspeak=OFF   ',
+          '- disable update to ThingSpeak')
+    print('   --rrdtool=OFF   ',
+          '- disable round robin database')
+    print('   --quiet            ',
+          '- outputs data to screen')
+
+
 #===============================================================================
 # DRAW SCREEN
 #===============================================================================
