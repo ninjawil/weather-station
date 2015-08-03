@@ -81,12 +81,12 @@ def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
                                     '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
     
     #Display RRDtool set up
-    if rrd_enable:
-        display_string.append('')
-        display_string.append('RRDtool set up:')
-        for i in range(0,len(rrd_set)):
-            display_string += rrd_set[i]
-            display_string.append('')
+    #if rrd_enable:
+    #    display_string.append('')
+    #    display_string.append('RRDtool set up:')
+    #    for i in range(0,len(rrd_set)):
+    #        display_string += rrd_set[i]
+    #        display_string.append('')
 
     #Create table header
     display_string.append('')

@@ -119,13 +119,13 @@ DOOR_TYPE            = 'GAUGE'
 
 # --- Set up rain fall reed switch ----
 PRECIP_SENSOR_PIN     = PIN_15
-PRECIP_RATE_NAME      = 'precip. rate'
+PRECIP_RATE_NAME      = 'precip rate'
 PRECIP_RATE_UNIT      = 'mm'
 PRECIP_RATE_TS_FIELD  = 5
 PRECIP_RATE_MIN       = -5
 PRECIP_RATE_MAX       = 50
 PRECIP_RATE_TYPE      = 'GAUGE'
-PRECIP_ACCU_NAME      = 'precip. acc'
+PRECIP_ACCU_NAME      = 'precip acc'
 PRECIP_ACCU_UNIT      = 'mm'
 PRECIP_ACCU_TS_FIELD  = 6
 PRECIP_ACCU_MIN       = -5

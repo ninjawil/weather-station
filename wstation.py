@@ -41,7 +41,7 @@ import DS18B20
 import thingspeak
 import screen_op
 import settings as s
-import RRDtool
+import rrdtool
 
 
 #===============================================================================
@@ -250,53 +250,49 @@ def main():
         rrd_data_sources = ['DS:' + s.OUT_TEMP_NAME.replace(' ','_') + 
                                 ':' + s.OUT_TEMP_TYPE + 
                                 ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.OUT_TEMP_MAX) + 
-                                ':' + str(s.OUT_TEMP_MIN),
+                                ':' + str(s.OUT_TEMP_MIN) + 
+                                ':' + str(s.OUT_TEMP_MAX),
                             'DS:' + s.IN_TEMP_NAME.replace(' ','_') + 
                                 ':' + s.IN_TEMP_TYPE + 
                                 ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.IN_TEMP_MAX) + 
-                                ':' + str(s.IN_TEMP_MIN),    
+                                ':' + str(s.IN_TEMP_MIN) + 
+                                ':' + str(s.IN_TEMP_MAX),    
                             'DS:' + s.IN_HUM_NAME.replace(' ','_') + 
                                 ':' + s.IN_HUM_TYPE + 
                                 ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.IN_HUM_MAX) + 
-                                ':' + str(s.IN_HUM_MIN),    
+                                ':' + str(s.IN_HUM_MIN) + 
+                                ':' + str(s.IN_HUM_MAX),    
                             'DS:' + s.DOOR_NAME.replace(' ','_') + 
                                 ':' + s.DOOR_TYPE + 
                                 ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.DOOR_MAX) + 
-                                ':' + str(s.DOOR_MIN),
+                                ':' + str(s.DOOR_MIN) + 
+                                ':' + str(s.DOOR_MAX),
                             'DS:' + s.PRECIP_RATE_NAME.replace(' ','_') + 
                                 ':' + s.PRECIP_RATE_TYPE + 
                                 ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.PRECIP_RATE_MAX) + 
-                                ':' + str(s.PRECIP_RATE_MIN),
+                                ':' + str(s.PRECIP_RATE_MIN) + 
+                                ':' + str(s.PRECIP_RATE_MAX),
                             'DS:' + s.PRECIP_ACCU_NAME.replace(' ','_') + 
                                 ':' + s.PRECIP_ACCU_TYPE + 
                                 ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.PRECIP_ACCY_MAX) + 
-                                ':' + str(s.PRECIP_RACCU_MIN)]
+                                ':' + str(s.PRECIP_ACCU_MIN) + 
+                                ':' + str(s.PRECIP_ACCU_MAX)]
                             
         for i in range(0,len(s.RRDTOOL_RRA),3):
             rra_files.append('RRA:' + s.RRDTOOL_RRA[i] + ':0.5:' + 
-                                ((s.RRDTOOL_RRA[i+1]*60)/s.UPDATE_RATE) + ':' + 
-                                (((s.RRDTOOL_RRA[i+2])*24*60)/s.RRDTOOL_RRA[i+1]))
+                                str((s.RRDTOOL_RRA[i+1]*60)/s.UPDATE_RATE) + ':' + 
+                                str(((s.RRDTOOL_RRA[i+2])*24*60)/s.RRDTOOL_RRA[i+1]))
     
-        rrdtool_set.append((s.RRDTOOL_RRD_FILE_FAST,
-                            '--step', s.UPDATE_RATE,
-                            '--start', '0', 
-                            rrd_data_sources[:-1], 
-                            rra_files))
+        rrd_set.append([s.RRDTOOL_RRD_FILE_FAST, '--step', str(s.UPDATE_RATE),
+                        '--start', 'now'])
+        rrd_set[0] +=  rrd_data_sources[:-1] + rra_files
                         
-        rrdtool_set.append((s.RRDTOOL_RRD_FILE_SLOW,
-                            '--step', s.UPDATE_RATE,
-                            '--start', '0', 
-                            rrd_data_sources[-1:], 
-                            rra_files[1:]))
+        rrd_set.append([s.RRDTOOL_RRD_FILE_SLOW, '--step', str(s.UPDATE_RATE),
+                        '--start', 'now'])
+        rrd_set[1] +=  rrd_data_sources[-1:] + rra_files[1:]
         
-        for i in rrdtool_set:
-            rrd[i] = RRDtool.create(i)
+        for i in range(0,len(rrd_set)):
+            rrdtool.create(rrd_set[i])
 
     
     #--- Set up thingspeak account ---
@@ -325,7 +321,7 @@ def main():
                                                     thingspeak_enable_update, 
                                                     thingspeak_acc.api_key,
                                                     rrdtool_enable_update,
-                                                    rrdtool_set)
+                                                    rrd_set)
                 print(datetime.datetime.now().strftime('%Y-%m-%d\t%H:%M:%S')),
 
             # --- Get rain fall measurement ---
@@ -379,9 +375,10 @@ def main():
             if rrdtool_enable_update:
                 sensor_data = []
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-                    sensor_data.append((key, value[s.VALUE]))
-                rrd[0].update(s.RRDTOOL_RRD_FILE_FAST, sensor_data[:-1])
-                rrd[1].update(s.RRDTOOL_RRD_FILE_SLOW, sensor_data[-1:])
+                    sensor_data.append(value[s.VALUE])
+                sensor_data = [str(i) for i in sensor_data]
+                rrdtool.update(s.RRDTOOL_RRD_FILE_FAST, 'N:' + ':'.join(sensor_data[:-1]))
+                rrdtool.update(s.RRDTOOL_RRD_FILE_SLOW, 'N:' + ':'.join(sensor_data[-1:]))
 
             # --- Delay to give update rate ---
             next_reading += s.UPDATE_RATE
