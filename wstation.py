@@ -41,7 +41,7 @@ import DHT22
 import DS18B20
 import thingspeak
 import settings as s
-#import rrdtool
+import rrdtool
 
 
 #===============================================================================
@@ -115,7 +115,7 @@ def reset_rain_acc():
 #===============================================================================
 # DRAW SCREEN
 #===============================================================================
-def draw_screen(thingspeak_enable_update, key, sensors):
+def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
     
     os.system('clear')
     
@@ -126,7 +126,7 @@ def draw_screen(thingspeak_enable_update, key, sensors):
     display_string.append('Next precip. acc. reset at '+ str(s.PRECIP_ACC_RESET_TIME))
 
     #Display thingspeak field data set up
-    if thingspeak_enable_update:
+    if thingspeak_enable:
         display_string.append('')
         display_string.append('Thingspeak write api key: '+key)
         display_string.append('')
@@ -137,6 +137,14 @@ def draw_screen(thingspeak_enable_update, key, sensors):
             display_string.append('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
                                     '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
     
+    #Display RRDtool set up
+    if rrd_enable:
+        display_string.append('')
+        display_string.append('RRDtool set up:')
+        for i in range(0,len(rrd_set)):
+            display_string += rrd_set[i]
+            display_string.append('')
+
     #Create table header
     display_string.append('')
     header ='Date\t\tTime\t\t'
@@ -171,6 +179,7 @@ def toggle_LED():
     #Toggle LED
     pi.write(s.LED_PIN, not(pi.read(s.LED_PIN)))
 
+
 #===============================================================================
 # MAIN
 #===============================================================================
@@ -189,13 +198,8 @@ def main():
     door_sensor_enable           = True
     rrdtool_enable_update        = True
     
-    thingspeak_write_api_key     = ''
-    
     sensors                      = {}
-    sensor_data                  = {}
-    
-    precip_tick_count = 0
-    precip_accu       = 0
+    rows                         = 0
 
     #Check and action passed arguments
     if len(sys.argv) > 1:
@@ -205,6 +209,8 @@ def main():
             in_sensor_enable = False
         if '--rainsensor=OFF' in sys.argv:
             rain_sensor_enable = False
+        if '--rrdtool=OFF' in sys.argv:
+            rrdtool_enable_update = False
         if '--thingspeak=OFF' in sys.argv:
             thingspeak_enable_update = False
         if '--quiet' in sys.argv:
@@ -220,18 +226,32 @@ def main():
                   '- disables rainfall monitoring')
             print('   --thingspeak=OFF   ',
                   '- disable update to ThingSpeak')
+            print('   --rrdtool=OFF   ',
+                  '- disable round robin database')
             print('   --quiet            ',
                   '- outputs data to screen')
             sys.exit(0)
-  
-   #Prepare sensor list
+
+
+    #Set up LED hardware and thread
+    pi.set_mode(s.LED_PIN, pigpio.OUTPUT)
+    ledThread = threading.Thread(target=toggle_LED)
+    ledThread.daemon = True
+    ledThread.start()
+
+    
+   #Set up outside temperature sensor
     if out_sensor_enable:
+        #Add to sensor list
         sensors[s.OUT_TEMP_NAME] = [0,0,0]
         sensors[s.OUT_TEMP_NAME][s.TS_FIELD] = s.OUT_TEMP_TS_FIELD 
         sensors[s.OUT_TEMP_NAME][s.VALUE] = 0
         sensors[s.OUT_TEMP_NAME][s.UNIT] = s.OUT_TEMP_UNIT
-                
+
+
+    #Set up inside temperature sensor
     if in_sensor_enable:
+        #Add to sensor list
         sensors[s.IN_TEMP_NAME] = [0,0,0]
         sensors[s.IN_TEMP_NAME][s.TS_FIELD] = s.IN_TEMP_TS_FIELD 
         sensors[s.IN_TEMP_NAME][s.VALUE] = 0
@@ -240,14 +260,30 @@ def main():
         sensors[s.IN_HUM_NAME][s.TS_FIELD] = s.IN_HUM_TS_FIELD 
         sensors[s.IN_HUM_NAME][s.VALUE] = 0
         sensors[s.IN_HUM_NAME][s.UNIT] = s.IN_HUM_UNIT
+        
+        #Set up hardware
+        DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
 
+    
+    #Set up door sensor
     if door_sensor_enable:
+        #Add to sensor list
         sensors[s.DOOR_NAME] = [0,0,0]
         sensors[s.DOOR_NAME][s.TS_FIELD] = s.DOOR_TS_FIELD 
         sensors[s.DOOR_NAME][s.VALUE] = 0
         sensors[s.DOOR_NAME][s.UNIT] = s.DOOR_UNIT
+        
+        #Set up hardware
+        pi.set_mode(s.DOOR_SENSOR_PIN, pigpio.INPUT)
 
+
+    #Set up rain sensor
     if rain_sensor_enable:
+        #Set up inital values for variables
+        precip_tick_count            = 0
+        precip_accu                  = 0
+        
+        #Add to sensor list
         sensors[s.PRECIP_RATE_NAME] = [0,0,0]
         sensors[s.PRECIP_RATE_NAME][s.TS_FIELD] = s.PRECIP_RATE_TS_FIELD 
         sensors[s.PRECIP_RATE_NAME][s.VALUE] = 0
@@ -255,43 +291,90 @@ def main():
         sensors[s.PRECIP_ACCU_NAME] = [0,0,0]
         sensors[s.PRECIP_ACCU_NAME][s.TS_FIELD] = s.PRECIP_ACCU_TS_FIELD 
         sensors[s.PRECIP_ACCU_NAME][s.VALUE] = 0
-        sensors[s.PRECIP_ACCU_NAME][s.UNIT] = s.PRECIP_ACCU_UNIT                        
- 
-    #Prepare rrd data
-    
-    
-
-    #Set up pin outs
-    pi.set_mode(s.PRECIP_SENSOR_PIN, pigpio.INPUT)
-    pi.set_mode(s.DOOR_SENSOR_PIN, pigpio.INPUT)
-    pi.set_mode(s.LED_PIN, pigpio.OUTPUT)
-    DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
-    rain_gauge = pi.callback(s.PRECIP_SENSOR_PIN, pigpio.FALLING_EDGE, 
-                             count_rain_ticks)
-    
-    #Set up LED flashing thread
-    ledThread = threading.Thread(target=toggle_LED)
-    ledThread.daemon = True
-    ledThread.start()
-    
-    #Set up rain acc reset thread and reset precip accumulated variable
-    if rain_sensor_enable:
+        sensors[s.PRECIP_ACCU_NAME][s.UNIT] = s.PRECIP_ACCU_UNIT
+        
+        #Set up rain gauge hardware
+        pi.set_mode(s.PRECIP_SENSOR_PIN, pigpio.INPUT)
+        rain_gauge = pi.callback(s.PRECIP_SENSOR_PIN, pigpio.FALLING_EDGE, 
+                                    count_rain_ticks)
+                                    
+        #Set up rain sensor thread
         rain_thread_next_call += prepare_reset_time(0)
-        rainThread = threading.Timer(rain_thread_next_call-time.time(), reset_rain_acc)
+        rainThread = threading.Timer(rain_thread_next_call - time.time(), 
+                                        reset_rain_acc)
         rainThread.daemon = True
         rainThread.start()
+
+ 
+    #Set up rrd data and tool
+    if rrdtool_enable_update:
+        #Set up inital values for variables
+        rrd_data_sources = []
+        rra_files        = []
+        rrd_set          = []
+    
+        rrd_data_sources = ['DS:' + s.OUT_TEMP_NAME.replace(' ','_') + 
+                                ':' + s.OUT_TEMP_TYPE + 
+                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                ':' + str(s.OUT_TEMP_MAX) + 
+                                ':' + str(s.OUT_TEMP_MIN),
+                            'DS:' + s.IN_TEMP_NAME.replace(' ','_') + 
+                                ':' + s.IN_TEMP_TYPE + 
+                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                ':' + str(s.IN_TEMP_MAX) + 
+                                ':' + str(s.IN_TEMP_MIN),    
+                            'DS:' + s.IN_HUM_NAME.replace(' ','_') + 
+                                ':' + s.IN_HUM_TYPE + 
+                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                ':' + str(s.IN_HUM_MAX) + 
+                                ':' + str(s.IN_HUM_MIN),    
+                            'DS:' + s.DOOR_NAME.replace(' ','_') + 
+                                ':' + s.DOOR_TYPE + 
+                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                ':' + str(s.DOOR_MAX) + 
+                                ':' + str(s.DOOR_MIN),
+                            'DS:' + s.PRECIP_RATE_NAME.replace(' ','_') + 
+                                ':' + s.PRECIP_RATE_TYPE + 
+                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                ':' + str(s.PRECIP_RATE_MAX) + 
+                                ':' + str(s.PRECIP_RATE_MIN),
+                            'DS:' + s.PRECIP_ACCU_NAME.replace(' ','_') + 
+                                ':' + s.PRECIP_ACCU_TYPE + 
+                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                ':' + str(s.PRECIP_ACCY_MAX) + 
+                                ':' + str(s.PRECIP_RACCU_MIN)]
+                            
+        for i in range(0,len(s.RRDTOOL_RRA),3):
+            rra_files.append('RRA:' + s.RRDTOOL_RRA[i] + ':0.5:' + 
+                                ((s.RRDTOOL_RRA[i+1]*60)/s.UPDATE_RATE) + ':' + 
+                                (((s.RRDTOOL_RRA[i+2])*24*60)/s.RRDTOOL_RRA[i+1]))
+    
+        rrdtool_set.append((s.RRDTOOL_RRD_FILE_FAST,
+                            '--step', s.UPDATE_RATE,
+                            '--start', '0', 
+                            rrd_data_sources[:-1], 
+                            rra_files))
+                        
+        rrdtool_set.append((s.RRDTOOL_RRD_FILE_SLOW,
+                            '--step', s.UPDATE_RATE,
+                            '--start', '0', 
+                            rrd_data_sources[-1:], 
+                            rra_files[1:]))
+        
+        for i in rrdtool_set:
+            rrdtool.create(i)
+
     
     #Set up thingpseak
     if thingspeak_enable_update:
+        #Set up inital values for variables
+        sensor_data                  = {}
+        thingspeak_write_api_key     = ''
+        
+        #Set up thingspeak account
         thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
                                                     s.THINGSPEAK_API_KEY_FILENAME)
 
-    #if rrdtool_enable_update:
-     #   rrdtool.create(
-
-    #Draw screen
-    if screen_output:
-        rows = draw_screen(thingspeak_enable_update, thingspeak_acc.api_key, sensors)
 
     #Set next loop time
     next_reading = time.time()
@@ -304,9 +387,12 @@ def main():
             #Print loop start time
             if screen_output:
                 rows -= 1
-                if rows < 0:
-                    rows = draw_screen(thingspeak_enable_update, 
-                                        thingspeak_acc.api_key, sensors)
+                if rows <= 0:
+                    rows = draw_screen(sensors,
+                                        thingspeak_enable_update, 
+                                        thingspeak_acc.api_key,
+                                        rrdtool_enable_update,
+                                        rrdtool_set)
                 print(datetime.datetime.now().strftime('%Y-%m-%d\t%H:%M:%S')),
 
             #Get rain fall measurement
