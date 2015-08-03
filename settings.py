@@ -53,12 +53,17 @@ UPDATE_RATE          = 5 # seconds
 RRD_HEARTBEAT        = 2 # multiplier
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
+
+
+#Sensor list set up
 TS_FIELD             = 0
 UNIT                 = 1
 VALUE                = 2
 
 
 # --- RRDTool set up ---
+RRDTOOL_RRD_FILE_FAST= 'weather_fast_data.rrd'
+RRDTOOL_RRD_FILE_SLOW= 'weather_slow_data.rrd'
 RRDTOOL_HEARTBEAT    = 2 # multiplier
 RRDTOOL_RRA          = ('AVERAGE',    5,  0.125,  # Consolidation type, Resolution (minutes), Recording Period (days)
                         'AVERAGE',   15,      1,
@@ -69,7 +74,7 @@ RRDTOOL_RRA          = ('AVERAGE',    5,  0.125,  # Consolidation type, Resoluti
                         'AVERAGE', 1440,    365,
                         'MIN',     1440,    365,
                         'MAX',     1440,    365)
-                        
+ 
 
 # --- Set up thingspeak ----
 THINGSPEAK_HOST_ADDR         = 'api.thingspeak.com:80'
@@ -127,7 +132,7 @@ PRECIP_ACCU_MIN       = -5
 PRECIP_ACCU_MAX       = 500
 PRECIP_ACCU_TYPE      = 'GAUGE'
 PRECIP_TICK_MEASURE   = 0.5677 #millimeters per tick
-PRECIP_ACC_RESET_TIME = [23,59,0,0] #hour, minute, second, microsecond
+PRECIP_ACC_RESET_TIME = (23,59,0,0) #hour, minute, second, microsecond
 
 
 # --- Set up flashing LED ----
