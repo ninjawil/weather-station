@@ -132,7 +132,7 @@ PRECIP_ACCU_MIN       = -5
 PRECIP_ACCU_MAX       = 500
 PRECIP_ACCU_TYPE      = 'GAUGE'
 PRECIP_TICK_MEASURE   = 0.5677 #millimeters per tick
-PRECIP_ACC_RESET_TIME = (23,59,0,0) #hour, minute, second, microsecond
+PRECIP_ACC_RESET_TIME = (00,00,00,00) #hour, minute, second, microsecond
 
 
 # --- Set up flashing LED ----
