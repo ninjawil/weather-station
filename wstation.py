@@ -119,33 +119,42 @@ def draw_screen(thingspeak_enable_update, key, sensors):
     
     os.system('clear')
     
-    print('Next precip. acc. reset at '+ str(s.PRECIP_ACC_RESET_TIME))
+    display_string = []
+    
+    display_string.append('WEATHER STATION')
+    display_string.append('')
+    display_string.append('Next precip. acc. reset at '+ str(s.PRECIP_ACC_RESET_TIME))
 
-    row_count = 3
-        
+    #Display thingspeak field data set up
     if thingspeak_enable_update:
-        print('\nThingspeak write api key: '+key)
-        print('\nThingspeak field set up:')
-        print('  Field\tName\t\tValue\tUnit')
-        print('  ---------------------------------------')
-        row_count = 6
+        display_string.append('')
+        display_string.append('Thingspeak write api key: '+key)
+        display_string.append('')
+        display_string.append('Thingspeak field set up:')
+        display_string.append('  Field\tName\t\tValue\tUnit')
+        display_string.append('  ---------------------------------------')
         for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-            row_count += 1
-            print('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
-                    '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
-            
-    header ='\nDate\t\tTime\t\t'
+            display_string.append('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
+                                    '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
+    
+    #Create table header
+    display_string.append('')
+    header ='Date\t\tTime\t\t'
     header_names = ''
     for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
         header_names = header_names + key +'\t'
     header = header + header_names + 'TS Send'
-    print(header)
-    print('=' * (len(header) + 5 * header.count('\t')))
-    row_count += 3
-    
+    display_string.append(header)
+    display_string.append('=' * (len(header) + 5 * header.count('\t')))
+ 
+    #Find the total number of rows on screen
     rows, columns = os.popen('stty size', 'r').read().split()
     
-    return(int(rows) - row_count)
+    #Draw screen
+    print('\n'.join(display_string))
+    
+    #Return number of rows left for data
+    return(int(rows) - len(display_string))
 
 
 #===============================================================================
