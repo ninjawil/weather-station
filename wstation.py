@@ -163,20 +163,7 @@ def main():
         if '--quiet' in sys.argv:
             screen_output = False 
         if '--help' in sys.argv:
-            print('usage: ./wstation.py {command}')
-            print('')
-            print('   --outsensor=OFF    ',
-                  '- disables outside temperature monitoring')
-            print('   --insensor=OFF     ',
-                  '- disables inside temperature monitoring')
-            print('   --rainsensor=OFF   ',
-                  '- disables rainfall monitoring')
-            print('   --thingspeak=OFF   ',
-                  '- disable update to ThingSpeak')
-            print('   --rrdtool=OFF   ',
-                  '- disable round robin database')
-            print('   --quiet            ',
-                  '- outputs data to screen')
+            screen_op.help_menu()
             sys.exit(0)
 
 
@@ -334,11 +321,11 @@ def main():
             if screen_output:
                 rows -= 1
                 if rows <= 0:
-                    rows = draw_screen(sensors,
-                                        thingspeak_enable_update, 
-                                        thingspeak_acc.api_key,
-                                        rrdtool_enable_update,
-                                        rrdtool_set)
+                    rows = screen_op.draw_screen(sensors,
+                                                    thingspeak_enable_update, 
+                                                    thingspeak_acc.api_key,
+                                                    rrdtool_enable_update,
+                                                    rrdtool_set)
                 print(datetime.datetime.now().strftime('%Y-%m-%d\t%H:%M:%S')),
 
             # --- Get rain fall measurement ---
