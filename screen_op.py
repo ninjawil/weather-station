@@ -81,12 +81,24 @@ def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
                                     '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
     
     #Display RRDtool set up
-    #if rrd_enable:
-    #    display_string.append('')
-    #    display_string.append('RRDtool set up:')
-    #    for i in range(0,len(rrd_set)):
-    #        display_string += rrd_set[i]
-    #        display_string.append('')
+    if rrd_enable:
+        #rrd display header
+        display_string.append('')
+        display_string.append('RRDtool set up:')
+        
+        #Work out shortest list
+        if len(rrd_set[0]) < len(rrd_set[1]):
+            short_list_ref = 0
+        else:
+            short_list_ref = 1
+
+        #Make lists equal in length
+        size_difference = len(rrd_set[not short_list_ref]) - len(rrd_set[short_list_ref])
+        rrd_set[short_list_ref].extend([''] * size_difference)
+        
+        #Merge lists
+        display_string += ['t'+x+'\t\t'+y for x,y in zip(rrd_set[0], rrd_set[1])]
+        display_string.append('')
 
     #Create table header
     display_string.append('')
