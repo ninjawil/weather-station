@@ -1,0 +1,115 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:special
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:weather_station-cache
+EELAYER 27 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title "Weather Station"
+Date "4 aug 2015"
+Rev "01"
+Comp "Will De Freitas"
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L GND #PWR2
+U 1 1 55C10308
+P 2500 3050
+F 0 "#PWR2" H 2500 3050 30  0001 C CNN
+F 1 "GND" H 2500 2980 30  0001 C CNN
+F 2 "" H 2500 3050 60  0000 C CNN
+F 3 "" H 2500 3050 60  0000 C CNN
+	1    2500 3050
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R1
+U 1 1 55C103C4
+P 2500 1600
+F 0 "R1" V 2580 1600 40  0000 C CNN
+F 1 "10K" V 2507 1601 40  0000 C CNN
+F 2 "~" V 2430 1600 30  0000 C CNN
+F 3 "~" H 2500 1600 30  0000 C CNN
+	1    2500 1600
+	1    0    0    -1  
+$EndComp
+$Comp
+L SPST SW1
+U 1 1 55C10424
+P 2500 2550
+F 0 "SW1" H 2500 2650 70  0000 C CNN
+F 1 "REED" H 2500 2450 70  0000 C CNN
+F 2 "~" H 2500 2550 60  0000 C CNN
+F 3 "~" H 2500 2550 60  0000 C CNN
+	1    2500 2550
+	0    -1   -1   0   
+$EndComp
+Text GLabel 3600 1950 2    60   Input ~ 0
+GPIO22
+Text Notes 2350 1000 0    60   ~ 0
+Rain Gauge
+$Comp
+L R R2
+U 1 1 55C10576
+P 3200 1950
+F 0 "R2" V 3280 1950 40  0000 C CNN
+F 1 "10K" V 3207 1951 40  0000 C CNN
+F 2 "~" V 3130 1950 30  0000 C CNN
+F 3 "~" H 3200 1950 30  0000 C CNN
+	1    3200 1950
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	3450 1950 3600 1950
+Wire Wire Line
+	2950 1950 2500 1950
+Wire Wire Line
+	2500 1850 2500 2050
+Connection ~ 2500 1950
+Wire Wire Line
+	2500 1350 2500 1250
+$Comp
+L +5V #PWR1
+U 1 1 55C10653
+P 2500 1250
+F 0 "#PWR1" H 2500 1340 20  0001 C CNN
+F 1 "+5V" H 2500 1340 30  0000 C CNN
+F 2 "" H 2500 1250 60  0000 C CNN
+F 3 "" H 2500 1250 60  0000 C CNN
+	1    2500 1250
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
