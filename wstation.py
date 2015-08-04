@@ -93,7 +93,7 @@ def prepare_reset_time(days_to_add):
                                 microsecond=s.PRECIP_ACC_RESET_TIME[3])
     reset_time += datetime.timedelta(days=days_to_add)
         
-    return (reset_time - now).total_seconds()
+    return reset_time.total_seconds()
     
 
 #===============================================================================
