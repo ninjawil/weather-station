@@ -31,6 +31,7 @@
 #===============================================================================
 # Import modules
 #===============================================================================
+import os
 import sys
 import threading
 import time
@@ -93,7 +94,7 @@ def prepare_reset_time(days_to_add):
                                 microsecond=s.PRECIP_ACC_RESET_TIME[3])
     reset_time += datetime.timedelta(days=days_to_add)
         
-    return reset_time.total_seconds()
+    return (reset_time - now).total_seconds()
     
 
 #===============================================================================
@@ -291,9 +292,10 @@ def main():
                         '--start', 'now'])
         rrd_set[1] +=  rrd_data_sources[-1:] + rra_files[1:]
         
+        #Create RRD files if none exist
         for i in range(0,len(rrd_set)):
-            rrdtool.create(rrd_set[i])
-
+            if not os.path.exists(rrd_set[i][0]):
+                rrdtool.create(rrd_set[i])
     
     #--- Set up thingspeak account ---
     if thingspeak_enable_update:
@@ -367,9 +369,9 @@ def main():
                     sensor_data[value[s.TS_FIELD]] = value[s.VALUE]
                 response = thingspeak_acc.update_channel(sensor_data)
                 if screen_output:
-                    print('\t' + response.reason)
+                    print('\t' + response.reason),
             elif screen_output:
-                print('\tN/A')
+                print('\tN/A'),
                 
             # --- Add data to RRD ---
             if rrdtool_enable_update:
@@ -379,6 +381,10 @@ def main():
                 sensor_data = [str(i) for i in sensor_data]
                 rrdtool.update(s.RRDTOOL_RRD_FILE_FAST, 'N:' + ':'.join(sensor_data[:-1]))
                 rrdtool.update(s.RRDTOOL_RRD_FILE_SLOW, 'N:' + ':'.join(sensor_data[-1:]))
+                if screen_output:
+                    print('\t\tOK')
+            elif screen_output:
+                print('\t\tN/A')
 
             # --- Delay to give update rate ---
             next_reading += s.UPDATE_RATE

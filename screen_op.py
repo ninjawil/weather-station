@@ -97,7 +97,7 @@ def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
         rrd_set[short_list_ref].extend([''] * size_difference)
         
         #Merge lists
-        display_string += ['t'+x+'\t\t'+y for x,y in zip(rrd_set[0], rrd_set[1])]
+        display_string += ['\t'+"{:<40}".format(x)+'\t\t'+y for x,y in zip(rrd_set[0], rrd_set[1])]
         display_string.append('')
 
     #Create table header
@@ -106,7 +106,7 @@ def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
     header_names = ''
     for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
         header_names = header_names + key +'\t'
-    header = header + header_names + 'TS Send'
+    header = header + header_names + 'TS Send\t\tRRD Write'
     display_string.append(header)
     display_string.append('=' * (len(header) + 5 * header.count('\t')))
  

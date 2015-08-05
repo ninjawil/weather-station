@@ -1,7 +1,7 @@
 # Folders & Directories #
 #########################
-*/rrd/*
-*/schematics/*
+**/rrd/**
+**/schematics/**
 
 # Compiled source #
 ###################
