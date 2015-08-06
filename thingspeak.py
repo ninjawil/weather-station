@@ -33,6 +33,7 @@
 #=======================================================================
 import httplib
 import urllib
+import time
 
 
 class ThingspeakAcc():
@@ -90,6 +91,10 @@ class ThingspeakAcc():
 
         data = response.read()
         conn.close()
+        
+        #Convert created at time to seconds since epoch
+        feed_time = time.strptime(response['created_at'], '%Y-%m-%dT%H:%M:%SZ')
+        response['created_at'] = time.mktime(feed_time)
         
         return response
 
