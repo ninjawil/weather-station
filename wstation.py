@@ -147,6 +147,7 @@ def main():
     rrdtool_enable_update        = True
     
     sensors                      = {}
+    rrd_data_sources             = []
     rows                         = 0
 
     # --- Check and action passed arguments ---
@@ -244,10 +245,9 @@ def main():
     # --- Set up rrd data and tool ---
     if rrdtool_enable_update:
         #Set up inital values for variables
-        rrd_data_sources = []
         rra_files        = []
-        rrd_set          = []
-    
+        last_data_values = []
+  
         rrd_data_sources = ['DS:' + s.OUT_TEMP_NAME.replace(' ','_') + 
                                 ':' + s.OUT_TEMP_TYPE + 
                                 ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
@@ -284,18 +284,16 @@ def main():
                                 str((s.RRDTOOL_RRA[i+1]*60)/s.UPDATE_RATE) + ':' + 
                                 str(((s.RRDTOOL_RRA[i+2])*24*60)/s.RRDTOOL_RRA[i+1]))
     
-        rrd_set.append([s.RRDTOOL_RRD_FILE_FAST, '--step', str(s.UPDATE_RATE),
-                        '--start', 'now'])
-        rrd_set[0] +=  rrd_data_sources[:-1] + rra_files
-                        
-        rrd_set.append([s.RRDTOOL_RRD_FILE_SLOW, '--step', str(s.UPDATE_RATE),
-                        '--start', 'now'])
-        rrd_set[1] +=  rrd_data_sources[-1:] + rra_files[1:]
+        rrd_set = [s.RRDTOOL_RRD_FILE, '--step', str(s.UPDATE_RATE), '--start', 'now']
+        rrd_set +=  rrd_data_sources + rra_files
         
         #Create RRD files if none exist
-        for i in range(0,len(rrd_set)):
-            if not os.path.exists(rrd_set[i][0]):
-                rrdtool.create(rrd_set[i])
+        if not os.path.exists(s.RRDTOOL_RRD_FILE):
+            rrdtool.create(rrd_set)
+        else:
+            last_data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, LAST)
+            precip_accu = last_data_values[4]
+
     
     #--- Set up thingspeak account ---
     if thingspeak_enable_update:
