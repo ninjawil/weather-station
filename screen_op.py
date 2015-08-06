@@ -70,14 +70,14 @@ def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
 
     #Display thingspeak field data set up
     if thingspeak_enable:
-        display_string.append('')
-        display_string.append('Thingspeak write api key: '+key)
-        display_string.append('')
-        display_string.append('Thingspeak field set up:')
-        display_string.append('  Field\tName\t\tValue\tUnit')
-        display_string.append('  ---------------------------------------')
+        setup_string.append('')
+        setup_string.append('Thingspeak write api key: '+key)
+        setup_string.append('')
+        ts_string.append('Thingspeak field set up:')
+        ts_string.append('  Field\tName\t\tValue\tUnit')
+        ts_string.append('  ---------------------------------------')
         for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-            display_string.append('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
+            ts_string.append('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
                                     '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
     
     #Display RRDtool set up
