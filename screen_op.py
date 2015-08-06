@@ -63,42 +63,44 @@ def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
     os.system('clear')
     
     display_string = []
+    setup_string   = [[],[]]
     
-    display_string.append('WEATHER STATION')
-    display_string.append('')
-    display_string.append('Next precip. acc. reset at '+ str(s.PRECIP_ACC_RESET_TIME))
+    display_string = [  'WEATHER STATION',
+                        '',
+                        'Next precip. acc. reset at '+ str(s.PRECIP_ACC_RESET_TIME)]
 
     #Display thingspeak field data set up
     if thingspeak_enable:
-        setup_string.append('')
-        setup_string.append('Thingspeak write api key: '+key)
-        setup_string.append('')
-        ts_string.append('Thingspeak field set up:')
-        ts_string.append('  Field\tName\t\tValue\tUnit')
-        ts_string.append('  ---------------------------------------')
+        setup_string[0]  = ['',
+                            'Thingspeak field set up:',
+                            '',
+                            'Thingspeak write api key: '+key,
+                            '  Field\tName\t\tValue\tUnit',
+                            '  ---------------------------------------']
         for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-            ts_string.append('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
+            setup_string[0].append('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
                                     '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
     
     #Display RRDtool set up
     if rrd_enable:
         #rrd display header
-        display_string.append('')
-        display_string.append('RRDtool set up:')
+        setup_string[1] = [ '',
+                            'RRDtool set up:']
+        setup_string[1] += rrd_set
         
-        #Work out shortest list
-        if len(rrd_set[0]) < len(rrd_set[1]):
-            short_list_ref = 0
-        else:
-            short_list_ref = 1
+    #Work out shortest list
+    if len(setup_string[0]) < len(setup_string[1]):
+        short_list_ref = 0
+    else:
+        short_list_ref = 1
 
-        #Make lists equal in length
-        size_difference = len(rrd_set[not short_list_ref]) - len(rrd_set[short_list_ref])
-        rrd_set[short_list_ref].extend([''] * size_difference)
+    #Make lists equal in length
+    size_difference = len(setup_string[not short_list_ref]) - len(setup_string[short_list_ref])
+    setup_string[short_list_ref].extend([''] * size_difference)
         
-        #Merge lists
-        display_string += ['\t'+"{:<40}".format(x)+'\t\t'+y for x,y in zip(rrd_set[0], rrd_set[1])]
-        display_string.append('')
+    #Merge lists
+    display_string += ['\t'+"{:<50}".format(x)+'\t\t'+y for x,y in zip(setup_string[0], setup_string[1])]
+    display_string.append('')
 
     #Create table header
     display_string.append('')
