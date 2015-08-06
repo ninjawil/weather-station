@@ -78,6 +78,7 @@ RRDTOOL_RRA          = ('LAST',       5,  0.125,  # Consolidation type, Resoluti
 # --- Set up thingspeak ----
 THINGSPEAK_HOST_ADDR         = 'api.thingspeak.com:80'
 THINGSPEAK_API_KEY_FILENAME  = 'thingspeak.txt'
+THINGSPEAK_CHANNEL_ID        = '39722'
 
 
 # --- Set up outside DS18B20 sensor ----
