@@ -183,6 +183,14 @@ def main():
         sensors[s.OUT_TEMP_NAME][s.TS_FIELD] = s.OUT_TEMP_TS_FIELD 
         sensors[s.OUT_TEMP_NAME][s.VALUE] = 0
         sensors[s.OUT_TEMP_NAME][s.UNIT] = s.OUT_TEMP_UNIT
+        
+        #Prepare RRD data sources
+        if rrdtool_enable_update:
+            rrd_data_sources += ['DS:' + s.OUT_TEMP_NAME.replace(' ','_') + 
+                                    ':' + s.OUT_TEMP_TYPE + 
+                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                    ':' + str(s.OUT_TEMP_MIN) + 
+                                    ':' + str(s.OUT_TEMP_MAX)]
 
 
     # --- Set up inside temperature sensor ---
@@ -199,6 +207,19 @@ def main():
         
         #Set up hardware
         DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
+        
+        #Prepare RRD data sources
+        if rrdtool_enable_update:
+            rrd_data_sources += ['DS:' + s.IN_TEMP_NAME.replace(' ','_') + 
+                                    ':' + s.IN_TEMP_TYPE + 
+                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                    ':' + str(s.IN_TEMP_MIN) + 
+                                    ':' + str(s.IN_TEMP_MAX),    
+                                'DS:' + s.IN_HUM_NAME.replace(' ','_') + 
+                                    ':' + s.IN_HUM_TYPE + 
+                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                    ':' + str(s.IN_HUM_MIN) + 
+                                    ':' + str(s.IN_HUM_MAX)]
 
     
     # --- Set up door sensor ---
@@ -211,6 +232,14 @@ def main():
         
         #Set up hardware
         pi.set_mode(s.DOOR_SENSOR_PIN, pigpio.INPUT)
+        
+        #Prepare RRD data sources
+        if rrdtool_enable_update:
+            rrd_data_sources += ['DS:' + s.DOOR_NAME.replace(' ','_') + 
+                                    ':' + s.DOOR_TYPE + 
+                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                    ':' + str(s.DOOR_MIN) + 
+                                    ':' + str(s.DOOR_MAX)]
 
 
     # --- Set up rain sensor ---
@@ -233,13 +262,27 @@ def main():
         pi.set_mode(s.PRECIP_SENSOR_PIN, pigpio.INPUT)
         rain_gauge = pi.callback(s.PRECIP_SENSOR_PIN, pigpio.FALLING_EDGE, 
                                     count_rain_ticks)
-                                    
+        
+        #Prepare RRD data sources
+        if rrdtool_enable_update:
+            rrd_data_sources += ['DS:' + s.PRECIP_RATE_NAME.replace(' ','_') + 
+                                    ':' + s.PRECIP_RATE_TYPE + 
+                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                    ':' + str(s.PRECIP_RATE_MIN) + 
+                                    ':' + str(s.PRECIP_RATE_MAX),
+                                'DS:' + s.PRECIP_ACCU_NAME.replace(' ','_') + 
+                                    ':' + s.PRECIP_ACCU_TYPE + 
+                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
+                                    ':' + str(s.PRECIP_ACCU_MIN) + 
+                                    ':' + str(s.PRECIP_ACCU_MAX)]                                    
+        
         #Set up rain sensor thread
         rain_thread_next_call += prepare_reset_time(0)
         rainThread = threading.Timer(rain_thread_next_call - time.time(), 
                                         reset_rain_acc)
         rainThread.daemon = True
         rainThread.start()
+
 
  
     # --- Set up rrd data and tool ---
@@ -248,42 +291,13 @@ def main():
         rra_files        = []
         last_data_values = []
   
-        rrd_data_sources = ['DS:' + s.OUT_TEMP_NAME.replace(' ','_') + 
-                                ':' + s.OUT_TEMP_TYPE + 
-                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.OUT_TEMP_MIN) + 
-                                ':' + str(s.OUT_TEMP_MAX),
-                            'DS:' + s.IN_TEMP_NAME.replace(' ','_') + 
-                                ':' + s.IN_TEMP_TYPE + 
-                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.IN_TEMP_MIN) + 
-                                ':' + str(s.IN_TEMP_MAX),    
-                            'DS:' + s.IN_HUM_NAME.replace(' ','_') + 
-                                ':' + s.IN_HUM_TYPE + 
-                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.IN_HUM_MIN) + 
-                                ':' + str(s.IN_HUM_MAX),    
-                            'DS:' + s.DOOR_NAME.replace(' ','_') + 
-                                ':' + s.DOOR_TYPE + 
-                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.DOOR_MIN) + 
-                                ':' + str(s.DOOR_MAX),
-                            'DS:' + s.PRECIP_RATE_NAME.replace(' ','_') + 
-                                ':' + s.PRECIP_RATE_TYPE + 
-                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.PRECIP_RATE_MIN) + 
-                                ':' + str(s.PRECIP_RATE_MAX),
-                            'DS:' + s.PRECIP_ACCU_NAME.replace(' ','_') + 
-                                ':' + s.PRECIP_ACCU_TYPE + 
-                                ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                ':' + str(s.PRECIP_ACCU_MIN) + 
-                                ':' + str(s.PRECIP_ACCU_MAX)]
-                            
+        #Prepare RRA files
         for i in range(0,len(s.RRDTOOL_RRA),3):
             rra_files.append('RRA:' + s.RRDTOOL_RRA[i] + ':0.5:' + 
                                 str((s.RRDTOOL_RRA[i+1]*60)/s.UPDATE_RATE) + ':' + 
                                 str(((s.RRDTOOL_RRA[i+2])*24*60)/s.RRDTOOL_RRA[i+1]))
-    
+                                
+        #Prepare RRD set
         rrd_set = [s.RRDTOOL_RRD_FILE, '--step', str(s.UPDATE_RATE), '--start', 'now']
         rrd_set +=  rrd_data_sources + rra_files
         
@@ -291,8 +305,9 @@ def main():
         if not os.path.exists(s.RRDTOOL_RRD_FILE):
             rrdtool.create(rrd_set)
         else:
-            last_data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, LAST)
-            precip_accu = last_data_values[4]
+            if rain_sensor_enable:
+                last_data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, LAST)
+                precip_accu = last_data_values[4]
 
     
     #--- Set up thingspeak account ---
