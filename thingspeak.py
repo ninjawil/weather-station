@@ -39,9 +39,10 @@ class ThingspeakAcc():
     
     '''Sets up thingspeak accounts'''
     
-    def __init__(self, acc_host_addr, key_file):
+    def __init__(self, acc_host_addr, key_file, acc_channel_id):
         self.host_addr = acc_host_addr
         self.api_key = self.get_write_api_key(key_file)
+        self.channel_id = acc_channel_id
         
         
     #===================================================================
@@ -62,6 +63,29 @@ class ThingspeakAcc():
                     
         conn = httplib.HTTPConnection(self.host_addr)
         conn.request('POST', '/update', params, headers)
+        response = conn.getresponse()
+
+        data = response.read()
+        conn.close()
+        
+        return response
+
+ 
+    #===================================================================
+    # GET LAST FEED
+    #===================================================================
+    def get_last_feed_entry(self):
+        
+        #Create POST data
+        data_to_send = {}
+        data_to_send['key'] = self.api_key
+   
+        params = urllib.urlencode(data_to_send)
+        headers = {'Content-type': 'application/x-www-form-urlencoded',
+                    'Accept': 'text/plain'}
+  
+        conn = httplib.HTTPConnection(self.host_addr)
+        conn.request('GET', '/channels/' + self.channel_id + '/feeds/last', params, headers)
         response = conn.getresponse()
 
         data = response.read()
