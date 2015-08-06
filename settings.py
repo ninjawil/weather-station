@@ -62,8 +62,7 @@ VALUE                = 2
 
 
 # --- RRDTool set up ---
-RRDTOOL_RRD_FILE_FAST= 'weather_fast_data.rrd'
-RRDTOOL_RRD_FILE_SLOW= 'weather_slow_data.rrd'
+RRDTOOL_RRD_FILE[0]= 'weather_data.rrd'
 RRDTOOL_HEARTBEAT    = 2 # multiplier
 RRDTOOL_RRA          = ('LAST',       5,  0.125,  # Consolidation type, Resolution (minutes), Recording Period (days)
                         'AVERAGE',   15,      1,
