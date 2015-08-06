@@ -81,37 +81,6 @@ def count_rain_ticks(gpio, level, tick):
         last_rising_edge = tick  
         precip_tick_count += 1
 
- 
-#===============================================================================
-# PREPARE RESET TIME
-#===============================================================================
-def prepare_reset_time(days_to_add):
-    
-    now = datetime.datetime.now()
-    reset_time = now.replace(hour=s.PRECIP_ACC_RESET_TIME[0], 
-                                minute=s.PRECIP_ACC_RESET_TIME[1], 
-                                second=s.PRECIP_ACC_RESET_TIME[2], 
-                                microsecond=s.PRECIP_ACC_RESET_TIME[3])
-    reset_time += datetime.timedelta(days=days_to_add)
-        
-    return (reset_time - now).total_seconds()
-    
-
-#===============================================================================
-# RESET PRECIPITATION ACCUMULATED VARIABLE
-#===============================================================================
-def reset_rain_acc():
-
-    global rain_thread_next_call
-    global precip_accu
-    
-    #Prepare next thread time
-    rain_thread_next_call += prepare_reset_time(1)
-    threading.Timer(rain_thread_next_call-time.time(), reset_rain_acc).start()
-
-    #reset precipitation accummulated
-    precip_accu = 0
-   
    
 #===============================================================================
 # TOGGLE LED
@@ -247,6 +216,7 @@ def main():
         #Set up inital values for variables
         precip_tick_count            = 0
         precip_accu                  = 0
+        last_data_values = []
         
         #Add to sensor list
         sensors[s.PRECIP_RATE_NAME] = [0,0,0]
@@ -275,21 +245,12 @@ def main():
                                     ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
                                     ':' + str(s.PRECIP_ACCU_MIN) + 
                                     ':' + str(s.PRECIP_ACCU_MAX)]                                    
-        
-        #Set up rain sensor thread
-        rain_thread_next_call += prepare_reset_time(0)
-        rainThread = threading.Timer(rain_thread_next_call - time.time(), 
-                                        reset_rain_acc)
-        rainThread.daemon = True
-        rainThread.start()
-
 
  
     # --- Set up rrd data and tool ---
     if rrdtool_enable_update:
         #Set up inital values for variables
         rra_files        = []
-        last_data_values = []
   
         #Prepare RRA files
         for i in range(0,len(s.RRDTOOL_RRA),3):
@@ -304,10 +265,6 @@ def main():
         #Create RRD files if none exist
         if not os.path.exists(s.RRDTOOL_RRD_FILE):
             rrdtool.create(rrd_set)
-        else:
-            if rain_sensor_enable:
-                last_data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, LAST)
-                precip_accu = last_data_values[4]
 
     
     #--- Set up thingspeak account ---
@@ -317,17 +274,21 @@ def main():
         
         #Set up thingspeak account
         thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
-                                                    s.THINGSPEAK_API_KEY_FILENAME)
+                                                    s.THINGSPEAK_API_KEY_FILENAME,
+                                                    s.THINGSPEAK_CHANNEL_ID)
 
 
     # --- Set next loop time ---
     next_reading = time.time()
 
 
-    # ========== Main code ==========
+    # ========== Timed Loop ==========
     try:
         while True:
             
+            #Get loop start time
+            loop_start_time = datetime.datetime.now()
+    
             # --- Print loop start time ---
             if screen_output:
                 rows -= 1
@@ -337,31 +298,61 @@ def main():
                                                     thingspeak_acc.api_key,
                                                     rrdtool_enable_update,
                                                     rrd_set)
-                print(datetime.datetime.now().strftime('%Y-%m-%d\t%H:%M:%S')),
+                print(loop_start_time.strftime('%Y-%m-%d\t%H:%M:%S')),
+
 
             # --- Get rain fall measurement ---
             if rain_sensor_enable:
+                
+                #Calculate precip rate and reset it
                 sensors[s.PRECIP_RATE_NAME][s.VALUE] = precip_tick_count * s.PRECIP_TICK_MEASURE
-                precip_accu += sensors[s.PRECIP_RATE_NAME][s.VALUE]
-                sensors[s.PRECIP_ACCU_NAME][s.VALUE] = precip_accu
                 precip_tick_count = 0
+   
+                #Get previous precip acc'ed value - prioritize local over web value
+                if rrdtool_enable_update:
+                    last_data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, LAST)
+                elif thingspeak_enable_update:
+                    last_data_values = thingspeak_acc.get_last_feed_entry()
+                    last_entry_time = last_data_values["created at"]
+                    last_precip_accu = last_data_values["field"+str(s.PRECIP_ACCU_TS_FIELD)]
+   
+                #Previous reset time
+                last_reset = loop_start_time.replace(hour=s.PRECIP_ACC_RESET_TIME[0], 
+                                                        minute=s.PRECIP_ACC_RESET_TIME[1], 
+                                                        second=s.PRECIP_ACC_RESET_TIME[2], 
+                                                        microsecond=s.PRECIP_ACC_RESET_TIME[3])
+    
+                #Reset precip acc    
+                time_since_last_reset = (loop_start_time - last_reset).total_seconds()
+                time_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) -  last_entry_time
+                if time_since_last_feed_entry > time_since_last_reset:
+                    sensors[s.PRECIP_ACCU_NAME][s.VALUE] = 0
+                else:
+                    sensors[s.PRECIP_ACCU_NAME][s.VALUE] = last_precip_accu
+                
+                #Add previous precip. acc'ed value to current precip. rate
+                sensors[s.PRECIP_ACCU_NAME][s.VALUE] += sensors[s.PRECIP_RATE_NAME][s.VALUE]
+
 
             # --- Check door status ---
             if door_sensor_enable:
                 sensors[s.DOOR_NAME][s.VALUE] = pi.read(s.DOOR_SENSOR_PIN)
-                
+
+
             # --- Get outside temperature ---
             if out_sensor_enable:
                 sensors[s.OUT_TEMP_NAME][s.VALUE] = DS18B20.get_temp(
                                                             s.W1_DEVICE_PATH, 
                                                             s.OUT_TEMP_SENSOR_REF)
-                
+
+   
             # --- Get inside temperature and humidity ---
             if in_sensor_enable:
                 DHT22_sensor.trigger()
                 time.sleep(0.2)  #Do not over poll DHT22
                 sensors[s.IN_TEMP_NAME][s.VALUE] = DHT22_sensor.temperature()
                 sensors[s.IN_HUM_NAME][s.VALUE]  = DHT22_sensor.humidity()
+
    
             # --- Display data on screen ---
             if screen_output:
@@ -373,7 +364,8 @@ def main():
                             print('\tCLOSED\t'),
                     else:
                         print('\t{:2.2f} '.format(value[s.VALUE]) + value[s.UNIT]),
-                    
+
+  
             # --- Send data to thingspeak ---
             if thingspeak_enable_update:
                 #Create dictionary with field as key and value
@@ -385,7 +377,8 @@ def main():
                     print('\t' + response.reason),
             elif screen_output:
                 print('\tN/A'),
-                
+
+   
             # --- Add data to RRD ---
             if rrdtool_enable_update:
                 sensor_data = []
@@ -399,6 +392,7 @@ def main():
             elif screen_output:
                 print('\t\tN/A')
 
+
             # --- Delay to give update rate ---
             next_reading += s.UPDATE_RATE
             sleep_length = next_reading - time.time()
@@ -406,6 +400,7 @@ def main():
                 time.sleep(sleep_length)
 
 
+    # ========== User exit command ==========
     except KeyboardInterrupt:
         
         if screen_output:
