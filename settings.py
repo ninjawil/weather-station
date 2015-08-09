@@ -83,7 +83,7 @@ THINGSPEAK_CHANNEL_ID        = '39722'
 
 # --- Set up outside DS18B20 sensor ----
 OUT_TEMP_NAME        = 'outside temp'
-OUT_TEMP_UNIT        = u'\u00b0C'
+OUT_TEMP_UNIT        = '*C' #u'\u00b0C'
 OUT_TEMP_SENSOR_REF  = '28-0414705bceff'
 OUT_TEMP_TS_FIELD    = 1
 OUT_TEMP_MIN         = -50
@@ -93,8 +93,8 @@ OUT_TEMP_TYPE        = 'GAUGE'
 # --- Set up inside DHT22 sensor ----
 IN_SENSOR_REF        = 'DHT22'
 IN_SENSOR_PIN        = PIN_11
-IN_TEMP_NAME        = 'inside temp'
-IN_TEMP_UNIT        = u'\u00b0C'
+IN_TEMP_NAME         = 'inside temp'
+IN_TEMP_UNIT         = '*C' #u'\u00b0C'
 IN_TEMP_TS_FIELD     = 2
 IN_TEMP_MIN          = -50
 IN_TEMP_MAX          = 100

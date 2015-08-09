@@ -75,11 +75,14 @@ def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
                             'Thingspeak field set up:',
                             '',
                             'Thingspeak write api key: '+key,
-                            '  Field\tName\t\tValue\tUnit',
+                            '',
+                            '  Field  Name            Value   Unit',
                             '  ---------------------------------------']
         for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-            setup_string[0].append('  ' + str(value[s.TS_FIELD]) + '\t' + key + 
-                                    '\t' + str(value[s.VALUE]) + '\t' + value[s.UNIT])
+            setup_string[0].append( '{:5.0f}    '.format(value[s.TS_FIELD]) + 
+                                    '{0:16}'.format(key) +
+                                    '{:5.2f}   '.format(value[s.VALUE]) +
+                                    '{0:8}'.format(value[s.UNIT]))
     
     #Display RRDtool set up
     if rrd_enable:
@@ -99,7 +102,7 @@ def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
     setup_string[short_list_ref].extend([''] * size_difference)
         
     #Merge lists
-    display_string += ['\t'+"{:<50}".format(x)+'\t\t'+y for x,y in zip(setup_string[0], setup_string[1])]
+    display_string += ['\t'+"{:<40}".format(x)+'\t\t'+y for x,y in zip(setup_string[0], setup_string[1])]
     display_string.append('')
 
     #Create table header
