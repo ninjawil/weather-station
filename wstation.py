@@ -311,13 +311,10 @@ def main():
                 #Get previous precip acc'ed value - prioritize local over web value
                 if rrdtool_enable_update:
                     data_values = []
-                    sensor_names = []
-                    data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', '-s', '-600')
+                    data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
+                                                '-s', str(s.UPDATE_RATE * -2))
                     last_entry_time = data_values[0][1]
-                    sensor_names = data_values[1]
-                    last_data_values = data_values[2][-1:]
-                    last_precip_accu = data_values[2][-1:][sensor_names.index(s.PRECIP_ACCU_NAME)]
-                    print(last_entry_time, sensor_names, last_data_values)
+                    last_precip_accu = data_values[2][-1][data_values[1].index(s.PRECIP_ACCU_NAME)]
                 elif thingspeak_enable_update:
                     last_data_values = thingspeak_acc.get_last_feed_entry()
                     last_entry_time = last_data_values["created at"]
