@@ -117,6 +117,7 @@ def main():
     
     sensors                      = {}
     rrd_data_sources             = []
+    rrd_set                      = []
     rows                         = 0
 
     # --- Check and action passed arguments ---
@@ -311,10 +312,21 @@ def main():
                 #Get previous precip acc'ed value - prioritize local over web value
                 if rrdtool_enable_update:
                     data_values = []
+                    
+                    #Fetch data from round robin database
                     data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
                                                 '-s', str(s.UPDATE_RATE * -2))
+                                                
+                    #Extract time and precip acc value from fetched tuple
                     last_entry_time = data_values[0][1]
-                    last_precip_accu = data_values[2][-1][data_values[1].index(s.PRECIP_ACCU_NAME)]
+                    data_location = data_values[1].index(s.PRECIP_ACCU_NAME.replace(' ','_'))
+                    last_precip_accu = data_values[2][-1][data_location]
+                    
+                    #If no data present, set it to 0
+                    if last_precip_accu is None:
+                        last_precip_accu = 0.00
+                        
+                #Get value from thingspeak if rrdtool is disabled
                 elif thingspeak_enable_update:
                     last_data_values = thingspeak_acc.get_last_feed_entry()
                     last_entry_time = last_data_values["created at"]
@@ -328,9 +340,9 @@ def main():
     
                 #Reset precip acc    
                 time_since_last_reset = (loop_start_time - last_reset).total_seconds()
-                time_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) -  last_entry_time
+                time_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) - last_entry_time
                 if time_since_last_feed_entry > time_since_last_reset:
-                    sensors[s.PRECIP_ACCU_NAME][s.VALUE] = 0
+                    sensors[s.PRECIP_ACCU_NAME][s.VALUE] = 0.00
                 else:
                     sensors[s.PRECIP_ACCU_NAME][s.VALUE] = last_precip_accu
                 
@@ -389,8 +401,7 @@ def main():
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     sensor_data.append(value[s.VALUE])
                 sensor_data = [str(i) for i in sensor_data]
-                rrdtool.update(s.RRDTOOL_RRD_FILE_FAST, 'N:' + ':'.join(sensor_data[:-1]))
-                rrdtool.update(s.RRDTOOL_RRD_FILE_SLOW, 'N:' + ':'.join(sensor_data[-1:]))
+                rrdtool.update(s.RRDTOOL_RRD_FILE, 'N:' + ':'.join(sensor_data))
                 if screen_output:
                     print('\t\tOK')
             elif screen_output:
