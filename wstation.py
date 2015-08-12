@@ -413,7 +413,6 @@ def main():
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     sensor_data.append(value[s.VALUE])
                 sensor_data = [str(i) for i in sensor_data]
-                print(s.RRDTOOL_RRD_FILE, 'N:' + ':'.join(sensor_data))
                 rrdtool.update(s.RRDTOOL_RRD_FILE, 'N:' + ':'.join(sensor_data))
                 if screen_output:
                     print('\t\tOK')
