@@ -266,6 +266,17 @@ def main():
         #Create RRD files if none exist
         if not os.path.exists(s.RRDTOOL_RRD_FILE):
             rrdtool.create(rrd_set)
+            
+        #Fetch data from round robin database
+        data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
+                                    '-s', str(s.UPDATE_RATE * -2))
+
+        #Sync task time to rrd database
+        next_reading  = data_values[0][1]
+        
+    else:
+        #Set next loop time
+        next_reading = time.time()
 
     
     #--- Set up thingspeak account ---
@@ -279,17 +290,10 @@ def main():
                                                     s.THINGSPEAK_CHANNEL_ID)
 
 
-    # --- Set next loop time ---
-    next_reading = time.time()
-
-
     # ========== Timed Loop ==========
     try:
         while True:
             
-            #Get loop start time
-            loop_start_time = datetime.datetime.now()
-    
             # --- Print loop start time ---
             if screen_output:
                 rows -= 1
@@ -299,7 +303,17 @@ def main():
                                                     thingspeak_acc.api_key,
                                                     rrdtool_enable_update,
                                                     rrd_set)
-                print(loop_start_time.strftime('%Y-%m-%d\t%H:%M:%S')),
+                print(time.strftime('%Y-%m-%d\t%H:%M:%S', time.gmtime(next_reading))),
+
+
+            # --- Delay to give update rate ---
+            sleep_length = next_reading - time.time()
+            if sleep_length > 0:
+                time.sleep(sleep_length)
+
+
+            #Get loop start time
+            loop_start_time = datetime.datetime.now()
 
 
             # --- Get rain fall measurement ---
@@ -418,12 +432,6 @@ def main():
                     print('\t\tOK')
             elif screen_output:
                 print('\t\tN/A')
-
-
-            # --- Delay to give update rate ---
-            sleep_length = next_reading - time.time()
-            if sleep_length > 0:
-                time.sleep(sleep_length)
 
 
     # ========== User exit command ==========
