@@ -312,15 +312,23 @@ def main():
                 #Get previous precip acc'ed value - prioritize local over web value
                 if rrdtool_enable_update:
                     data_values = []
+                    last_precip_accu = None
+                    tuple_location = 0
                     
                     #Fetch data from round robin database
                     data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
                                                 '-s', str(s.UPDATE_RATE * -2))
-                                                
+
+                    #Sync task time to rrd database
+                    next_reading  = data_values[0][1]
+                    
                     #Extract time and precip acc value from fetched tuple
-                    last_entry_time = data_values[0][1]
                     data_location = data_values[1].index(s.PRECIP_ACCU_NAME.replace(' ','_'))
-                    last_precip_accu = data_values[2][-1][data_location]
+                    while last_precip_accu is None or -tuple_location > len(data_values[2]):
+                        tuple_location -= 1
+                        last_precip_accu = data_values[2][tuple_location][data_location]
+                        
+                    last_entry_time = data_values[0][1] + (tuple_location * s.UPDATE_RATE)
                     
                     #If no data present, set it to 0
                     if last_precip_accu is None:
@@ -348,6 +356,10 @@ def main():
                 
                 #Add previous precip. acc'ed value to current precip. rate
                 sensors[s.PRECIP_ACCU_NAME][s.VALUE] += sensors[s.PRECIP_RATE_NAME][s.VALUE]
+                
+            else:
+                # If rrdtool is disable just increment task time by rate
+                next_reading += s.UPDATE_RATE
 
 
             # --- Check door status ---
@@ -401,6 +413,7 @@ def main():
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     sensor_data.append(value[s.VALUE])
                 sensor_data = [str(i) for i in sensor_data]
+                print(s.RRDTOOL_RRD_FILE, 'N:' + ':'.join(sensor_data))
                 rrdtool.update(s.RRDTOOL_RRD_FILE, 'N:' + ':'.join(sensor_data))
                 if screen_output:
                     print('\t\tOK')
@@ -409,7 +422,6 @@ def main():
 
 
             # --- Delay to give update rate ---
-            next_reading += s.UPDATE_RATE
             sleep_length = next_reading - time.time()
             if sleep_length > 0:
                 time.sleep(sleep_length)
