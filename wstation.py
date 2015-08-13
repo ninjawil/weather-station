@@ -247,7 +247,22 @@ def main():
                                     ':' + str(s.PRECIP_ACCU_MIN) + 
                                     ':' + str(s.PRECIP_ACCU_MAX)]                                    
 
- 
+
+    # --- Set up thingspeak account ---
+    if thingspeak_enable_update:
+        #Set up inital values for variables
+        thingspeak_write_api_key     = ''
+        
+        #Set up thingspeak account
+        thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
+                                                    s.THINGSPEAK_API_KEY_FILENAME,
+                                                    s.THINGSPEAK_CHANNEL_ID) 
+
+
+    # --- Set next loop time ---
+    next_reading = time.time() + s.UPDATE_RATE
+    
+    
     # --- Set up rrd data and tool ---
     if rrdtool_enable_update:
         #Set up inital values for variables
@@ -258,36 +273,21 @@ def main():
             rra_files.append('RRA:' + s.RRDTOOL_RRA[i] + ':0.5:' + 
                                 str((s.RRDTOOL_RRA[i+1]*60)/s.UPDATE_RATE) + ':' + 
                                 str(((s.RRDTOOL_RRA[i+2])*24*60)/s.RRDTOOL_RRA[i+1]))
-                                
+ 
         #Prepare RRD set
-        rrd_set = [s.RRDTOOL_RRD_FILE, '--step', str(s.UPDATE_RATE), '--start', 'now']
+        rrd_set = [s.RRDTOOL_RRD_FILE, 
+                    '--step', str(s.UPDATE_RATE), 
+                    '--start', str(next_reading)]
         rrd_set +=  rrd_data_sources + rra_files
         
         #Create RRD files if none exist
         if not os.path.exists(s.RRDTOOL_RRD_FILE):
             rrdtool.create(rrd_set)
-            
-        #Fetch data from round robin database
-        data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
-                                    '-s', str(s.UPDATE_RATE * -2))
-
-        #Sync task time to rrd database
-        next_reading  = data_values[0][1]
-        
-    else:
-        #Set next loop time
-        next_reading = time.time()
-
-    
-    #--- Set up thingspeak account ---
-    if thingspeak_enable_update:
-        #Set up inital values for variables
-        thingspeak_write_api_key     = ''
-        
-        #Set up thingspeak account
-        thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
-                                                    s.THINGSPEAK_API_KEY_FILENAME,
-                                                    s.THINGSPEAK_CHANNEL_ID)
+        else:
+            #Fetch data from round robin database & extract next entry time to sync loop
+            data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
+                                        '-s', str(s.UPDATE_RATE * -2))
+            next_reading  = data_values[0][1]
 
 
     # ========== Timed Loop ==========
