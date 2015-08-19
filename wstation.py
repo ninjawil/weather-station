@@ -39,7 +39,6 @@ import datetime
 import pigpio
 import DHT22
 import DS18B20
-import thingspeak
 import screen_op
 import settings as s
 import rrdtool
@@ -130,8 +129,6 @@ def main():
             rain_sensor_enable = False
         if '--rrdtool=OFF' in sys.argv:
             rrdtool_enable_update = False
-        if '--thingspeak=OFF' in sys.argv:
-            thingspeak_enable_update = False
         if '--quiet' in sys.argv:
             screen_output = False 
         if '--help' in sys.argv:
@@ -248,17 +245,6 @@ def main():
                                     ':' + str(s.PRECIP_ACCU_MAX)]                                    
 
 
-    # --- Set up thingspeak account ---
-    if thingspeak_enable_update:
-        #Set up inital values for variables
-        thingspeak_write_api_key     = ''
-        
-        #Set up thingspeak account
-        thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
-                                                    s.THINGSPEAK_API_KEY_FILENAME,
-                                                    s.THINGSPEAK_CHANNEL_ID) 
-
-
     # --- Set next loop time ---
     next_reading = time.time() + s.UPDATE_RATE
     
@@ -347,12 +333,6 @@ def main():
                     #If no data present, set it to 0
                     if last_precip_accu is None:
                         last_precip_accu = 0.00
-                        
-                #Get value from thingspeak if rrdtool is disabled
-                elif thingspeak_enable_update:
-                    last_data_values = thingspeak_acc.get_last_feed_entry()
-                    last_entry_time = last_data_values["created at"]
-                    last_precip_accu = last_data_values["field"+str(s.PRECIP_ACCU_TS_FIELD)]
    
                 #Previous reset time
                 last_reset = loop_start_time.replace(hour=s.PRECIP_ACC_RESET_TIME[0], 
@@ -406,19 +386,6 @@ def main():
                             print('\tCLOSED\t'),
                     else:
                         print('\t{:2.2f} '.format(value[s.VALUE]) + value[s.UNIT]),
-
-  
-            # --- Send data to thingspeak ---
-            if thingspeak_enable_update:
-                #Create dictionary with field as key and value
-                sensor_data = {}
-                for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-                    sensor_data[value[s.TS_FIELD]] = value[s.VALUE]
-                response = thingspeak_acc.update_channel(sensor_data)
-                if screen_output:
-                    print('\t' + response.reason),
-            elif screen_output:
-                print('\tN/A'),
 
    
             # --- Add data to RRD ---
