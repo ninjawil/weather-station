@@ -109,7 +109,6 @@ def main():
     rain_sensor_enable           = True
     out_sensor_enable            = True
     in_sensor_enable             = True
-    thingspeak_enable_update     = True
     screen_output                = True
     door_sensor_enable           = True
     rrdtool_enable_update        = True
