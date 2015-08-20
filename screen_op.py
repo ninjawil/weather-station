@@ -47,8 +47,6 @@ def help_menu():
           '- disables inside temperature monitoring')
     print('   --rainsensor=OFF   ',
           '- disables rainfall monitoring')
-    print('   --thingspeak=OFF   ',
-          '- disable update to ThingSpeak')
     print('   --rrdtool=OFF   ',
           '- disable round robin database')
     print('   --quiet            ',
@@ -58,52 +56,20 @@ def help_menu():
 #===============================================================================
 # DRAW SCREEN
 #===============================================================================
-def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
+def draw_screen(sensors, rrd_enable, rrd_set):
     
     os.system('clear')
     
     display_string = []
-    setup_string   = [[],[]]
     
     display_string = [  'WEATHER STATION',
                         '',
-                        'Next precip. acc. reset at '+ str(s.PRECIP_ACC_RESET_TIME)]
-
-    #Display thingspeak field data set up
-    if thingspeak_enable:
-        setup_string[0]  = ['',
-                            'Thingspeak field set up:',
-                            '',
-                            'Thingspeak write api key: '+key,
-                            '',
-                            '  Field  Name            Value   Unit',
-                            '  ---------------------------------------']
-        for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-            setup_string[0].append( '{:5.0f}    '.format(value[s.TS_FIELD]) + 
-                                    '{0:16}'.format(key) +
-                                    '{:5.2f}   '.format(value[s.VALUE]) +
-                                    '{0:8}'.format(value[s.UNIT]))
-    
-    #Display RRDtool set up
-    if rrd_enable:
-        #rrd display header
-        setup_string[1] = [ '',
-                            'RRDtool set up:']
-        setup_string[1] += rrd_set
-        
-    #Work out shortest list
-    if len(setup_string[0]) < len(setup_string[1]):
-        short_list_ref = 0
-    else:
-        short_list_ref = 1
-
-    #Make lists equal in length
-    size_difference = len(setup_string[not short_list_ref]) - len(setup_string[short_list_ref])
-    setup_string[short_list_ref].extend([''] * size_difference)
-        
-    #Merge lists
-    display_string += ['\t'+"{:<40}".format(x)+'\t\t'+y for x,y in zip(setup_string[0], setup_string[1])]
-    display_string.append('')
+                        'Next precip. acc. reset at '+ str(s.PRECIP_ACC_RESET_TIME),
+                        '',
+                        'RRDtool set up:',
+                        '']
+                        
+    display_string += rrd_set
 
     #Create table header
     display_string.append('')
@@ -111,7 +77,7 @@ def draw_screen(sensors, thingspeak_enable, key, rrd_enable, rrd_set):
     header_names = ''
     for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
         header_names = header_names + key +'\t'
-    header = header + header_names + 'TS Send\t\tRRD Write'
+    header = header + header_names + 'RRD Write'
     display_string.append(header)
     display_string.append('=' * (len(header) + 5 * header.count('\t')))
  
