@@ -41,27 +41,43 @@ import thingspeak
 # MAIN
 #===============================================================================
 def main():
+    
+    update_rate = 300 #seconds
+    
 
     # --- Set up thingspeak account ---
-    #Set up inital values for variables
     thingspeak_write_api_key     = ''
-        
-    #Set up thingspeak account
     thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
                                                 s.THINGSPEAK_API_KEY_FILENAME,
                                                 s.THINGSPEAK_CHANNEL_ID)
 
-    #Create RRD files if none exist
+
+    # --- Interogate thingspeak for set up ---
+    
+
+    # --- Check if RRD file exists ---
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
             return
+
+  
+    # --- Set next loop time ---
+    next_update = time.time() + update_rate
+
 
     # ========== Timed Loop ==========
     try:
         while True:
+            
+            # -- Get last feed upddate from thingspeak ---
+            
        
-            #Fetch values from rrd
+            # --- Fetch values from rrd ---
             data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
                                         '-s', str(s.UPDATE_RATE * -2))
+
+
+            # --- Create a list with new thingspeak updates ---
+            
   
             # --- Send data to thingspeak ---
             #Create dictionary with field as key and value
@@ -69,6 +85,15 @@ def main():
             for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                 sensor_data[value[s.TS_FIELD]] = value[s.VALUE]
             response = thingspeak_acc.update_channel(sensor_data)
+
+
+            # --- Check response from update attempt ---
+            
+
+            # --- Delay to give update rate ---
+            sleep_length = next_update - time.time()
+            if sleep_length > 0:
+                time.sleep(sleep_length)
 
 
     # ========== User exit command ==========
