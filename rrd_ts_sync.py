@@ -59,6 +59,9 @@ def main():
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
             return
 
+
+    # --- Check if RRD file variables match TS variables ---
+
   
     # --- Set next loop time ---
     next_update = time.time() + update_rate
