@@ -284,8 +284,6 @@ def main():
                 rows -= 1
                 if rows <= 0:
                     rows = screen_op.draw_screen(sensors,
-                                                    thingspeak_enable_update, 
-                                                    thingspeak_acc.api_key,
                                                     rrdtool_enable_update,
                                                     rrd_set)
                 print(time.strftime('%Y-%m-%d\t%H:%M:%S', time.gmtime(next_reading))),
