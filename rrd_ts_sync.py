@@ -31,7 +31,6 @@
 #===============================================================================
 # Import modules
 #===============================================================================
-import settings as s
 import rrdtool
 import thingspeak
 
@@ -43,10 +42,12 @@ import thingspeak
 def main():
     
     update_rate = 300 #seconds
+    rrdtool_file = ''
+    thingspeak_write_api_key = ''
+    rrd_data = {}
     
 
     # --- Set up thingspeak account ---
-    thingspeak_write_api_key     = ''
     thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
                                                 s.THINGSPEAK_API_KEY_FILENAME,
                                                 s.THINGSPEAK_CHANNEL_ID)
@@ -56,7 +57,7 @@ def main():
     
 
     # --- Check if RRD file exists ---
-    if not os.path.exists(s.RRDTOOL_RRD_FILE):
+    if not os.path.exists(rrdtool_file):
             return
 
 
@@ -75,18 +76,14 @@ def main():
             
        
             # --- Fetch values from rrd ---
-            data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
-                                        '-s', str(s.UPDATE_RATE * -2))
+            data_values = rrdtool.fetch(rrdtool_file, 'LAST', 
+                                        '-s', str(update_rate * -2))
 
 
             # --- Create a list with new thingspeak updates ---
             
   
             # --- Send data to thingspeak ---
-            #Create dictionary with field as key and value
-            sensor_data = {}
-            for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-                sensor_data[value[s.TS_FIELD]] = value[s.VALUE]
             response = thingspeak_acc.update_channel(sensor_data)
 
 
