@@ -150,7 +150,7 @@ class ThingspeakAcc():
     #===================================================================
     # GET LAST FEED
     #===================================================================
-    def get_last_entry in channel_feed(self, parameters):
+    def get_last_entry_in_channel_feed(self, parameters):
         
         '''Valid parameters:
             api_key (string) Read API Key for this specific Channel 
