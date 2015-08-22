@@ -287,6 +287,7 @@ def main():
                                                     rrdtool_enable_update,
                                                     rrd_set)
                 print(time.strftime('%Y-%m-%d\t%H:%M:%S', time.gmtime(next_reading))),
+                # !!! Displays GMT - need to add timezone !!!
 
 
             # --- Delay to give update rate ---
@@ -304,9 +305,9 @@ def main():
                 
                 #Calculate precip rate and reset it
                 sensors[s.PRECIP_RATE_NAME][s.VALUE] = precip_tick_count * s.PRECIP_TICK_MEASURE
-                precip_tick_count = 0
+                precip_tick_count = 0.000000
    
-                #Get previous precip acc'ed value - prioritize local over web value
+                #Get previous precip acc'ed value
                 if rrdtool_enable_update:
                     data_values = []
                     last_precip_accu = None
@@ -321,7 +322,7 @@ def main():
                     
                     #Extract time and precip acc value from fetched tuple
                     data_location = data_values[1].index(s.PRECIP_ACCU_NAME.replace(' ','_'))
-                    while last_precip_accu is None and -tuple_location > len(data_values[2]):
+                    while last_precip_accu is None and -tuple_location < len(data_values[2]):
                         tuple_location -= 1
                         last_precip_accu = data_values[2][tuple_location][data_location]
                         
@@ -393,9 +394,9 @@ def main():
                 sensor_data = [str(i) for i in sensor_data]
                 rrdtool.update(s.RRDTOOL_RRD_FILE, 'N:' + ':'.join(sensor_data))
                 if screen_output:
-                    print('\t\tOK')
+                    print('\tOK')
             elif screen_output:
-                print('\t\tN/A')
+                print('\tN/A')
 
 
     # ========== User exit command ==========
