@@ -321,7 +321,7 @@ def main():
                     
                     #Extract time and precip acc value from fetched tuple
                     data_location = data_values[1].index(s.PRECIP_ACCU_NAME.replace(' ','_'))
-                    while last_precip_accu is None or -tuple_location > len(data_values[2]):
+                    while last_precip_accu is None and -tuple_location > len(data_values[2]):
                         tuple_location -= 1
                         last_precip_accu = data_values[2][tuple_location][data_location]
                         
