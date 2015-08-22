@@ -38,30 +38,65 @@ import time
 
 class ThingspeakAcc():
     
-    '''Sets up thingspeak accounts'''
+    '''Sets up thingspeak accounts -
+    + Write api key can be either the api key or a filename with extension '.txt' with the api key inside'''
     
-    def __init__(self, acc_host_addr, key_file, acc_channel_id):
+    def __init__(self, acc_host_addr, write_api_key, acc_channel_id):
         self.host_addr = acc_host_addr
-        self.api_key = self.get_write_api_key(key_file)
         self.channel_id = acc_channel_id
         
+        if(write_api_key[-4:] == '.txt'):
+            self.api_key = self.get_write_api_key(write_api_key)
+        else:
+            self.api_key = write_api_key
+            write_api_key_file(filename)
         
+
     #===================================================================
-    # UPDATE THINGSPEAK CHANNEL
+    # PREPARE HEADERS
     #===================================================================
-    def update_channel(self, field_data):
+    def prepare_connection(self, parameters):
         
         #Create POST data
-        data_to_send = {}
-        data_to_send['key'] = self.api_key
-        
-        for key, value in sorted(field_data.items()):
-            data_to_send['field'+str(key)] = value
-                    
-        params = urllib.urlencode(data_to_send)
+        if 'api_key' not in parameters.keys():
+            parameters['key'] = self.api_key
+   
+        params = urllib.urlencode(parameters)
+
         headers = {'Content-type': 'application/x-www-form-urlencoded',
                     'Accept': 'text/plain'}
                     
+        return params, headers
+
+    
+
+    #===================================================================
+    # UPDATE THINGSPEAK CHANNEL
+    #===================================================================
+    def update_channel(self, parameters):
+        
+        '''Valid parameters:
+            api_key (string) - Write API Key for this specific Channel (required). 
+                                The Write API Key can optionally be sent via a THINGSPEAKAPIKEY HTTP header.
+            field1 (string) - Field 1 data (optional)
+            field2 (string) - Field 2 data (optional)
+            field3 (string) - Field 3 data (optional)
+            field4 (string) - Field 4 data (optional)
+            field5 (string) - Field 5 data (optional)
+            field6 (string) - Field 6 data (optional)
+            field7 (string) - Field 7 data (optional)
+            field8 (string) - Field 8 data (optional)
+            lat (decimal) - Latitude in degrees (optional)
+            long (decimal) - Longitude in degrees (optional)
+            elevation (integer) - Elevation in meters (optional)
+            status (string) - Status update message (optional)
+            twitter (string) - Twitter username linked to ThingTweet (optional)
+            tweet (string) - Twitter status update; see updating ThingTweet for more info (optional)
+            created_at (datetime) - Date when this feed entry was created, in ISO 8601 format, 
+            for example: 2014-12-31 23:59:59 . Time zones can be specified via the timezone parameter (optional)'''
+        
+        params, headers = self.prepare_connection(parameters)
+        
         conn = httplib.HTTPConnection(self.host_addr)
         conn.request('POST', '/update', params, headers)
         response = conn.getresponse()
@@ -71,20 +106,71 @@ class ThingspeakAcc():
         
         return response
 
- 
+
+    #===================================================================
+    # GET CHANNEL FEED
+    #===================================================================
+    def get_channel_feed(self, parameters):
+        
+        '''Valid parameters:
+                api_key (string) Read API Key for this specific Channel 
+                    (optional--no key required for public channels)
+                results (integer) Number of entries to retrieve, 8000 max, default of 100 (optional)
+                days (integer) Number of 24-hour periods before now to include in feed (optional)
+                start (datetime) Start date in format YYYY-MM-DD%20HH:NN:SS (optional)
+                end (datetime) End date in format YYYY-MM-DD%20HH:NN:SS (optional)
+                timezone (string) Timezone identifier for this request (optional)
+                offset (integer) Timezone offset that results should be displayed in. 
+                    Please use the timezone parameter for greater accuracy. (optional)
+                status (true/false) Include status updates in feed by setting "status=true" (optional)
+                metadata (true/false) Include Channel's metadata by setting "metadata=true" (optional)
+                location (true/false) Include latitude, longitude, 
+                    and elevation in feed by setting "location=true" (optional)
+                min (decimal) Minimum value to include in response (optional)
+                max (decimal) Maximum value to include in response (optional)
+                round (integer) Round to this many decimal places (optional)
+                timescale (integer or string) Get first value in this many minutes, 
+                    valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily" (optional)
+                sum (integer or string) Get sum of this many minutes, 
+                    valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily" (optional)
+                average (integer or string) Get average of this many minutes, 
+                    valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily" (optional)
+                median (integer or string) Get median of this many minutes, 
+                    valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily" (optional)
+                callback (string) Function name to be used for JSONP cross-domain requests (optional)'''
+                
+        params, headers = self.prepare_connection(parameters)
+        
+        conn = httplib.HTTPConnection(self.host_addr)
+        conn.request('GET', '/channels/' + self.channel_id + '/feeds/', params, headers)
+        response = conn.getresponse()
+
+        data = response.read()
+        conn.close()
+        
+        return response 
+
+
     #===================================================================
     # GET LAST FEED
     #===================================================================
-    def get_last_feed_entry(self):
+    def get_last_entry_in_channel_feed(self, parameters):
         
-        #Create POST data
-        data_to_send = {}
-        data_to_send['key'] = self.api_key
-   
-        params = urllib.urlencode(data_to_send)
-        headers = {'Content-type': 'application/x-www-form-urlencoded',
-                    'Accept': 'text/plain'}
-  
+        '''Valid parameters:
+            api_key (string) Read API Key for this specific Channel 
+                (optional--no key required for public channels)
+            timezone (string) Timezone identifier for this request (optional)
+            offset (integer) Timezone offset that results should be displayed in. 
+                Please use the timezone parameter for greater accuracy. (optional)
+            status (true/false) Include status updates in feed by setting "status=true" (optional)
+            location (true/false) Include latitude, longitude, 
+                and elevation in feed by setting "location=true" (optional)
+            callback (string) Function name to be used for JSONP cross-domain requests (optional)
+            prepend (string) Text to add before the API response (optional)
+            append (string) Text to add after the API response (optional)'''
+        
+        params, headers = self.prepare_connection(parameters)
+        
         conn = httplib.HTTPConnection(self.host_addr)
         conn.request('GET', '/channels/' + self.channel_id + '/feeds/last', params, headers)
         response = conn.getresponse()
@@ -99,6 +185,14 @@ class ThingspeakAcc():
         return response
 
 
+    #===========================================================================
+    # WRITE API KEY TO FILE
+    #===========================================================================
+    def write_api_key_file(self, filename):
+        with open(filename, 'w') as f:
+                f.write(key)
+
+    
     #===========================================================================
     # LOAD THINGSPEAK API KEY
     #===========================================================================
@@ -116,8 +210,7 @@ class ThingspeakAcc():
                 answer = raw_input('Is this correct? Y/N >')
                 if answer in ('y', 'Y'):
                     entry_incorrect = False
-            with open(filename, 'w') as f:
-                f.write(key)
+            write_api_key_file(filename)
         else:
             key = f.read()
         
