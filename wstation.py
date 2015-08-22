@@ -308,8 +308,8 @@ def main():
 
             # --- Delay to give update rate ---
             sleep_length = next_reading - time.time()
-            if sleep_length > 0:
-                time.sleep(sleep_length)
+           # if sleep_length > 0:
+            #    time.sleep(sleep_length)
 
 
             #Get loop start time
@@ -338,7 +338,7 @@ def main():
                     
                     #Extract time and precip acc value from fetched tuple
                     data_location = data_values[1].index(s.PRECIP_ACCU_NAME.replace(' ','_'))
-                    while last_precip_accu is None or -tuple_location > len(data_values[2]):
+                    while last_precip_accu is None and -tuple_location < len(data_values[2]):
                         tuple_location -= 1
                         last_precip_accu = data_values[2][tuple_location][data_location]
                         
@@ -413,7 +413,7 @@ def main():
                 #Create dictionary with field as key and value
                 sensor_data = {}
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
-                    sensor_data[value[s.TS_FIELD]] = value[s.VALUE]
+                    sensor_data['field'+str(value[s.TS_FIELD])] = value[s.VALUE]
                 response = thingspeak_acc.update_channel(sensor_data)
                 if screen_output:
                     print('\t' + response.reason),

@@ -58,7 +58,7 @@ class ThingspeakAcc():
     def prepare_connection(self, parameters):
         
         #Create POST data
-        if 'api_key' not in parameters.keys()
+        if 'api_key' not in parameters.keys():
             parameters['key'] = self.api_key
    
         params = urllib.urlencode(parameters)
@@ -66,7 +66,8 @@ class ThingspeakAcc():
         headers = {'Content-type': 'application/x-www-form-urlencoded',
                     'Accept': 'text/plain'}
                     
-        conn = httplib.HTTPConnection(self.host_addr)
+        return params, headers
+
     
 
     #===================================================================
@@ -94,8 +95,9 @@ class ThingspeakAcc():
             created_at (datetime) - Date when this feed entry was created, in ISO 8601 format, 
             for example: 2014-12-31 23:59:59 . Time zones can be specified via the timezone parameter (optional)'''
         
-        prepare_connection(parameters)
+        params, headers = self.prepare_connection(parameters)
         
+        conn = httplib.HTTPConnection(self.host_addr)
         conn.request('POST', '/update', params, headers)
         response = conn.getresponse()
 
@@ -137,7 +139,9 @@ class ThingspeakAcc():
                     valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily" (optional)
                 callback (string) Function name to be used for JSONP cross-domain requests (optional)'''
                 
-        prepare_connection(parameters)
+        params, headers = self.prepare_connection(parameters)
+        
+        conn = httplib.HTTPConnection(self.host_addr)
         conn.request('GET', '/channels/' + self.channel_id + '/feeds/', params, headers)
         response = conn.getresponse()
 
@@ -165,7 +169,9 @@ class ThingspeakAcc():
             prepend (string) Text to add before the API response (optional)
             append (string) Text to add after the API response (optional)'''
         
-        prepare_connection(parameters)
+        params, headers = self.prepare_connection(parameters)
+        
+        conn = httplib.HTTPConnection(self.host_addr)
         conn.request('GET', '/channels/' + self.channel_id + '/feeds/last', params, headers)
         response = conn.getresponse()
 
