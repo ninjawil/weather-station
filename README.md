@@ -13,4 +13,9 @@ Records
 
 Flashes an LED on and OFF every second to indicate operation.
 
-Data recorded is sent to thingspeak. A write api key is requested on first start, this is then recorded to a text file.
+Data recorded is sent to thingspeak.
+ + need to set up a crontab job to loop sync the rrd file with thingspeak
+
+Dependencies:
+ + PIGPIO - http://abyz.co.uk/rpi/pigpio/
+ + needs requests python library - http://www.python-requests.org/en/latest/user/install/
