@@ -53,6 +53,7 @@ UPDATE_RATE          = 300 # seconds
 RRD_HEARTBEAT        = 2 # multiplier
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
+LOG_FILENAME         = 'wstation.log'
 
 
 #Sensor list set up
@@ -99,6 +100,7 @@ IN_TEMP_TS_FIELD     = 2
 IN_TEMP_MIN          = -50
 IN_TEMP_MAX          = 100
 IN_TEMP_TYPE         = 'GAUGE'
+
 IN_HUM_NAME          = 'inside hum'
 IN_HUM_UNIT          = '%'
 IN_HUM_TS_FIELD      = 3
@@ -119,20 +121,22 @@ DOOR_TYPE            = 'GAUGE'
 
 # --- Set up rain fall reed switch ----
 PRECIP_SENSOR_PIN     = PIN_15
+PRECIP_TICK_MEASURE   = 0.3 #millimeters per tick
+PRECIP_ACC_RESET_TIME = (00,00,00,00) #hour, minute, second, microsecond
+
 PRECIP_RATE_NAME      = 'precip rate'
 PRECIP_RATE_UNIT      = 'mm'
 PRECIP_RATE_TS_FIELD  = 5
 PRECIP_RATE_MIN       = -5
 PRECIP_RATE_MAX       = 50
 PRECIP_RATE_TYPE      = 'GAUGE'
+
 PRECIP_ACCU_NAME      = 'precip acc'
 PRECIP_ACCU_UNIT      = 'mm'
 PRECIP_ACCU_TS_FIELD  = 6
 PRECIP_ACCU_MIN       = -5
 PRECIP_ACCU_MAX       = 500
 PRECIP_ACCU_TYPE      = 'GAUGE'
-PRECIP_TICK_MEASURE   = 0.3 #millimeters per tick
-PRECIP_ACC_RESET_TIME = (00,00,00,00) #hour, minute, second, microsecond
 
 
 # --- Set up flashing LED ----
