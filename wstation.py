@@ -43,6 +43,16 @@ import thingspeak
 import screen_op
 import settings as s
 import rrdtool
+import logging
+
+
+#===============================================================================
+# SET UP logger
+#===============================================================================
+logging.basicConfig(filename=s.LOG_FILENAME, level=logging.INFO,
+                    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+logger = logging.getLogger(__name__)
+logger.info('Wstation Started')
 
 
 #===============================================================================
@@ -64,6 +74,8 @@ last_rising_edge = None
 #===============================================================================
 def count_rain_ticks(gpio, level, tick):
     
+    '''Count the ticks from a reed switch'''
+    
     global precip_tick_count
     global last_rising_edge
     
@@ -80,12 +92,16 @@ def count_rain_ticks(gpio, level, tick):
     if pulse:
         last_rising_edge = tick  
         precip_tick_count += 1
+        
+    logger.info('Rain tick pulse = %s', pulse)
 
    
 #===============================================================================
 # TOGGLE LED
 #===============================================================================
 def toggle_LED():
+    
+    '''A thread called at a specific time to toggle an LED on/off'''
 
     global led_thread_next_call
 
@@ -101,6 +117,8 @@ def toggle_LED():
 # MAIN
 #===============================================================================
 def main():
+    
+    '''Entry point for script'''
 
     global precip_tick_count
     global precip_accu
@@ -120,7 +138,9 @@ def main():
     rrd_set                      = []
     rows                         = 0
 
-    # --- Check and action passed arguments ---
+    #---------------------------------------------------------------------------
+    # CHECK AND ACTION PASSED ARGUMENTS
+    #---------------------------------------------------------------------------
     if len(sys.argv) > 1:
         if '--outsensor=OFF' in sys.argv:
             out_sensor_enable = False
@@ -139,14 +159,18 @@ def main():
             sys.exit(0)
 
 
-    # ---Set up LED hardware and thread ---
+    #---------------------------------------------------------------------------
+    # SET UP LED HARDWARE AND THREAD
+    #---------------------------------------------------------------------------
     pi.set_mode(s.LED_PIN, pigpio.OUTPUT)
     ledThread = threading.Thread(target=toggle_LED)
     ledThread.daemon = True
     ledThread.start()
 
     
-   # --- Set up outside temperature sensor ---
+    #---------------------------------------------------------------------------
+    # SET UP OUTSIDE TEMPERATURE SENSOR
+    #---------------------------------------------------------------------------
     if out_sensor_enable:
         #Add to sensor list
         sensors[s.OUT_TEMP_NAME] = [0,0,0]
@@ -163,7 +187,9 @@ def main():
                                     ':' + str(s.OUT_TEMP_MAX)]
 
 
-    # --- Set up inside temperature sensor ---
+    #---------------------------------------------------------------------------
+    # SET UP INSIDE TEMPERATURE SENSOR
+    #---------------------------------------------------------------------------
     if in_sensor_enable:
         #Add to sensor list
         sensors[s.IN_TEMP_NAME] = [0,0,0]
@@ -192,7 +218,9 @@ def main():
                                     ':' + str(s.IN_HUM_MAX)]
 
     
-    # --- Set up door sensor ---
+    #---------------------------------------------------------------------------
+    # SET UP DOOR SENSOR
+    #---------------------------------------------------------------------------
     if door_sensor_enable:
         #Add to sensor list
         sensors[s.DOOR_NAME] = [0,0,0]
@@ -212,7 +240,9 @@ def main():
                                     ':' + str(s.DOOR_MAX)]
 
 
-    # --- Set up rain sensor ---
+    #---------------------------------------------------------------------------
+    # SET UP RAIN SENSOR
+    #---------------------------------------------------------------------------
     if rain_sensor_enable:
         #Set up inital values for variables
         precip_tick_count            = 0
@@ -248,7 +278,9 @@ def main():
                                     ':' + str(s.PRECIP_ACCU_MAX)]                                    
 
 
-    # --- Set up thingspeak account ---
+    #---------------------------------------------------------------------------
+    # SET THINGSPEAK ACCOUNT
+    #---------------------------------------------------------------------------
     if thingspeak_enable_update:
         #Set up inital values for variables
         thingspeak_write_api_key     = ''
@@ -259,11 +291,15 @@ def main():
                                                     s.THINGSPEAK_CHANNEL_ID) 
 
 
-    # --- Set next loop time ---
+    #---------------------------------------------------------------------------
+    # SET NEXT LOOP TIME
+    #---------------------------------------------------------------------------
     next_reading = time.time() + s.UPDATE_RATE
     
     
-    # --- Set up rrd data and tool ---
+    #---------------------------------------------------------------------------
+    # SET UP RRD DATA AND TOOL
+    #---------------------------------------------------------------------------
     if rrdtool_enable_update:
         #Set up inital values for variables
         rra_files        = []
@@ -282,19 +318,27 @@ def main():
         
         #Create RRD files if none exist
         if not os.path.exists(s.RRDTOOL_RRD_FILE):
+            logger.info('RRD file not found')
             rrdtool.create(rrd_set)
+            logger.info('New RRD file created')
         else:
             #Fetch data from round robin database & extract next entry time to sync loop
+            logger.info('RRD file found')
             data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
                                         '-s', str(s.UPDATE_RATE * -2))
             next_reading  = data_values[0][1]
+            logger.info('Next sensor reading at %d', next_reading)
 
 
-    # ========== Timed Loop ==========
+    #---------------------------------------------------------------------------
+    # TIMED LOOP
+    #---------------------------------------------------------------------------
     try:
         while True:
             
-            # --- Print loop start time ---
+            #-------------------------------------------------------------------
+            # Print loop start time
+            #-------------------------------------------------------------------
             if screen_output:
                 rows -= 1
                 if rows <= 0:
@@ -306,24 +350,32 @@ def main():
                 print(time.strftime('%Y-%m-%d\t%H:%M:%S', time.gmtime(next_reading))),
 
 
-            # --- Delay to give update rate ---
+            #-------------------------------------------------------------------
+            # Delay to give update rate
+            #-------------------------------------------------------------------
             sleep_length = next_reading - time.time()
-           # if sleep_length > 0:
+            # if sleep_length > 0:
             #    time.sleep(sleep_length)
 
 
-            #Get loop start time
+            #-------------------------------------------------------------------
+            # Get loop start time
+            #-------------------------------------------------------------------
             loop_start_time = datetime.datetime.now()
+            logger.info('Loop start time: %s', loop_start_time.strftime('%Y-%m-%d %H:%M:%S'))
 
 
-            # --- Get rain fall measurement ---
+            #-------------------------------------------------------------------
+            # Get rain fall measurement
+            #-------------------------------------------------------------------
             if rain_sensor_enable:
                 
                 #Calculate precip rate and reset it
                 sensors[s.PRECIP_RATE_NAME][s.VALUE] = precip_tick_count * s.PRECIP_TICK_MEASURE
-                precip_tick_count = 0
+                precip_tick_count = 0.000000
+                logger.info('Pricipitation counter RESET')
    
-                #Get previous precip acc'ed value - prioritize local over web value
+                #Get previous precip acc'ed value
                 if rrdtool_enable_update:
                     data_values = []
                     last_precip_accu = None
@@ -335,6 +387,7 @@ def main():
 
                     #Sync task time to rrd database
                     next_reading  = data_values[0][1]
+                    logger.info('Next sensor reading at %d', next_reading)
                     
                     #Extract time and precip acc value from fetched tuple
                     data_location = data_values[1].index(s.PRECIP_ACCU_NAME.replace(' ','_'))
@@ -365,6 +418,7 @@ def main():
                 time_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) - last_entry_time
                 if time_since_last_feed_entry > time_since_last_reset:
                     sensors[s.PRECIP_ACCU_NAME][s.VALUE] = 0.00
+                    logger.info('Pricipitation accumulated RESET')
                 else:
                     sensors[s.PRECIP_ACCU_NAME][s.VALUE] = last_precip_accu
                 
@@ -374,29 +428,41 @@ def main():
             else:
                 # If rrdtool is disable just increment task time by rate
                 next_reading += s.UPDATE_RATE
+                logger.info('Next sensor reading at %d', next_reading)
 
 
-            # --- Check door status ---
+            #-------------------------------------------------------------------
+            # Check door status
+            #-------------------------------------------------------------------
             if door_sensor_enable:
+                logger.info('Reading value from door sensor')
                 sensors[s.DOOR_NAME][s.VALUE] = pi.read(s.DOOR_SENSOR_PIN)
 
 
-            # --- Get outside temperature ---
+            #-------------------------------------------------------------------
+            # Get outside temperature
+            #-------------------------------------------------------------------
             if out_sensor_enable:
+                logger.info('Reading value from DS18B20 sensor')
                 sensors[s.OUT_TEMP_NAME][s.VALUE] = DS18B20.get_temp(
                                                             s.W1_DEVICE_PATH, 
                                                             s.OUT_TEMP_SENSOR_REF)
 
    
-            # --- Get inside temperature and humidity ---
+            #-------------------------------------------------------------------
+            # Get inside temperature and humidity
+            #-------------------------------------------------------------------
             if in_sensor_enable:
+                logger.info('Reading value from DHT22 sensor')
                 DHT22_sensor.trigger()
                 time.sleep(0.2)  #Do not over poll DHT22
                 sensors[s.IN_TEMP_NAME][s.VALUE] = DHT22_sensor.temperature()
                 sensors[s.IN_HUM_NAME][s.VALUE]  = DHT22_sensor.humidity()
 
    
-            # --- Display data on screen ---
+            #-------------------------------------------------------------------
+            # Display data on screen
+            #-------------------------------------------------------------------
             if screen_output:
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     if key == s.DOOR_NAME:
@@ -408,21 +474,27 @@ def main():
                         print('\t{:2.2f} '.format(value[s.VALUE]) + value[s.UNIT]),
 
   
-            # --- Send data to thingspeak ---
+            #-------------------------------------------------------------------
+            # Send data to thingspeak
+            #-------------------------------------------------------------------
             if thingspeak_enable_update:
                 #Create dictionary with field as key and value
                 sensor_data = {}
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     sensor_data['field'+str(value[s.TS_FIELD])] = value[s.VALUE]
                 response = thingspeak_acc.update_channel(sensor_data)
+                logger.info('Thingspeak response: %d - %s', response.status, response.reason)
                 if screen_output:
                     print('\t' + response.reason),
             elif screen_output:
                 print('\tN/A'),
 
    
-            # --- Add data to RRD ---
+            #-------------------------------------------------------------------
+            # Add data to RRD
+            #-------------------------------------------------------------------
             if rrdtool_enable_update:
+                logger.info('Updating RRD file')
                 sensor_data = []
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     sensor_data.append(value[s.VALUE])
@@ -434,7 +506,9 @@ def main():
                 print('\t\tN/A')
 
 
-    # ========== User exit command ==========
+    #---------------------------------------------------------------------------
+    # User exit command
+    #---------------------------------------------------------------------------
     except KeyboardInterrupt:
         
         if screen_output:
@@ -447,11 +521,12 @@ def main():
         DHT22_sensor.cancel()
         rain_gauge.cancel()
         
+        logger.info('Finished')
         sys.exit(0)
 
 
 #===============================================================================
-# Boiler plate
+# BOILER PLATE
 #===============================================================================
 if __name__=='__main__':
     main()
