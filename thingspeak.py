@@ -101,6 +101,8 @@ class ThingspeakChannel(ThingspeakAcc):
     #---------------------------------------------------------------------------    
     def __init__(self, acc_host_addr, **args):
         
+        '''Prepares thingspeak channel'''
+        
         if acc_host_addr[-1:] is not '/':
             acc_host_addr += '/'
             
@@ -125,6 +127,9 @@ class ThingspeakChannel(ThingspeakAcc):
     # WRITE API KEY TO FILE
     #---------------------------------------------------------------------------
     def write_write_api_key_file(self, filename):
+        
+        '''Writes api key to file'''
+        
         with open(filename, 'w') as f:
                 f.write(self.api_key)
 
@@ -133,6 +138,8 @@ class ThingspeakChannel(ThingspeakAcc):
     # LOAD THINGSPEAK API KEY
     #---------------------------------------------------------------------------
     def read_write_api_key(self, filename):
+        
+        '''Returns api key from file'''
     
         error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
         
@@ -153,7 +160,9 @@ class ThingspeakChannel(ThingspeakAcc):
     #---------------------------------------------------------------------------
     def update_channel(self, parameters):
         
-        '''Valid parameters:
+        '''Posts parameters dicitionary values to thingspeak channel.
+        
+            Valid parameters:
             api_key (string) - Write API Key for this specific Channel
                (required). The Write API Key can optionally be sent via a
                THINGSPEAKAPIKEY HTTP header.
@@ -189,7 +198,9 @@ class ThingspeakChannel(ThingspeakAcc):
     #---------------------------------------------------------------------------
     def get_channel_feed(self, parameters):
         
-        '''Valid parameters:
+        '''Returns string of thingspeak feed of certain size.
+        
+           Valid parameters:
             api_key (string) Read API Key for this specific Channel 
                (optional--no key required for public channels)
             results (integer) Number of entries to retrieve, 8000 max,
@@ -237,7 +248,9 @@ class ThingspeakChannel(ThingspeakAcc):
     #---------------------------------------------------------------------------
     def get_last_entry_in_channel_feed(self, parameters):
         
-        '''Valid parameters:
+        ''''Returns string of last thingspeak feed.
+        
+            Valid parameters:
             api_key (string) Read API Key for this specific Channel 
                 (optional--no key required for public channels)
             timezone (string) Timezone identifier for this request (optional)
@@ -263,7 +276,9 @@ class ThingspeakChannel(ThingspeakAcc):
     #---------------------------------------------------------------------------
     def get_status_update(self, parameters):
         
-        '''Valid parameters:
+        ''''Returns string of thingspeak status.
+        
+            Valid parameters:
             api_key (string) Read API Key for this specific Channel (optional
                 --no key required for public channels)
             timezone (string) Timezone identifier for this request (optional)
@@ -283,7 +298,8 @@ class ThingspeakChannel(ThingspeakAcc):
     #---------------------------------------------------------------------------
     def get_specific_entry(self, entry_id, parameters):
         
-        '''entry_id to return
+        ''''Returns string of specific thingspeak feed pointed by 'entry_id'.
+        
            Valid parameters:
             api_key (string) Read API Key for this specific Channel (optional
                 --no key required for public channels)
