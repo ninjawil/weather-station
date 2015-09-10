@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
 #
-# Controls shed weather station
+# 'Controls shed weather station
 #
 # The MIT License (MIT)
 #
@@ -26,7 +26,7 @@
 #
 #-------------------------------------------------------------------------------
 
-#!usr/bin/env python
+#!/usr/bin/env python
 
 '''Gathers data from various sensors to capture weather conditiona and take
 apropriate actions in shed.'''
@@ -298,9 +298,9 @@ def main():
         thingspeak_write_api_key     = ''
         
         #Set up thingspeak account
-        thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
-                                                    s.THINGSPEAK_API_KEY_FILENAME,
-                                                    s.THINGSPEAK_CHANNEL_ID) 
+        ts_acc = thingspeak.TSChannel(s.THINGSPEAK_HOST_ADDR,
+                                        file=s.THINGSPEAK_API_KEY_FILENAME,
+                                        ch_id=s.THINGSPEAK_CHANNEL_ID) 
 
 
     #---------------------------------------------------------------------------
@@ -356,7 +356,7 @@ def main():
                 if rows <= 0:
                     rows = screen_op.draw_screen(sensors,
                                                     thingspeak_enable_update, 
-                                                    thingspeak_acc.api_key,
+                                                    ts_acc.api_key,
                                                     rrdtool_enable_update,
                                                     rrd_set)
                 print(time.strftime('%Y-%m-%d\t%H:%M:%S', time.gmtime(next_reading))),
@@ -415,7 +415,7 @@ def main():
                         
                 #Get value from thingspeak if rrdtool is disabled
                 elif thingspeak_enable_update:
-                    last_data_values = thingspeak_acc.get_last_feed_entry()
+                    last_data_values = ts_acc.get_last_feed_entry()
                     last_entry_time = last_data_values["created at"]
                     last_precip_accu = last_data_values["field"+str(s.PRECIP_ACCU_TS_FIELD)]
    
@@ -483,7 +483,8 @@ def main():
                         else:
                             print('\tCLOSED\t'),
                     else:
-                        print('\t{:2.2f} '.format(value[s.VALUE]) + value[s.UNIT]),
+                        print('\t{value:2.2f}{unit} '.format(value=value[s.VALUE],
+                                                             unit=value[s.UNIT])),
 
   
             #-------------------------------------------------------------------
@@ -494,10 +495,12 @@ def main():
                 sensor_data = {}
                 for key, value in sorted(sensors.items(), key=lambda e: e[1][0]):
                     sensor_data['field'+str(value[s.TS_FIELD])] = value[s.VALUE]
-                response = thingspeak_acc.update_channel(sensor_data)
-                logger.info('Thingspeak response: %d - %s', response.status, response.reason)
+                response = ts_acc.update_channel(sensor_data)
+                logger.info('Thingspeak response: {code} - {reason}'.format(
+                                code=response.status_code, 
+                                reason=response.reason))
                 if screen_output:
-                    print('\t' + response.reason),
+                    print('\t{response}'.format(reponse=response.reason)),
             elif screen_output:
                 print('\tN/A'),
 
@@ -534,11 +537,10 @@ def main():
         rain_gauge.cancel()
         
         logger.info('Finished')
-        sys.exit(0)
-
+        
 
 #===============================================================================
 # BOILER PLATE
 #===============================================================================
 if __name__=='__main__':
-    main()
+    sys.exit(main())

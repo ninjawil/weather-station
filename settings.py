@@ -26,7 +26,7 @@
 #
 #-------------------------------------------------------------------------------
 
-#!usr/bin/env python
+#!/usr/bin/env python
 
 
 #===============================================================================
@@ -53,7 +53,7 @@ UPDATE_RATE          = 300 # seconds
 RRD_HEARTBEAT        = 2 # multiplier
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
-LOG_FILENAME         = '/log/wstation.log'
+LOG_FILENAME         = '/wstation.log'
 
 
 #Sensor list set up
@@ -77,7 +77,7 @@ RRDTOOL_RRA          = ('LAST',       5,  0.125,  # Consolidation type, Resoluti
  
 
 # --- Set up thingspeak ----
-THINGSPEAK_HOST_ADDR         = 'api.thingspeak.com:80'
+THINGSPEAK_HOST_ADDR         = 'https://api.thingspeak.com'
 THINGSPEAK_API_KEY_FILENAME  = 'thingspeak.txt'
 THINGSPEAK_CHANNEL_ID        = '39722'
 

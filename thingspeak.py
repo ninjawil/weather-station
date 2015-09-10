@@ -26,7 +26,7 @@
 #
 #-------------------------------------------------------------------------------
 
-#!usr/bin/env python
+#!/usr/bin/env python
 
 #===============================================================================
 # IMPORT MODULES
@@ -38,7 +38,7 @@ import ast
 #===============================================================================
 # CLASS DEFINITION AND FUNCTIONS
 #===============================================================================
-class ThingspeakAcc:
+class TSAccount:
 
     '''Sets up a thingspeak account'''
 
@@ -85,7 +85,7 @@ class ThingspeakAcc:
      
 
 #===============================================================================
-class ThingspeakChannel(ThingspeakAcc):
+class TSChannel(TSAccount):
     
     '''Set up thingspeak channel:
         + Account host address (required)
@@ -160,7 +160,8 @@ class ThingspeakChannel(ThingspeakAcc):
     #---------------------------------------------------------------------------
     def update_channel(self, parameters):
         
-        '''Posts parameters dicitionary values to thingspeak channel.
+        '''Posts parameters dictionary values to thingspeak channel and
+            returns requests post data.
         
             Valid parameters:
             api_key (string) - Write API Key for this specific Channel

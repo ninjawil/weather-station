@@ -18,6 +18,22 @@ Data recorded is sent to thingspeak.
  + need to set up a crontab job to loop sync the rrd file with thingspeak
 
 ### Dependencies
+
+#### Python
+System needs Python 3+
+'''
+$ sudo apt-get install python3-pip
+$ sudo apt-get install python3-setuptools
+$ sudo python3 -m easy_install pip
+...
+Installing pip script to /usr/local/bin
+Installing pip-3.2 script to /usr/local/bin
+.. Now I get pip-3.2:
+
+$ sudo pip-3.2 install requests
+'''
+
+
 #### PIGPIO
 See http://abyz.co.uk/rpi/pigpio/ for more details.
 Install using:
