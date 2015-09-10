@@ -28,22 +28,34 @@
 
 #!usr/bin/env python
 
+'''Gathers data from various sensors to capture weather conditiona and take
+apropriate actions in shed.'''
+
+
 #===============================================================================
 # Import modules
 #===============================================================================
+
+# Standard Library
 import os
 import sys
 import threading
 import time
 import datetime
+import logging
+
+# Third party modules
+import rrdtool
 import pigpio
 import DHT22
+
+# Application modules
 import DS18B20
 import thingspeak
 import screen_op
 import settings as s
-import rrdtool
-import logging
+
+
 
 
 #===============================================================================
