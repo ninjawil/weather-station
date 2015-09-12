@@ -53,7 +53,7 @@ UPDATE_RATE          = 300 # seconds
 RRD_HEARTBEAT        = 2 # multiplier
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
-LOG_FILENAME         = '/wstation.log'
+LOG_FILENAME         = 'wstation.log'
 
 
 #Sensor list set up

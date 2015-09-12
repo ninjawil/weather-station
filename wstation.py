@@ -64,7 +64,7 @@ import settings as s
 logging.basicConfig(filename=s.LOG_FILENAME, level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger = logging.getLogger(__name__)
-logger.info('Wstation Started')
+logger.info('--- Wstation Started ---')
 
 
 #===============================================================================
@@ -324,13 +324,14 @@ def main():
  
         #Prepare RRD set
         rrd_set = [s.RRDTOOL_RRD_FILE, 
-                    '--step', str(s.UPDATE_RATE), 
-                    '--start', str(next_reading)]
+                    '--step', '{step}'.format(step=s.UPDATE_RATE), 
+                    '--start', '{start_time:.0f}'.format(start_time=next_reading)]
         rrd_set +=  rrd_data_sources + rra_files
         
         #Create RRD files if none exist
         if not os.path.exists(s.RRDTOOL_RRD_FILE):
             logger.info('RRD file not found')
+            logger.info(rrd_set)
             rrdtool.create(rrd_set)
             logger.info('New RRD file created')
         else:
@@ -339,7 +340,8 @@ def main():
             data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
                                         '-s', str(s.UPDATE_RATE * -2))
             next_reading  = data_values[0][1]
-            logger.info('Next sensor reading at %d', next_reading)
+            logger.info('RRD FETCH: Next sensor reading at {time}'.format(
+                time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
 
 
     #---------------------------------------------------------------------------
@@ -366,8 +368,8 @@ def main():
             # Delay to give update rate
             #-------------------------------------------------------------------
             sleep_length = next_reading - time.time()
-            # if sleep_length > 0:
-            #    time.sleep(sleep_length)
+            if sleep_length > 0:
+                time.sleep(sleep_length)
 
 
             #-------------------------------------------------------------------
@@ -399,7 +401,8 @@ def main():
 
                     #Sync task time to rrd database
                     next_reading  = data_values[0][1]
-                    logger.info('Next sensor reading at %d', next_reading)
+                    logger.info('Next sensor reading at {time}'.format(
+                        time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
                     
                     #Extract time and precip acc value from fetched tuple
                     data_location = data_values[1].index(s.PRECIP_ACCU_NAME.replace(' ','_'))
@@ -440,7 +443,8 @@ def main():
             else:
                 # If rrdtool is disable just increment task time by rate
                 next_reading += s.UPDATE_RATE
-                logger.info('Next sensor reading at %d', next_reading)
+                logger.info('Next sensor reading at  {time}'.format(
+                    time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
 
 
             #-------------------------------------------------------------------
@@ -500,7 +504,7 @@ def main():
                                 code=response.status_code, 
                                 reason=response.reason))
                 if screen_output:
-                    print('\t{response}'.format(reponse=response.reason)),
+                    print('\t{response}'.format(response=response.reason)),
             elif screen_output:
                 print('\tN/A'),
 
@@ -525,6 +529,8 @@ def main():
     # User exit command
     #---------------------------------------------------------------------------
     except KeyboardInterrupt:
+
+        logger.info('USER ACTION: End command')
         
         if screen_output:
             print('\nExiting program...')
@@ -536,7 +542,7 @@ def main():
         DHT22_sensor.cancel()
         rain_gauge.cancel()
         
-        logger.info('Finished')
+        logger.info('--- Finished ---')
         
 
 #===============================================================================

@@ -32,7 +32,11 @@
 # IMPORT MODULES
 #===============================================================================
 import requests
+import requests.packages.urllib3
 import ast
+import logging
+
+requests.packages.urllib3.disable_warnings()
 
 
 #===============================================================================
@@ -187,6 +191,8 @@ class TSChannel(TSAccount):
                 zones can be specified via the timezone parameter (optional)'''
 
         cmd = self.host_addr + 'update'
+
+        logger.info('TS update')
         
         if 'api_key' not in parameters:
             parameters['api_key'] = self.api_key
