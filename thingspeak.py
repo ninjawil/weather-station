@@ -26,7 +26,7 @@
 #
 #-------------------------------------------------------------------------------
 
-#!/usr/bin/env python
+#!usr/bin/env python
 
 #===============================================================================
 # IMPORT MODULES
@@ -36,6 +36,7 @@ import requests.packages.urllib3
 import ast
 import logging
 
+#!!! DISABLE WARNINGS ON PYTHON <2.7.9 !!!
 requests.packages.urllib3.disable_warnings()
 
 
@@ -105,8 +106,6 @@ class TSChannel(TSAccount):
     #---------------------------------------------------------------------------    
     def __init__(self, acc_host_addr, **args):
         
-        '''Prepares thingspeak channel'''
-        
         if acc_host_addr[-1:] is not '/':
             acc_host_addr += '/'
             
@@ -131,9 +130,6 @@ class TSChannel(TSAccount):
     # WRITE API KEY TO FILE
     #---------------------------------------------------------------------------
     def write_write_api_key_file(self, filename):
-        
-        '''Writes api key to file'''
-        
         with open(filename, 'w') as f:
                 f.write(self.api_key)
 
@@ -142,8 +138,6 @@ class TSChannel(TSAccount):
     # LOAD THINGSPEAK API KEY
     #---------------------------------------------------------------------------
     def read_write_api_key(self, filename):
-        
-        '''Returns api key from file'''
     
         error_to_catch = getattr(__builtins__,'FileNotFoundError', IOError)
         
@@ -164,10 +158,7 @@ class TSChannel(TSAccount):
     #---------------------------------------------------------------------------
     def update_channel(self, parameters):
         
-        '''Posts parameters dictionary values to thingspeak channel and
-            returns requests post data.
-        
-            Valid parameters:
+        '''Valid parameters:
             api_key (string) - Write API Key for this specific Channel
                (required). The Write API Key can optionally be sent via a
                THINGSPEAKAPIKEY HTTP header.
@@ -203,9 +194,7 @@ class TSChannel(TSAccount):
     #---------------------------------------------------------------------------
     def get_channel_feed(self, parameters):
         
-        '''Returns string of thingspeak feed of certain size.
-        
-           Valid parameters:
+        '''Valid parameters:
             api_key (string) Read API Key for this specific Channel 
                (optional--no key required for public channels)
             results (integer) Number of entries to retrieve, 8000 max,
@@ -253,9 +242,7 @@ class TSChannel(TSAccount):
     #---------------------------------------------------------------------------
     def get_last_entry_in_channel_feed(self, parameters):
         
-        ''''Returns string of last thingspeak feed.
-        
-            Valid parameters:
+        '''Valid parameters:
             api_key (string) Read API Key for this specific Channel 
                 (optional--no key required for public channels)
             timezone (string) Timezone identifier for this request (optional)
@@ -281,9 +268,7 @@ class TSChannel(TSAccount):
     #---------------------------------------------------------------------------
     def get_status_update(self, parameters):
         
-        ''''Returns string of thingspeak status.
-        
-            Valid parameters:
+        '''Valid parameters:
             api_key (string) Read API Key for this specific Channel (optional
                 --no key required for public channels)
             timezone (string) Timezone identifier for this request (optional)
@@ -303,8 +288,7 @@ class TSChannel(TSAccount):
     #---------------------------------------------------------------------------
     def get_specific_entry(self, entry_id, parameters):
         
-        ''''Returns string of specific thingspeak feed pointed by 'entry_id'.
-        
+        '''entry_id to return
            Valid parameters:
             api_key (string) Read API Key for this specific Channel (optional
                 --no key required for public channels)
