@@ -124,6 +124,20 @@ def toggle_LED():
     #Toggle LED
     pi.write(s.LED_PIN, not(pi.read(s.LED_PIN)))
 
+  
+#===============================================================================
+# TOGGLE LED
+#===============================================================================
+def create_rrd_data_source(source_name, source_type, source_heartbeat, 
+                            source_min, source_max):
+    return 'DS:{ds_name}:{ds_type}:{ds_hb}:{ds_min}:{ds_max}'.format(
+        ds_name=source_name.replace(' ','_'),
+        ds_type=source_type,
+        ds_hb=source_heartbeat,
+        ds_min=source_min,
+        ds_max=source_max)
+
+    
 
 #===============================================================================
 # MAIN
@@ -192,11 +206,11 @@ def main():
         
         #Prepare RRD data sources
         if rrdtool_enable_update:
-            rrd_data_sources += ['DS:' + s.OUT_TEMP_NAME.replace(' ','_') + 
-                                    ':' + s.OUT_TEMP_TYPE + 
-                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                    ':' + str(s.OUT_TEMP_MIN) + 
-                                    ':' + str(s.OUT_TEMP_MAX)]
+            rrd_data_sources += [create_rrd_data_source(s.OUT_TEMP_NAME, 
+                                    s.OUT_TEMP_TYPE,
+                                    str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE),
+                                    str(s.OUT_TEMP_MIN),
+                                    str(s.OUT_TEMP_MAX))]
 
 
     #---------------------------------------------------------------------------
@@ -218,16 +232,16 @@ def main():
         
         #Prepare RRD data sources
         if rrdtool_enable_update:
-            rrd_data_sources += ['DS:' + s.IN_TEMP_NAME.replace(' ','_') + 
-                                    ':' + s.IN_TEMP_TYPE + 
-                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                    ':' + str(s.IN_TEMP_MIN) + 
-                                    ':' + str(s.IN_TEMP_MAX),    
-                                'DS:' + s.IN_HUM_NAME.replace(' ','_') + 
-                                    ':' + s.IN_HUM_TYPE + 
-                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                    ':' + str(s.IN_HUM_MIN) + 
-                                    ':' + str(s.IN_HUM_MAX)]
+            rrd_data_sources += [create_rrd_data_source(s.IN_TEMP_NAME, 
+                                    s.IN_TEMP_TYPE,
+                                    str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE),
+                                    str(s.IN_TEMP_MIN),
+                                    str(s.IN_TEMP_MAX))]
+            rrd_data_sources += [create_rrd_data_source(s.IN_HUM_NAME, 
+                                    s.IN_HUM_TYPE,
+                                    str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE),
+                                    str(s.IN_HUM_MIN),
+                                    str(s.IN_HUM_MAX))]
 
     
     #---------------------------------------------------------------------------
@@ -245,11 +259,11 @@ def main():
         
         #Prepare RRD data sources
         if rrdtool_enable_update:
-            rrd_data_sources += ['DS:' + s.DOOR_NAME.replace(' ','_') + 
-                                    ':' + s.DOOR_TYPE + 
-                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                    ':' + str(s.DOOR_MIN) + 
-                                    ':' + str(s.DOOR_MAX)]
+            rrd_data_sources += [create_rrd_data_source(s.DOOR_NAME, 
+                                    s.DOOR_TYPE,
+                                    str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE),
+                                    str(s.DOOR_MIN),
+                                    str(s.DOOR_MAX))]
 
 
     #---------------------------------------------------------------------------
@@ -278,16 +292,16 @@ def main():
         
         #Prepare RRD data sources
         if rrdtool_enable_update:
-            rrd_data_sources += ['DS:' + s.PRECIP_RATE_NAME.replace(' ','_') + 
-                                    ':' + s.PRECIP_RATE_TYPE + 
-                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                    ':' + str(s.PRECIP_RATE_MIN) + 
-                                    ':' + str(s.PRECIP_RATE_MAX),
-                                'DS:' + s.PRECIP_ACCU_NAME.replace(' ','_') + 
-                                    ':' + s.PRECIP_ACCU_TYPE + 
-                                    ':' + str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE) + 
-                                    ':' + str(s.PRECIP_ACCU_MIN) + 
-                                    ':' + str(s.PRECIP_ACCU_MAX)]                                    
+            rrd_data_sources += [create_rrd_data_source(s.PRECIP_RATE_NAME, 
+                                    s.PRECIP_RATE_TYPE,
+                                    str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE),
+                                    str(s.PRECIP_RATE_MIN),
+                                    str(s.PRECIP_RATE_MAX))]
+            rrd_data_sources += [create_rrd_data_source(s.PRECIP_ACCU_NAME, 
+                                    s.PRECIP_ACCU_TYPE,
+                                    str(s.RRDTOOL_HEARTBEAT*s.UPDATE_RATE),
+                                    str(s.PRECIP_ACCU_MIN),
+                                    str(s.PRECIP_ACCU_MAX))]                               
 
 
     #---------------------------------------------------------------------------
@@ -376,7 +390,8 @@ def main():
             # Get loop start time
             #-------------------------------------------------------------------
             loop_start_time = datetime.datetime.now()
-            logger.info('Loop start time: %s', loop_start_time.strftime('%Y-%m-%d %H:%M:%S'))
+            logger.info('Loop start time: {start_time}'.format(
+                start_time=loop_start_time.strftime('%Y-%m-%d %H:%M:%S')))
 
 
             #-------------------------------------------------------------------
