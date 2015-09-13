@@ -92,7 +92,6 @@ OUT_TEMP_MAX         = 50
 OUT_TEMP_TYPE        = 'GAUGE'
 
 # --- Set up inside DHT22 sensor ----
-IN_SENSOR_REF        = 'DHT22'
 IN_SENSOR_PIN        = PIN_11
 IN_TEMP_NAME         = 'inside temp'
 IN_TEMP_UNIT         = '*C' #u'\u00b0C'

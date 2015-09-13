@@ -199,10 +199,7 @@ def main():
     #---------------------------------------------------------------------------
     if out_sensor_enable:
         #Add to sensor list
-        sensors[s.OUT_TEMP_NAME] = [0,0,0]
-        sensors[s.OUT_TEMP_NAME][s.TS_FIELD] = s.OUT_TEMP_TS_FIELD 
-        sensors[s.OUT_TEMP_NAME][s.VALUE] = 0
-        sensors[s.OUT_TEMP_NAME][s.UNIT] = s.OUT_TEMP_UNIT
+        sensors[s.OUT_TEMP_NAME] = [s.OUT_TEMP_TS_FIELD, s.OUT_TEMP_UNIT, 0]
         
         #Prepare RRD data sources
         if rrdtool_enable_update:
@@ -218,14 +215,8 @@ def main():
     #---------------------------------------------------------------------------
     if in_sensor_enable:
         #Add to sensor list
-        sensors[s.IN_TEMP_NAME] = [0,0,0]
-        sensors[s.IN_TEMP_NAME][s.TS_FIELD] = s.IN_TEMP_TS_FIELD 
-        sensors[s.IN_TEMP_NAME][s.VALUE] = 0
-        sensors[s.IN_TEMP_NAME][s.UNIT] = s.IN_TEMP_UNIT
-        sensors[s.IN_HUM_NAME] = [0,0,0]
-        sensors[s.IN_HUM_NAME][s.TS_FIELD] = s.IN_HUM_TS_FIELD 
-        sensors[s.IN_HUM_NAME][s.VALUE] = 0
-        sensors[s.IN_HUM_NAME][s.UNIT] = s.IN_HUM_UNIT
+        sensors[s.IN_TEMP_NAME] = [s.IN_TEMP_TS_FIELD, s.IN_TEMP_UNIT, 0]
+        sensors[s.IN_HUM_NAME] = [s.IN_HUM_TS_FIELD, s.IN_HUM_UNIT, 0]
         
         #Set up hardware
         DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
@@ -249,10 +240,7 @@ def main():
     #---------------------------------------------------------------------------
     if door_sensor_enable:
         #Add to sensor list
-        sensors[s.DOOR_NAME] = [0,0,0]
-        sensors[s.DOOR_NAME][s.TS_FIELD] = s.DOOR_TS_FIELD 
-        sensors[s.DOOR_NAME][s.VALUE] = 0
-        sensors[s.DOOR_NAME][s.UNIT] = s.DOOR_UNIT
+        sensors[s.DOOR_NAME] = [s.DOOR_TS_FIELD, s.DOOR_UNIT, 0]
         
         #Set up hardware
         pi.set_mode(s.DOOR_SENSOR_PIN, pigpio.INPUT)
@@ -271,19 +259,13 @@ def main():
     #---------------------------------------------------------------------------
     if rain_sensor_enable:
         #Set up inital values for variables
-        precip_tick_count            = 0
-        precip_accu                  = 0
-        last_data_values = []
+        precip_tick_count = 0
+        precip_accu       = 0
+        last_data_values  = []
         
         #Add to sensor list
-        sensors[s.PRECIP_RATE_NAME] = [0,0,0]
-        sensors[s.PRECIP_RATE_NAME][s.TS_FIELD] = s.PRECIP_RATE_TS_FIELD 
-        sensors[s.PRECIP_RATE_NAME][s.VALUE] = 0
-        sensors[s.PRECIP_RATE_NAME][s.UNIT] = s.PRECIP_RATE_UNIT
-        sensors[s.PRECIP_ACCU_NAME] = [0,0,0]
-        sensors[s.PRECIP_ACCU_NAME][s.TS_FIELD] = s.PRECIP_ACCU_TS_FIELD 
-        sensors[s.PRECIP_ACCU_NAME][s.VALUE] = 0
-        sensors[s.PRECIP_ACCU_NAME][s.UNIT] = s.PRECIP_ACCU_UNIT
+        sensors[s.PRECIP_RATE_NAME] = [s.PRECIP_RATE_TS_FIELD, s.PRECIP_RATE_UNIT, 0]
+        sensors[s.PRECIP_ACCU_NAME] = [s.PRECIP_ACCU_TS_FIELD, s.PRECIP_ACCU_UNIT, 0]
         
         #Set up rain gauge hardware
         pi.set_mode(s.PRECIP_SENSOR_PIN, pigpio.INPUT)
@@ -332,9 +314,10 @@ def main():
   
         #Prepare RRA files
         for i in range(0,len(s.RRDTOOL_RRA),3):
-            rra_files.append('RRA:' + s.RRDTOOL_RRA[i] + ':0.5:' + 
-                                str((s.RRDTOOL_RRA[i+1]*60)/s.UPDATE_RATE) + ':' + 
-                                str(((s.RRDTOOL_RRA[i+2])*24*60)/s.RRDTOOL_RRA[i+1]))
+            rra_files.append('RRA:{cf}:0.5:{steps}:{rows}'.format(
+                cf=s.RRDTOOL_RRA[i],
+                steps=str((s.RRDTOOL_RRA[i+1]*60)/s.UPDATE_RATE),
+                rows=str(((s.RRDTOOL_RRA[i+2])*24*60)/s.RRDTOOL_RRA[i+1])))
  
         #Prepare RRD set
         rrd_set = [s.RRDTOOL_RRD_FILE, 
