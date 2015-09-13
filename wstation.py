@@ -81,6 +81,15 @@ rain_thread_next_call    = time.time()
 last_rising_edge = None
 
 
+sensors={
+    'outside temp':[1,'*C',0],
+    'inside temp':[2,'*C',0],
+    'inside hum':[3,'%',0],
+    'door open':[4,'',0],
+    'precip rate':[5,'mm',0],
+    'precip acc':[6,'mm',0]
+}
+
 #===============================================================================
 # EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
 #===============================================================================
@@ -159,7 +168,6 @@ def main():
     door_sensor_enable           = True
     rrdtool_enable_update        = True
     
-    sensors                      = {}
     rrd_data_sources             = []
     rrd_set                      = []
     rows                         = 0
@@ -198,9 +206,6 @@ def main():
     # SET UP OUTSIDE TEMPERATURE SENSOR
     #---------------------------------------------------------------------------
     if out_sensor_enable:
-        #Add to sensor list
-        sensors[s.OUT_TEMP_NAME] = [s.OUT_TEMP_TS_FIELD, s.OUT_TEMP_UNIT, 0]
-        
         #Prepare RRD data sources
         if rrdtool_enable_update:
             rrd_data_sources += [create_rrd_data_source(s.OUT_TEMP_NAME, 
@@ -214,10 +219,6 @@ def main():
     # SET UP INSIDE TEMPERATURE SENSOR
     #---------------------------------------------------------------------------
     if in_sensor_enable:
-        #Add to sensor list
-        sensors[s.IN_TEMP_NAME] = [s.IN_TEMP_TS_FIELD, s.IN_TEMP_UNIT, 0]
-        sensors[s.IN_HUM_NAME] = [s.IN_HUM_TS_FIELD, s.IN_HUM_UNIT, 0]
-        
         #Set up hardware
         DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
         
@@ -239,9 +240,6 @@ def main():
     # SET UP DOOR SENSOR
     #---------------------------------------------------------------------------
     if door_sensor_enable:
-        #Add to sensor list
-        sensors[s.DOOR_NAME] = [s.DOOR_TS_FIELD, s.DOOR_UNIT, 0]
-        
         #Set up hardware
         pi.set_mode(s.DOOR_SENSOR_PIN, pigpio.INPUT)
         
@@ -262,10 +260,6 @@ def main():
         precip_tick_count = 0
         precip_accu       = 0
         last_data_values  = []
-        
-        #Add to sensor list
-        sensors[s.PRECIP_RATE_NAME] = [s.PRECIP_RATE_TS_FIELD, s.PRECIP_RATE_UNIT, 0]
-        sensors[s.PRECIP_ACCU_NAME] = [s.PRECIP_ACCU_TS_FIELD, s.PRECIP_ACCU_UNIT, 0]
         
         #Set up rain gauge hardware
         pi.set_mode(s.PRECIP_SENSOR_PIN, pigpio.INPUT)
