@@ -83,14 +83,6 @@ def main():
     #Set initial variable values
     rrdtool_enable_update        = True
 
-    sensors={
-        s.OUT_TEMP_NAME:0,
-        s.IN_TEMP_NAME:0,
-        s.IN_HUM_NAME:0,
-        s.DOOR_NAME:0
-    }
-
-
     #---------------------------------------------------------------------------
     # Load PIGPIO
     #---------------------------------------------------------------------------
@@ -122,6 +114,9 @@ def main():
             logger.info('RRD file found')
             data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
                                         '-s', str(s.UPDATE_RATE * -2))
+            print(data_values)
+            sensors = dict.fromkeys(data_values[1], 0)
+            print(sensors)
             next_reading  = data_values[0][1]
             logger.info('RRD FETCH: Next sensor reading at {time}'.format(
                 time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
@@ -173,7 +168,7 @@ def main():
         
         #Log an error if failed to read sensor
         #Error value will exceed max on RRD file and be added as NaN
-        if sensors[s.OUT_TEMP_NAME] = 999.99:
+        if sensors[s.OUT_TEMP_NAME] is 999.99:
             logger.error('Failed to read DS18B20 sensor')
 
 
@@ -189,13 +184,15 @@ def main():
     if rrdtool_enable_update:
         logger.info('Updating RRD file')
 
-        sensor_data = []
-        for key, value in sorted(sensors.items()):
-            sensor_data.append(value)
-        sensor_data = [str(i) for i in sensor_data]
-
         try:
-            rrdtool.update(s.RRDTOOL_RRD_FILE, 'N:' + ':'.join(sensor_data))
+            rrdtool.update(s.RRDTOOL_RRD_FILE, 
+                'N:{out_temp}:{in_temp}:{in_hum}:{door}:{p_rate}:{p_accu}'.format(
+                    out_temp=str(sensors[s.OUT_TEMP_NAME]),
+                    in_temp=str(sensors[s.IN_TEMP_NAME]),
+                    in_hum=str(sensors[s.IN_HUM_NAME]),
+                    door=str(sensors[s.DOOR_NAME]),
+                    p_rate='U',
+                    p_accu='U'))
         except rrdtool.error:
             logger.error('Failed to update RRD file ({value_error})'.format(
                 value_error=rrdtool.error))
