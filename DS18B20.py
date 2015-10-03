@@ -67,7 +67,6 @@ def get_temp(w1_device_path, device_id):
     #If unsuccessful first read loop until temperature acquired
     while lines[0].strip()[-3:] != 'YES':
         time.sleep(0.2)
-        print('Failed to read DS18B20. Trying again...')
         lines = w1_slave_read(device_id)
 
     temp_output = lines[1].find('t=')
@@ -75,5 +74,7 @@ def get_temp(w1_device_path, device_id):
     if temp_output != -1:
         temp_string = lines[1].strip()[temp_output+2:]
         temp_c = float(temp_string) / 1000.0
+    else:
+        temp_c = 999.99
 
     return temp_c
