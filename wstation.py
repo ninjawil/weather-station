@@ -225,7 +225,12 @@ def main():
     #---------------------------------------------------------------------------
     if in_sensor_enable:
         #Set up hardware
-        DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
+        try:
+            DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
+        except ValueError:
+            print('Failed to connect to DHT22')
+            logger.error('Failed to connect to DHT22 ({value_error})'.format(
+                value_error=ValueError))
         
         #Prepare RRD data sources
         if rrdtool_enable_update:
@@ -467,12 +472,7 @@ def main():
             #-------------------------------------------------------------------
             if in_sensor_enable:
                 logger.info('Reading value from DHT22 sensor')
-                try:
-                    DHT22_sensor.trigger()
-                except ValueError:
-                    print('Failed to connect to DHT22')
-                    logger.error('Failed to connect to DHT22 ({value_error})'.format(
-                        value_error=ValueError))
+                DHT22_sensor.trigger()
                 time.sleep(0.2)  #Do not over poll DHT22
                 sensors[s.IN_TEMP_NAME][s.VALUE] = DHT22_sensor.temperature()
                 sensors[s.IN_HUM_NAME][s.VALUE]  = DHT22_sensor.humidity()
