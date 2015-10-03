@@ -467,7 +467,12 @@ def main():
             #-------------------------------------------------------------------
             if in_sensor_enable:
                 logger.info('Reading value from DHT22 sensor')
-                DHT22_sensor.trigger()
+                try:
+                    DHT22_sensor.trigger()
+                except ValueError:
+                    print('Failed to connect to DHT22')
+                    logger.error('Failed to connect to DHT22 ({value_error})'.format(
+                        value_error=ValueError))
                 time.sleep(0.2)  #Do not over poll DHT22
                 sensors[s.IN_TEMP_NAME][s.VALUE] = DHT22_sensor.temperature()
                 sensors[s.IN_HUM_NAME][s.VALUE]  = DHT22_sensor.humidity()
