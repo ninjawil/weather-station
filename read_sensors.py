@@ -81,10 +81,6 @@ def main():
     '''Entry point for script'''
 
     #Set initial variable values
-    out_sensor_enable            = True
-    in_sensor_enable             = True
-    thingspeak_enable_update     = True
-    door_sensor_enable           = True
     rrdtool_enable_update        = True
 
     sensors={
@@ -108,29 +104,6 @@ def main():
         sys.exit()
 
 
-    #-------------------------------------------------------------------
-    # Get inside temperature and humidity
-    #-------------------------------------------------------------------
-    if in_sensor_enable:
-        logger.info('Reading value from DHT22 sensor')
-
-        #Set up sensor  
-        try:
-            DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
-        except ValueError:
-            print('Failed to connect to DHT22')
-            logger.error('Failed to connect to DHT22 ({value_error})'.format(
-                value_error=ValueError))
-            logger.info('Exiting...')
-            sys.exit()
-
-        #Read sensor
-        DHT22_sensor.trigger()
-        time.sleep(0.2)  #Do not over poll DHT22
-        sensors[s.IN_TEMP_NAME] = DHT22_sensor.temperature()
-        sensors[s.IN_HUM_NAME]  = DHT22_sensor.humidity() 
-
-   
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
@@ -155,9 +128,32 @@ def main():
 
 
     #-------------------------------------------------------------------
+    # Get inside temperature and humidity
+    #-------------------------------------------------------------------
+    if s.IN_SENSOR_ENABLE:
+        logger.info('Reading value from DHT22 sensor')
+
+        #Set up sensor  
+        try:
+            DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
+        except ValueError:
+            print('Failed to connect to DHT22')
+            logger.error('Failed to connect to DHT22 ({value_error})'.format(
+                value_error=ValueError))
+            logger.info('Exiting...')
+            sys.exit()
+
+        #Read sensor
+        DHT22_sensor.trigger()
+        time.sleep(0.2)  #Do not over poll DHT22
+        sensors[s.IN_TEMP_NAME] = DHT22_sensor.temperature()
+        sensors[s.IN_HUM_NAME]  = DHT22_sensor.humidity() 
+
+
+    #-------------------------------------------------------------------
     # Check door status
     #-------------------------------------------------------------------
-    if door_sensor_enable:
+    if s.DOOR_ENABLE:
         logger.info('Reading value from door sensor')
 
         #Set up hardware
@@ -170,10 +166,15 @@ def main():
     #-------------------------------------------------------------------
     # Get outside temperature
     #-------------------------------------------------------------------
-    if out_sensor_enable:
+    if s.OUT_TEMP_ENABLE:
         logger.info('Reading value from DS18B20 sensor')
         sensors[s.OUT_TEMP_NAME] = DS18B20.get_temp(s.W1_DEVICE_PATH, 
                                                     s.OUT_TEMP_SENSOR_REF)
+        
+        #Log an error if failed to read sensor
+        #Error value will exceed max on RRD file and be added as NaN
+        if sensors[s.OUT_TEMP_NAME] = 999.99:
+            logger.error('Failed to read DS18B20 sensor')
 
 
     #-------------------------------------------------------------------
