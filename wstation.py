@@ -119,7 +119,7 @@ def count_rain_ticks(gpio, level, tick):
         last_rising_edge = tick  
         precip_tick_count += 1
         
-    logger.info('Rain tick pulse = {is_pulse}'.format(is_pulse=pulse)
+    logger.info('Rain tick pulse = {is_pulse}'.format(is_pulse=pulse))
 
    
 #===============================================================================
