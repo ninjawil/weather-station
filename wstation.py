@@ -70,7 +70,12 @@ logger.info('--- Wstation Started ---')
 #===============================================================================
 # LOAD DRIVERS
 #===============================================================================
-pi = pigpio.pi()
+try:
+    pi = pigpio.pi()
+except ValueError:
+    print('Failed to connect to PIGPIO')
+    logger.error('Failed to connect to PIGPIO ({value_error})'.format(
+        value_error=ValueError))
 
 
 #===============================================================================
@@ -114,7 +119,7 @@ def count_rain_ticks(gpio, level, tick):
         last_rising_edge = tick  
         precip_tick_count += 1
         
-    logger.info('Rain tick pulse = %s', pulse)
+    logger.info('Rain tick pulse = {is_pulse}'.format(is_pulse=pulse)
 
    
 #===============================================================================
