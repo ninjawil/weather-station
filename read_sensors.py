@@ -185,7 +185,7 @@ def main():
         logger.info('Updating RRD file')
 
         try:
-            rrdtool.update(s.RRDTOOL_RRD_FILE, 
+            rrdtool.update(s.RRDTOOL_RRD_FILE,
                 'N:{out_temp}:{in_temp}:{in_hum}:{door}:{p_rate}:{p_accu}'.format(
                     out_temp=str(sensors[s.OUT_TEMP_NAME]),
                     in_temp=str(sensors[s.IN_TEMP_NAME]),
