@@ -123,11 +123,11 @@ DOOR_TYPE            = 'GAUGE'
 
 
 # --- Set up rain fall reed switch ----
+PRECIP_SENSOR_ENABLE  = True
 PRECIP_SENSOR_PIN     = PIN_15
 PRECIP_TICK_MEASURE   = 0.3 #millimeters per tick
 PRECIP_ACC_RESET_TIME = (00,00,00,00) #hour, minute, second, microsecond
 
-PRECIP_RATE_ENABLE    = True
 PRECIP_RATE_NAME      = 'precip_rate'
 PRECIP_RATE_UNIT      = 'mm'
 PRECIP_RATE_TS_FIELD  = 5
@@ -135,7 +135,6 @@ PRECIP_RATE_MIN       = -5
 PRECIP_RATE_MAX       = 50
 PRECIP_RATE_TYPE      = 'GAUGE'
 
-PRECIP_ACCU_ENABLE    = True
 PRECIP_ACCU_NAME      = 'precip_acc'
 PRECIP_ACCU_UNIT      = 'mm'
 PRECIP_ACCU_TS_FIELD  = 6
