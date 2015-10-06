@@ -155,7 +155,7 @@ def main():
         data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
                                     '-s', str(s.UPDATE_RATE * -2))
         print(data_values)
-        sensors = dict.fromkeys(data_values[1], 0)
+        sensors = dict.fromkeys(data_values[1], 'U')
         print(sensors)
         next_reading  = data_values[0][1]
         logger.info('RRD FETCH: Next sensor reading at {time}'.format(
@@ -165,15 +165,15 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP RAIN SENSOR
     #---------------------------------------------------------------------------
-    if s.SENSOR_SET['precip_acc'][0]:
+    if s.SENSOR_SET['precip_acc'][ENABLE]:
         #Set up inital values for variables
         precip_tick_count = 0
         precip_accu       = 0
         last_data_values  = []
         
         #Set up rain gauge hardware
-        pi.set_mode(s.SENSOR_SET['precip_acc'][1], pigpio.INPUT)
-        rain_gauge = pi.callback(s.SENSOR_SET['precip_acc'][1], 
+        pi.set_mode(s.SENSOR_SET['precip_acc'][PIN_REF], pigpio.INPUT)
+        rain_gauge = pi.callback(s.SENSOR_SET['precip_acc'][PIN_REF], 
                                     pigpio.FALLING_EDGE, 
                                     count_rain_ticks)
 
@@ -204,7 +204,7 @@ def main():
             #-------------------------------------------------------------------
             # Get rain fall measurement
             #-------------------------------------------------------------------
-            if s.SENSOR_SET['precip_acc'][0]:
+            if s.SENSOR_SET['precip_acc'][ENABLE]:
                 
                 #Calculate precip rate and reset it
                 sensors['precip_rate'] = precip_tick_count * s.PRECIP_TICK_MEASURE
@@ -263,25 +263,19 @@ def main():
                 logger.info('Next sensor reading at  {time}'.format(
                     time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
 
-   
+
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            if rrdtool_enable_update:
-                logger.info('Updating RRD file')
+            logger.info('Updating RRD file')
 
-                try:
-                    rrdtool.update(s.RRDTOOL_RRD_FILE,
-                        'N:{out_temp}:{in_temp}:{in_hum}:{door}:{p_rate}:{p_accu}'.format(
-                            out_temp='U',
-                            in_temp='U',
-                            in_hum='U',
-                            door='U',
-                            p_rate=sensors[s.PRECIP_RATE_NAME],
-                            p_accu=sensors['precip_acc']))
-                except rrdtool.error:
-                    logger.error('Failed to update RRD file ({value_error})'.format(
-                        value_error=rrdtool.error))
+            try:
+                rrdtool.update(s.RRDTOOL_RRD_FILE,
+                    'N:{values}'.format(
+                        values=':'.join([str(sensors[i]) for i in sorted(sensors)]))
+            except rrdtool.error:
+                logger.error('Failed to update RRD file ({value_error})'.format(
+                    value_error=rrdtool.error))
 
 
     #---------------------------------------------------------------------------
