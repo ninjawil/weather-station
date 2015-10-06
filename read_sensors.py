@@ -102,8 +102,7 @@ def main():
     if rrdtool_enable_update:
         #Set up inital values for variables
         rra_files        = []
-  
-               
+        
         #Create RRD files if none exist
         if not os.path.exists(s.RRDTOOL_RRD_FILE):
             logger.info('RRD file not found')
@@ -125,12 +124,12 @@ def main():
     #-------------------------------------------------------------------
     # Get inside temperature and humidity
     #-------------------------------------------------------------------
-    if s.IN_SENSOR_ENABLE:
+    if s.SENSOR_SET['inside_temp'][0]:
         logger.info('Reading value from DHT22 sensor')
 
         #Set up sensor  
         try:
-            DHT22_sensor = DHT22.sensor(pi, s.IN_SENSOR_PIN)
+            DHT22_sensor = DHT22.sensor(pi, s.SENSOR_SET['inside_temp'][1])
         except ValueError:
             print('Failed to connect to DHT22')
             logger.error('Failed to connect to DHT22 ({value_error})'.format(
@@ -141,35 +140,42 @@ def main():
         #Read sensor
         DHT22_sensor.trigger()
         time.sleep(0.2)  #Do not over poll DHT22
-        sensors[s.IN_TEMP_NAME] = DHT22_sensor.temperature()
-        sensors[s.IN_HUM_NAME]  = DHT22_sensor.humidity() 
+        sensors['inside_temp'] = DHT22_sensor.temperature()
+        sensors['inside_hum']  = DHT22_sensor.humidity() 
 
 
     #-------------------------------------------------------------------
     # Check door status
     #-------------------------------------------------------------------
-    if s.DOOR_ENABLE:
+    if s.SENSOR_SET['door_open'][0]:
         logger.info('Reading value from door sensor')
 
         #Set up hardware
-        pi.set_mode(s.DOOR_SENSOR_PIN, pigpio.INPUT)
+        pi.set_mode(s.SENSOR_SET['door_open'][1], pigpio.INPUT)
 
         #Read data
-        sensors[s.DOOR_NAME] = pi.read(s.DOOR_SENSOR_PIN)
+        sensors['door_open'] = pi.read(s.SENSOR_SET['door_open'][1])
 
 
     #-------------------------------------------------------------------
     # Get outside temperature
     #-------------------------------------------------------------------
-    if s.OUT_TEMP_ENABLE:
+    if s.SENSOR_SET['outside_temp'][0]:
         logger.info('Reading value from DS18B20 sensor')
-        sensors[s.OUT_TEMP_NAME] = DS18B20.get_temp(s.W1_DEVICE_PATH, 
+        sensors['outside_temp'] = DS18B20.get_temp(s.W1_DEVICE_PATH, 
                                                     s.OUT_TEMP_SENSOR_REF)
         
         #Log an error if failed to read sensor
         #Error value will exceed max on RRD file and be added as NaN
-        if sensors[s.OUT_TEMP_NAME] is 999.99:
+        if sensors['outside_temp'] is 999.99:
             logger.error('Failed to read DS18B20 sensor')
+
+
+    #-------------------------------------------------------------------
+    # Ignore precipitation values
+    #-------------------------------------------------------------------
+    sensors['precip_rate'] = 'U'
+    sensors['precip_acc'] = 'U'
 
 
     #-------------------------------------------------------------------
@@ -181,21 +187,15 @@ def main():
     #-------------------------------------------------------------------
     # Add data to RRD
     #-------------------------------------------------------------------
-    if rrdtool_enable_update:
-        logger.info('Updating RRD file')
+    logger.info('Updating RRD file')
 
-        try:
-            rrdtool.update(s.RRDTOOL_RRD_FILE,
-                'N:{out_temp}:{in_temp}:{in_hum}:{door}:{p_rate}:{p_accu}'.format(
-                    out_temp=str(sensors[s.OUT_TEMP_NAME]),
-                    in_temp=str(sensors[s.IN_TEMP_NAME]),
-                    in_hum=str(sensors[s.IN_HUM_NAME]),
-                    door=str(sensors[s.DOOR_NAME]),
-                    p_rate='U',
-                    p_accu='U'))
-        except rrdtool.error:
-            logger.error('Failed to update RRD file ({value_error})'.format(
-                value_error=rrdtool.error))
+    try:
+        rrdtool.update(s.RRDTOOL_RRD_FILE,
+            'N:{values}'.format(
+                values=':'.join([str(sensors[i]) for i in sorted(sensors)]))
+    except rrdtool.error:
+        logger.error('Failed to update RRD file ({value_error})'.format(
+            value_error=rrdtool.error))
 
 
     #-------------------------------------------------------------------
