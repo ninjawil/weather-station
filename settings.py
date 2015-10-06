@@ -53,7 +53,6 @@ UPDATE_RATE          = 300 # seconds
 RRD_HEARTBEAT        = 2 # multiplier
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
-LOG_FILENAME         = 'wstation.log'
 
 
 #Sensor list set up
@@ -63,9 +62,12 @@ VALUE                = 2
 
 
 # --- RRDTool set up ---
+RRDTOOL_RRD_DIR      = 'data'
 RRDTOOL_RRD_FILE     = 'weather_data.rrd'
 RRDTOOL_HEARTBEAT    = 2 # multiplier
-RRDTOOL_RRA          = ('LAST',       5,  0.125,  # Consolidation type, Resolution (minutes), Recording Period (days)
+
+# Consolidation type, Resolution (minutes), Recording Period (days)
+RRDTOOL_RRA          = ('LAST',       5,  0.125, 
                         'AVERAGE',   15,      1,
                         'AVERAGE',   30,      2,
                         'AVERAGE',  120,      7,
@@ -143,6 +145,11 @@ PRECIP_ACCU_MAX       = 500
 PRECIP_ACCU_TYPE      = 'GAUGE'
 
 
-# --- Set up flashing LED ----
-LED_PIN              = PIN_12
-LED_FLASH_RATE       = 1  # seconds
+
+SENSOR_SET= {   'inside_temp':  (True, PIN_11, '*C', -50, 100, 'GAUGE'),
+                'inside_hum':   (True, PIN_11, '%',  -1,  101, 'GAUGE'),
+                'door_open':    (True, PIN_13, '',   -1,  2,   'GAUGE'),
+                'precip_rate':  (True, PIN_15, 'mm', -5,  50,  'GAUGE'),
+                'precip_acc':   (True, PIN_15, 'mm', -5,  500, 'GAUGE'),
+                'outside_temp': (True, '28-0414705bceff',
+                                               '*C', -50, 50,  'GAUGE')}
