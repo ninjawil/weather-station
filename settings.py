@@ -84,66 +84,11 @@ THINGSPEAK_API_KEY_FILENAME  = 'thingspeak.txt'
 THINGSPEAK_CHANNEL_ID        = '39722'
 
 
-# --- Set up outside DS18B20 sensor ----
-OUT_TEMP_ENABLE      = True
-OUT_TEMP_NAME        = 'outside_temp'
-OUT_TEMP_UNIT        = '*C' #u'\u00b0C'
-OUT_TEMP_SENSOR_REF  = '28-0414705bceff'
-OUT_TEMP_TS_FIELD    = 1
-OUT_TEMP_MIN         = -50
-OUT_TEMP_MAX         = 50
-OUT_TEMP_TYPE        = 'GAUGE'
-
-
-# --- Set up inside DHT22 sensor ----
-IN_SENSOR_ENABLE     = True
-IN_SENSOR_PIN        = PIN_11
-IN_TEMP_NAME         = 'inside_temp'
-IN_TEMP_UNIT         = '*C' #u'\u00b0C'
-IN_TEMP_TS_FIELD     = 2
-IN_TEMP_MIN          = -50
-IN_TEMP_MAX          = 100
-IN_TEMP_TYPE         = 'GAUGE'
-
-IN_HUM_NAME          = 'inside_hum'
-IN_HUM_UNIT          = '%'
-IN_HUM_TS_FIELD      = 3
-IN_HUM_MIN           = -1
-IN_HUM_MAX           = 101
-IN_HUM_TYPE          = 'GAUGE'
-
-
-# --- Set up door reed switch ----
-DOOR_ENABLE          = True
-DOOR_NAME            = 'door_open'
-DOOR_UNIT            = ''
-DOOR_SENSOR_PIN      = PIN_13
-DOOR_TS_FIELD        = 4
-DOOR_MIN             = -1
-DOOR_MAX             = 2
-DOOR_TYPE            = 'GAUGE'
-
-
 # --- Set up rain fall reed switch ----
 PRECIP_SENSOR_ENABLE  = True
 PRECIP_SENSOR_PIN     = PIN_15
 PRECIP_TICK_MEASURE   = 0.3 #millimeters per tick
 PRECIP_ACC_RESET_TIME = (00,00,00,00) #hour, minute, second, microsecond
-
-PRECIP_RATE_NAME      = 'precip_rate'
-PRECIP_RATE_UNIT      = 'mm'
-PRECIP_RATE_TS_FIELD  = 5
-PRECIP_RATE_MIN       = -5
-PRECIP_RATE_MAX       = 50
-PRECIP_RATE_TYPE      = 'GAUGE'
-
-PRECIP_ACCU_NAME      = 'precip_acc'
-PRECIP_ACCU_UNIT      = 'mm'
-PRECIP_ACCU_TS_FIELD  = 6
-PRECIP_ACCU_MIN       = -5
-PRECIP_ACCU_MAX       = 500
-PRECIP_ACCU_TYPE      = 'GAUGE'
-
 
 
 SENSOR_SET= {   'inside_temp':  (True, PIN_11, '*C', -50, 100, 'GAUGE'),
