@@ -49,6 +49,7 @@ import pigpio
 
 # Application modules
 import settings as s
+import rrd_tools
 
 
 #===============================================================================
@@ -130,19 +131,10 @@ def main():
     global precip_accu
     global rain_thread_next_call
 
-    #Set initial variable values
-    rrdtool_enable_update        = True
-    
-    rrd_data_sources             = []
-    rrd_set                      = []
 
-   
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
-    #Set up inital values for variables
-    rra_files        = []
-
            
     #Create RRD files if none exist
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
@@ -267,15 +259,13 @@ def main():
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            logger.info('Updating RRD file')
+            result = update_rrd_file(s.RRDTOOL_RRD_FILE,sensors)
 
-            try:
-                rrdtool.update(s.RRDTOOL_RRD_FILE,
-                    'N:{values}'.format(
-                        values=':'.join([str(sensors[i]) for i in sorted(sensors)]))
-            except rrdtool.error:
+            if result = 'OK':
+                logger.info('Update RRD file OK')
+            else:
                 logger.error('Failed to update RRD file ({value_error})'.format(
-                    value_error=rrdtool.error))
+                    value_error=result))
 
 
     #---------------------------------------------------------------------------
