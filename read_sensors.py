@@ -50,6 +50,7 @@ import DHT22
 # Application modules
 import DS18B20
 import settings as s
+import rrd_tools
 
 
 #===============================================================================
@@ -80,8 +81,6 @@ def main():
     
     '''Entry point for script'''
 
-    #Set initial variable values
-    rrdtool_enable_update        = True
 
     #---------------------------------------------------------------------------
     # Load PIGPIO
@@ -90,46 +89,43 @@ def main():
         pi = pigpio.pi()
     except ValueError:
         print('Failed to connect to PIGPIO')
-        logger.error('Failed to connect to PIGPIO ({value_error})'.format(
+        logger.error('Failed to connect to PIGPIO ({value_error}). Exiting...'.format(
             value_error=ValueError))
-        logger.info('Exiting...')
         sys.exit()
 
 
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
-    if rrdtool_enable_update:
-        #Set up inital values for variables
-        rra_files        = []
-        
-        #Create RRD files if none exist
-        if not os.path.exists(s.RRDTOOL_RRD_FILE):
-            logger.info('RRD file not found')
-            logger.info('Exiting...')
-            sys.exit()
-        else:
-            #Fetch data from round robin database & extract next entry time to sync loop
-            logger.info('RRD file found')
-            data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
-                                        '-s', str(s.UPDATE_RATE * -2))
-            print(data_values)
-            sensors = dict.fromkeys(data_values[1], 0)
-            print(sensors)
-            next_reading  = data_values[0][1]
-            logger.info('RRD FETCH: Next sensor reading at {time}'.format(
-                time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
+    #Set up inital values for variables
+    rra_files        = []
+    
+    #Create RRD files if none exist
+    if not os.path.exists(s.RRDTOOL_RRD_FILE):
+        logger.error('RRD file not found. Exiting...')
+        sys.exit()
+    else:
+        #Fetch data from round robin database & extract next entry time to sync loop
+        logger.info('RRD file found')
+        data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
+                                    '-s', str(s.UPDATE_RATE * -2))
+        print(data_values)
+        sensors = dict.fromkeys(data_values[1], 'U')
+        print(sensors)
+        next_reading  = data_values[0][1]
+        logger.info('RRD FETCH: Next sensor reading at {time}'.format(
+            time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
 
 
     #-------------------------------------------------------------------
     # Get inside temperature and humidity
     #-------------------------------------------------------------------
-    if s.SENSOR_SET['inside_temp'][0]:
+    if s.SENSOR_SET['inside_temp'][s.ENABLE]:
         logger.info('Reading value from DHT22 sensor')
 
         #Set up sensor  
         try:
-            DHT22_sensor = DHT22.sensor(pi, s.SENSOR_SET['inside_temp'][1])
+            DHT22_sensor = DHT22.sensor(pi, s.SENSOR_SET['inside_temp'][s.PIN_REF])
         except ValueError:
             print('Failed to connect to DHT22')
             logger.error('Failed to connect to DHT22 ({value_error})'.format(
@@ -147,7 +143,7 @@ def main():
     #-------------------------------------------------------------------
     # Check door status
     #-------------------------------------------------------------------
-    if s.SENSOR_SET['door_open'][0]:
+    if s.SENSOR_SET['door_open'][s.ENABLE]:
         logger.info('Reading value from door sensor')
 
         #Set up hardware
@@ -160,22 +156,15 @@ def main():
     #-------------------------------------------------------------------
     # Get outside temperature
     #-------------------------------------------------------------------
-    if s.SENSOR_SET['outside_temp'][0]:
+    if s.SENSOR_SET['outside_temp'][s.ENABLE]:
         logger.info('Reading value from DS18B20 sensor')
         sensors['outside_temp'] = DS18B20.get_temp(s.W1_DEVICE_PATH, 
-                                                    s.OUT_TEMP_SENSOR_REF)
+                                                   s.SENSOR_SET['outside_temp'][s.PIN_REF])
         
         #Log an error if failed to read sensor
         #Error value will exceed max on RRD file and be added as NaN
         if sensors['outside_temp'] is 999.99:
             logger.error('Failed to read DS18B20 sensor')
-
-
-    #-------------------------------------------------------------------
-    # Ignore precipitation values
-    #-------------------------------------------------------------------
-    sensors['precip_rate'] = 'U'
-    sensors['precip_acc'] = 'U'
 
 
     #-------------------------------------------------------------------
@@ -187,15 +176,13 @@ def main():
     #-------------------------------------------------------------------
     # Add data to RRD
     #-------------------------------------------------------------------
-    logger.info('Updating RRD file')
+    result = update_rrd_file(s.RRDTOOL_RRD_FILE,sensors)
 
-    try:
-        rrdtool.update(s.RRDTOOL_RRD_FILE,
-            'N:{values}'.format(
-                values=':'.join([str(sensors[i]) for i in sorted(sensors)]))
-    except rrdtool.error:
+    if result = 'OK':
+        logger.info('Update RRD file OK')
+    else:
         logger.error('Failed to update RRD file ({value_error})'.format(
-            value_error=rrdtool.error))
+            value_error=result))
 
 
     #-------------------------------------------------------------------
