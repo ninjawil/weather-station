@@ -20,19 +20,7 @@ Data recorded is sent to thingspeak.
 ### Dependencies
 
 #### Python
-System needs Python 3+
-'''
-$ sudo apt-get install python3-pip
-$ sudo apt-get install python3-setuptools
-$ sudo python3 -m easy_install pip
-...
-Installing pip script to /usr/local/bin
-Installing pip-3.2 script to /usr/local/bin
-.. Now I get pip-3.2:
-
-$ sudo pip-3.2 install requests
-'''
-
+System needs Python 2.7.9
 
 #### PIGPIO
 See http://abyz.co.uk/rpi/pigpio/ for more details.
@@ -44,6 +32,8 @@ cd PIGPIO
 make
 make install
 ```
+
+
 
 #### Requests
 Download and install from http://www.python-requests.org/en/latest/user/install/
@@ -60,3 +50,5 @@ Added to /boot/config.txt:
 # enable 1-wire GPIO devices
 dtoverlay=w1-gpio
 ```
+
+#### python-crontab

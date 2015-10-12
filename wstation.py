@@ -45,6 +45,8 @@ import logging
 
 # Third party modules
 import rrdtool
+from crontab import CronTab
+
 
 # Application modules
 import settings as s
@@ -98,6 +100,20 @@ def main():
         next_reading  = data_values[0][1]
         logger.info('RRD FETCH: Next sensor reading at {time}'.format(
             time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
+
+
+    #---------------------------------------------------------------------------
+    # RUN SCRIPT
+    #---------------------------------------------------------------------------
+    #read_rain_gauge.main()
+
+    #Set up to read sensors using cron job
+    cron = CronTab()
+    job = cron.new(command='read_sensors.py')
+    if not cron.find_command('read_sensors.py'):
+        #job.minute.during(0,55).every(s.UPDATE_RATE/60)
+        job.minute.on(0, 5, 10, 15, 20 ,25, 30, 35 ,40, 45, 50, 55)
+        #job.minute.on([i for i in range(0, 60, s.UPDATE_RATE/60)])
 
 
 #===============================================================================
