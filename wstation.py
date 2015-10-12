@@ -54,22 +54,13 @@ import rrd_tools as r
 #===============================================================================
 # Set up logger
 #===============================================================================
-log_directory = 'logs'
-log_file = 'wstation.log'
+log_file = 'logs/wstation.log'
 
-if not os.path.exists(log_directory):
-    os.makedirs(log_directory)
-
-logging.basicConfig(filename='{directory}/{file_name}'.format(
-                                directory=log_directory, 
-                                file_name=log_file), 
+logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
                     level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger = logging.getLogger(__name__)
 logger.info('--- Read Rain Gauge Script Started ---')
-script_start_time = datetime.datetime.now()
-logger.info('Script start time: {start_time}'.format(
-    start_time=script_start_time.strftime('%Y-%m-%d %H:%M:%S'))) 
 
 
 
@@ -96,7 +87,7 @@ def main():
                                     s.RRDTOOL_RRA, 
                                     s.UPDATE_RATE, 
                                     s.RRDTOOL_HEARTBEAT,
-                                    datetime.datetime.now() + s.UPDATE_RATE))
+                                    int(time.time() + s.UPDATE_RATE)))
         logger.info('New RRD file created')
 
     else:

@@ -95,9 +95,7 @@ def create_rrd_file(file_dir, file_name, sensor_set, rra_set, update_rate,
 def update_rrd_file(file_name,data_values):
     try:
         rrdtool.update(file_name, 'N:{values}'.format(
-                values=':'.join([str(data_values[i]) for i in sorted(data_values)]))
-        e= 'OK'
+            values=':'.join([str(data_values[i]) for i in sorted(data_values)])))
+        return 'OK'
     except rrdtool.error, e:
-        continue
-
-    return e
+        return e
