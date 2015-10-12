@@ -138,10 +138,10 @@ def main():
         logger.info('Reading value from door sensor')
 
         #Set up hardware
-        pi.set_mode(s.SENSOR_SET['door_open'][1], pigpio.INPUT)
+        pi.set_mode(s.SENSOR_SET['door_open'][s.PIN_REF], pigpio.INPUT)
 
         #Read data
-        sensors['door_open'] = pi.read(s.SENSOR_SET['door_open'][1])
+        sensors['door_open'] = pi.read(s.SENSOR_SET['door_open'][s.PIN_REF])
 
 
     #-------------------------------------------------------------------

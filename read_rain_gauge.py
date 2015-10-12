@@ -240,7 +240,7 @@ def main():
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            result = update_rrd_file(s.RRDTOOL_RRD_FILE,sensors)
+            result = rrd_tools.update_rrd_file(s.RRDTOOL_RRD_FILE,sensors)
 
             if result == 'OK':
                 logger.info('Update RRD file OK')
