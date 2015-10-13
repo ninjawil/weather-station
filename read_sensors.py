@@ -55,7 +55,7 @@ import DHT22
 # Application modules
 import DS18B20
 import settings as s
-import rrd_tools as rrd
+import rrd_tools
 
 
 
@@ -95,7 +95,8 @@ def main():
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
     try:
-        next_reading  = rrd.last_update(s.RRDTOOL_RRD_FILE)
+        rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
+        next_reading  = rrd.last_update()
         logger.info('RRD fetch successful')
         logger.info('Next sensor reading at {time}'.format(
             time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
@@ -184,7 +185,7 @@ def main():
     #-------------------------------------------------------------------
     # Add data to RRD
     #-------------------------------------------------------------------
-    result = rrd.update_file(s.RRDTOOL_RRD_FILE, [sensor[i].value for i in sensor])
+    result = rrd.update_file([sensor[i].value for i in sensor])
 
     if result == 'OK':
         logger.info('Update RRD file OK')
