@@ -48,7 +48,7 @@ from crontab import CronTab
 
 # Application modules
 import settings as s
-import rrd_tools as r
+import rrd_tools
 
 
 #===============================================================================
@@ -74,9 +74,8 @@ def main():
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
-        logger.info(rrd.create_file(s.RRDTOOL_RRD_DIR, 
-                                    s.RRDTOOL_RRD_FILE,
-                                    s.SENSOR_SET,
+        rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
+        logger.info(rrd.create_file(s.SENSOR_SET,
                                     s.RRDTOOL_RRA, 
                                     s.UPDATE_RATE, 
                                     s.RRDTOOL_HEARTBEAT,
