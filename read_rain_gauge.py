@@ -54,6 +54,7 @@ import threading
 import time
 import datetime
 import logging
+import collections
 
 # Third party modules
 import rrdtool
@@ -108,7 +109,10 @@ def main():
  
     precip_tick_count = 0
     precip_accu       = 0
-    last_data_values  = []   
+    last_data_values  = []
+
+    rrd_tuple = collections.namedtuple('rrd_tuple', 
+        'start end step ds value') 
 
 
     #---------------------------------------------------------------------------
@@ -191,48 +195,44 @@ def main():
             sensors['precip_rate'] = precip_tick_count * s.PRECIP_TICK_MEASURE
             precip_tick_count = 0.000000
             logger.info('Pricipitation counter RESET')
-
-            #Get previous precip acc'ed value
-            data_values = []
-            last_precip_accu = None
-            tuple_location = 0
             
+
             #Fetch data from round robin database
-            data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
+            rrd_data = []
+            rrd_data = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
                                         '-s', str(s.UPDATE_RATE * -2))
+            rrd_data = rrd_tuple(rrd_data[0][0], rrd_data[0][1], rrd_data[0][2], 
+                                 rrd_data[1], rrd_data[2])
+
 
             #Sync task time to rrd database
-            next_reading  = data_values[0][1]
-            logger.info('Next sensor reading at {time}'.format(
-                time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
+            next_reading  = rrd_data.end
             
+
             #Extract time and precip acc value from fetched tuple
-            data_location = data_values[1].index('precip_acc'.replace(' ','_'))
-            while last_precip_accu is None and -tuple_location < len(data_values[2]):
-                tuple_location -= 1
-                last_precip_accu = data_values[2][tuple_location][data_location]
+            loc = 0
+            last_precip_accu = None
+            data_location = rrd_data.ds.index('precip_acc')
+            while last_precip_accu is None and -loc < len(rrd_data.value):
+                loc -= 1
+                last_precip_accu = rrd_data.value[loc][data_location]
                 
-            last_entry_time = data_values[0][1] + (tuple_location * s.UPDATE_RATE)
+            last_entry_time = rrd_data.end + (loc * s.UPDATE_RATE)
             
-            #If no data present, set it to 0
             if last_precip_accu is None:
                 last_precip_accu = 0.00
                     
 
-            #Previous reset time
-            last_reset = loop_start_time.replace(hour=s.PRECIP_ACC_RESET_TIME[0], 
-                                                    minute=s.PRECIP_ACC_RESET_TIME[1], 
-                                                    second=s.PRECIP_ACC_RESET_TIME[2], 
-                                                    microsecond=s.PRECIP_ACC_RESET_TIME[3])
-
-            #Reset precip acc    
-            time_since_last_reset = (loop_start_time - last_reset).total_seconds()
-            time_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) - last_entry_time
-            if time_since_last_feed_entry > time_since_last_reset:
+            ##Reset precip acc 
+            last_reset = loop_start_time.replace(hour=0, minute=0, second=0, microsecond=0)   
+            secs_since_last_reset = (loop_start_time - last_reset).total_seconds()
+            secs_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) - last_entry_time
+            if secs_since_last_feed_entry > secs_since_last_reset:
                 sensors['precip_acc'] = 0.00
                 logger.info('Pricipitation accumulated RESET')
             else:
                 sensors['precip_acc'] = last_precip_accu
+            
             
             #Add previous precip. acc'ed value to current precip. rate
             sensors['precip_acc'] += sensors['precip_rate']
@@ -254,9 +254,9 @@ def main():
     # User exit command
     #---------------------------------------------------------------------------
     except KeyboardInterrupt:
-
         logger.info('USER ACTION: End command')
     
+    finally:
         #Stop processes
         rain_gauge.cancel()
         
