@@ -26,16 +26,21 @@
 
 #!/usr/bin/env python
 
-''' Script sets up hardware as long as sensor is enabled.
+'''Counts ticks from the reed switch of a rain gauge via an interrupt driven
+    callback function. This count is stored in the precipiattion rate variable
+    and is reset every loop.
 
-    Reads the data from the sensor and then updates the RRD file.
+    Script loops until stopped by the user.
 
-    Sensor value is initiated with 'U' which passed to the rrdtool will be 
-    recorded as NaN. If reading sensor data fails the value is not updated and
-    'U' will remain. 
+    Data is stored to an RRD file at the update time pulled from the RRD file.
 
-    The script will not exit on sensor failure only once it finishes or if a RRD
-    file is not found or PIGPIO does not load correctly.'''
+    Current precipitation accumulated value is pulled from the RRD file and 
+    incremented by the counted ticks from the rain gauge.
+
+    At midnight, the precipitation accumulated value is reset.
+
+    If there is no RRD file or its set up is different from requirement, the 
+    script will abort.'''
 
 
 #===============================================================================
@@ -43,21 +48,54 @@
 #===============================================================================
 
 # Standard Library
+import os
 import sys
+import threading
 import time
+import datetime
 import logging
 import collections
 
 # Third party modules
+import rrdtool
 import pigpio
-import DHT22
 
 # Application modules
-import DS18B20
 import settings as s
 import rrd_tools as rrd
 
 
+#===============================================================================
+# GLOBAL VARIABLES
+#===============================================================================
+last_rising_edge = None
+
+
+#===============================================================================
+# EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
+#===============================================================================
+def count_rain_ticks(gpio, level, tick):
+    
+    '''Count the ticks from a reed switch'''
+    
+    global precip_tick_count
+    global last_rising_edge
+    
+    pulse = False
+    
+    if last_rising_edge is not None:
+        #check tick in microseconds
+        if pigpio.tickDiff(last_rising_edge, tick) > s.DEBOUNCE_MICROS * 1000000:
+            pulse = True
+
+    else:
+        pulse = True
+
+    if pulse:
+        last_rising_edge = tick  
+        precip_tick_count += 1
+        
+ 
 
 #===============================================================================
 # MAIN
@@ -66,26 +104,35 @@ def main():
     
     '''Entry point for script'''
 
+    global precip_tick_count
+    global precip_accu
+ 
+    precip_tick_count = 0
+    precip_accu       = 0
+    last_data_values  = []
+
+    rrd_tuple = collections.namedtuple('rrd_tuple', 
+        'start end step ds value') 
+
 
     #---------------------------------------------------------------------------
-    # Load PIGPIO
+    # SET UP LOGGER
     #---------------------------------------------------------------------------
-    log_file = 'logs/read_sensors.log'
-
+    log_file = 'logs/read_rain_gauge.log'
     logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
-                        level=logging.INFO,
-                        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
     logger = logging.getLogger(__name__)
-    logger.info('--- Read Sensor Script Started ---')   
-    
+    logger.info('--- Read Rain Gauge Script Started ---')
+
 
     #---------------------------------------------------------------------------
-    # Load PIGPIO
+    # LOAD DRIVERS
     #---------------------------------------------------------------------------
     try:
         pi = pigpio.pi()
-
     except ValueError:
+        print('Failed to connect to PIGPIO')
         logger.error('Failed to connect to PIGPIO ({value_error}). Exiting...'.format(
             value_error=ValueError))
         sys.exit()
@@ -115,93 +162,111 @@ def main():
                                         s.SENSOR_SET[item][3],
                                         s.SENSOR_SET[item][4],
                                         s.SENSOR_SET[item][5],
-                                        s.SENSOR_SET[item][6])
+                                        'U')
 
 
+    #---------------------------------------------------------------------------
+    # SET UP RAIN SENSOR HARDWARE
+    #---------------------------------------------------------------------------
+    pi.set_mode(sensor['precip_acc'].ref, pigpio.INPUT)
+    rain_gauge = pi.callback(sensor['precip_acc'].ref, pigpio.FALLING_EDGE, 
+                                count_rain_ticks)
 
 
-    #-------------------------------------------------------------------
-    # Get inside temperature and humidity
-    #-------------------------------------------------------------------
-    if sensor['inside_temp'].enable:
-        logger.info('Reading value from DHT22 sensor')
-  
-        try:
-            DHT22_sensor = DHT22.sensor(pi, sensor['inside_temp'].ref)
-            DHT22_sensor.trigger()
-            time.sleep(0.2)  #Do not over poll DHT22
-
-            sensor['inside_temp'].value = DHT22_sensor.temperature()
-            sensor['inside_hum'].value  = DHT22_sensor.humidity() 
-
-        except ValueError:
-            logger.error('Failed to read DHT22 ({value_error})'.format(
-                value_error=ValueError))
+    #---------------------------------------------------------------------------
+    # TIMED LOOP
+    #---------------------------------------------------------------------------
+    try:
+        while True:
+            
+            #-------------------------------------------------------------------
+            # Delay to give update rate
+            #-------------------------------------------------------------------
+            sleep_length = next_reading - time.time()
+            if sleep_length > 0:
+                time.sleep(sleep_length)
 
 
-    #-------------------------------------------------------------------
-    # Check door status
-    #-------------------------------------------------------------------
-    if sensor['door_open'].enable:
-        logger.info('Reading value from door sensor')
-
-        try:
-            pi.set_mode(sensor['door_open'].ref, pigpio.INPUT)
-            sensor['door_open'].value = pi.read(sensor['door_open'].ref)
-
-        except ValueError:
-            logger.error('Failed to read door sensor ({value_error})'.format(
-                value_error=ValueError))
+            #-------------------------------------------------------------------
+            # Get loop start time
+            #-------------------------------------------------------------------
+            loop_start_time = datetime.datetime.now()
+            logger.info('Loop start time: {start_time}'.format(
+                start_time=loop_start_time.strftime('%Y-%m-%d %H:%M:%S')))
 
 
-    #-------------------------------------------------------------------
-    # Get outside temperature
-    #-------------------------------------------------------------------
-    if sensor['outside_temp'].enable:
-        logger.info('Reading value from DS18B20 sensor')
+            #-------------------------------------------------------------------
+            # Get rain fall measurement
+            #-------------------------------------------------------------------
+            #Calculate precip rate and reset it
+            sensor['precip_rate'].value = precip_tick_count * s.PRECIP_TICK_MEASURE
+            precip_tick_count = 0.000000
+            logger.info('Pricipitation counter RESET')
+            
 
-        try:
-            sensor['outside_temp'].value = DS18B20.get_temp(s.W1_DEVICE_PATH, 
-                                                   sensor['outside_temp'].ref)
-
-        except ValueError:
-            logger.error('Failed to read DS18B20 ({value_error})'.format(
-                value_error=ValueError))
-        
-        #Log an error if failed to read sensor
-        #Error value will exceed max on RRD file and be added as NaN
-        if sensor['outside_temp'].value > 900:
-            logger.error('Failed to read DS18B20 sensor (temp > 900)')
+            #Fetch data from round robin database
+            rrd_data = []
+            rrd_data = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
+                                        '-s', str(s.UPDATE_RATE * -2))
+            rrd_data = rrd_tuple(rrd_data[0][0], rrd_data[0][1], rrd_data[0][2], 
+                                 rrd_data[1], rrd_data[2])
 
 
-    #-------------------------------------------------------------------
-    # Display data on screen
-    #-------------------------------------------------------------------
-    print(sensors)
+            #Sync task time to rrd database
+            next_reading  = rrd_data.end
+            
+
+            #Extract time and precip acc value from fetched tuple
+            loc = 0
+            last_precip_accu = None
+            data_location = rrd_data.ds.index('precip_acc')
+            while last_precip_accu is None and -loc < len(rrd_data.value):
+                loc -= 1
+                last_precip_accu = rrd_data.value[loc][data_location]
+                
+            last_entry_time = rrd_data.end + (loc * s.UPDATE_RATE)
+            
+            if last_precip_accu is None:
+                last_precip_accu = 0.00
+                    
+
+            ##Reset precip acc 
+            last_reset = loop_start_time.replace(hour=0, minute=0, second=0, microsecond=0)   
+            secs_since_last_reset = (loop_start_time - last_reset).total_seconds()
+            secs_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) - last_entry_time
+            if secs_since_last_feed_entry > secs_since_last_reset:
+                sensor['precip_acc'].value = 0.00
+                logger.info('Pricipitation accumulated RESET')
+            else:
+                sensor['precip_acc'].value = last_precip_accu
+            
+            #Add previous precip. acc'ed value to current precip. rate
+            sensor['precip_acc'].value += sensor['precip_rate'].value
+                
+
+            #-------------------------------------------------------------------
+            # Add data to RRD
+            #-------------------------------------------------------------------
+            result = rrd.update_file(s.RRDTOOL_RRD_FILE, [sensor[i].value for i in sensor])
+
+            if result == 'OK':
+                logger.info('Update RRD file OK')
+            else:
+                logger.error('Failed to update RRD file ({value_error})'.format(
+                    value_error=result))
 
 
-    #-------------------------------------------------------------------
-    # Add data to RRD
-    #-------------------------------------------------------------------
-    result = rrd_tools.update_rrd_file(s.RRDTOOL_RRD_FILE,sensors)
-
-    if result == 'OK':
-        logger.info('Update RRD file OK')
-    else:
-        logger.error('Failed to update RRD file ({value_error})'.format(
-            value_error=result))
-
-
-    #-------------------------------------------------------------------
-    # Prepare to end script
-    #-------------------------------------------------------------------
-    #Stop processes
-    DHT22_sensor.cancel()
+    #---------------------------------------------------------------------------
+    # User exit command
+    #---------------------------------------------------------------------------
+    except KeyboardInterrupt:
+        logger.info('USER ACTION: End command')
     
-    logger.info('--- Read Sensors Finished ---')
-
-    sys.exit()
-
+    finally:
+        #Stop processes
+        rain_gauge.cancel()
+        
+        logger.info('--- Finished ---')
         
 
 #===============================================================================
