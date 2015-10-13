@@ -118,12 +118,10 @@ def main():
                                         'U')
 
 
-
-
     #-------------------------------------------------------------------
     # Get inside temperature and humidity
     #-------------------------------------------------------------------
-    if sensor['inside_temp'].enable:
+    if sensor['inside_temp'].enable or sensor['inside_hum'].enable:
         logger.info('Reading value from DHT22 sensor')
   
         try:
@@ -131,8 +129,11 @@ def main():
             DHT22_sensor.trigger()
             time.sleep(0.2)  #Do not over poll DHT22
 
-            sensor['inside_temp'].value = DHT22_sensor.temperature()
-            sensor['inside_hum'].value  = DHT22_sensor.humidity() 
+            if sensor['inside_temp'].enable:
+                sensor['inside_temp'].value = DHT22_sensor.temperature()
+
+            if sensor['inside_hum'].enable: 
+                sensor['inside_hum'].value  = DHT22_sensor.humidity() 
 
         except ValueError:
             logger.error('Failed to read DHT22 ({value_error})'.format(
