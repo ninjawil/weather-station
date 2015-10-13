@@ -132,6 +132,7 @@ def main():
     try:
         pi = pigpio.pi()
     except ValueError:
+        print('Failed to connect to PIGPIO')
         logger.error('Failed to connect to PIGPIO ({value_error}). Exiting...'.format(
             value_error=ValueError))
         sys.exit()
@@ -141,24 +142,34 @@ def main():
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
     try:
-        sensors = dict.fromkeys(rrd.ds_list(s.RRDTOOL_RRD_FILE), 'U')
-        print(sensors)
-
         next_reading  = rrd.last_update(s.RRDTOOL_RRD_FILE)
-        logger.info('RRD FETCH Successful')
+        logger.info('RRD fetch successful')
         logger.info('Next sensor reading at {time}'.format(
             time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
+
     except ValueError:
         logger.info('RRD fetch failed. Exiting...')
         sys.exit()
+
+    sensor_settings = collections.namedtuple('sensor_settings',
+                                             'enable ref unit min max type value')
+
+    sensor = {}
+    for item in s.SENSOR_SET:
+        sensor[item] = sensor_settings( s.SENSOR_SET[item][0],
+                                        s.SENSOR_SET[item][1],
+                                        s.SENSOR_SET[item][2],
+                                        s.SENSOR_SET[item][3],
+                                        s.SENSOR_SET[item][4],
+                                        s.SENSOR_SET[item][5],
+                                        'U')
 
 
     #---------------------------------------------------------------------------
     # SET UP RAIN SENSOR HARDWARE
     #---------------------------------------------------------------------------
-    pi.set_mode(s.SENSOR_SET['precip_acc'][s.PIN_REF], pigpio.INPUT)
-    rain_gauge = pi.callback(s.SENSOR_SET['precip_acc'][s.PIN_REF], 
-                                pigpio.FALLING_EDGE, 
+    pi.set_mode(sensor['precip_acc'].ref, pigpio.INPUT)
+    rain_gauge = pi.callback(sensor['precip_acc'].ref, pigpio.FALLING_EDGE, 
                                 count_rain_ticks)
 
 
@@ -188,7 +199,7 @@ def main():
             # Get rain fall measurement
             #-------------------------------------------------------------------
             #Calculate precip rate and reset it
-            sensors['precip_rate'] = precip_tick_count * s.PRECIP_TICK_MEASURE
+            sensor['precip_rate'].value = precip_tick_count * s.PRECIP_TICK_MEASURE
             precip_tick_count = 0.000000
             logger.info('Pricipitation counter RESET')
             
@@ -224,20 +235,19 @@ def main():
             secs_since_last_reset = (loop_start_time - last_reset).total_seconds()
             secs_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) - last_entry_time
             if secs_since_last_feed_entry > secs_since_last_reset:
-                sensors['precip_acc'] = 0.00
+                sensor['precip_acc'].value = 0.00
                 logger.info('Pricipitation accumulated RESET')
             else:
-                sensors['precip_acc'] = last_precip_accu
+                sensor['precip_acc'].value = last_precip_accu
             
-
             #Add previous precip. acc'ed value to current precip. rate
-            sensors['precip_acc'] += sensors['precip_rate']
+            sensor['precip_acc'].value += sensor['precip_rate'].value
                 
 
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            result = rrd.update_file(s.RRDTOOL_RRD_FILE,sensors)
+            result = rrd.update_file(s.RRDTOOL_RRD_FILE, [sensor[i].value for i in sensor])
 
             if result == 'OK':
                 logger.info('Update RRD file OK')
