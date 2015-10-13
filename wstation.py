@@ -42,7 +42,7 @@ import datetime
 import logging
 
 # Third party modules
-import rrdtool
+import rrdtool as rrd
 from crontab import CronTab
 
 
@@ -73,10 +73,8 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
-    if not os.path.exists('{directory}/{file_name}'.format(
-                                        directory=s.RRDTOOL_RRD_DIR, 
-                                        file_name=s.RRDTOOL_RRD_FILE)):
-        logger.info(r.create_rrd_file(s.RRDTOOL_RRD_DIR, 
+    if not os.path.exists(s.RRDTOOL_RRD_FILE):
+        logger.info(rrd.create_file(s.RRDTOOL_RRD_DIR, 
                                     s.RRDTOOL_RRD_FILE,
                                     s.SENSOR_SET,
                                     s.RRDTOOL_RRA, 
@@ -87,11 +85,6 @@ def main():
     else:
         #Fetch data from round robin database & extract next entry time to sync loop
         logger.info('RRD file found')
-        data_values = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
-                                    '-s', str(s.UPDATE_RATE * -2))
-        next_reading  = data_values[0][1]
-        logger.info('RRD FETCH: Next sensor reading at {time}'.format(
-            time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
 
 
     #---------------------------------------------------------------------------
