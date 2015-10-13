@@ -1,7 +1,5 @@
 #-------------------------------------------------------------------------------
 #
-# 'Controls shed weather station
-#
 # The MIT License (MIT)
 #
 # Copyright (c) 2015 William De Freitas
@@ -93,13 +91,16 @@ def main():
 
     global precip_tick_count
     global precip_accu
-    
+ 
+    precip_tick_count = 0
+    precip_accu       = 0
+    last_data_values  = []   
+
 
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
     log_file = 'logs/read_rain_gauge.log'
-
     logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
         level=logging.INFO,
         format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
@@ -122,8 +123,6 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
-           
-    #Create RRD files if none exist
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
         logger.info('RRD file not found. Exiting...')
         sys.exit()
@@ -141,14 +140,8 @@ def main():
 
 
     #---------------------------------------------------------------------------
-    # SET UP RAIN SENSOR
+    # SET UP RAIN SENSOR HARDWARE
     #---------------------------------------------------------------------------
-    #Set up inital values for variables
-    precip_tick_count = 0
-    precip_accu       = 0
-    last_data_values  = []
-    
-    #Set up rain gauge hardware
     pi.set_mode(s.SENSOR_SET['precip_acc'][s.PIN_REF], pigpio.INPUT)
     rain_gauge = pi.callback(s.SENSOR_SET['precip_acc'][s.PIN_REF], 
                                 pigpio.FALLING_EDGE, 
