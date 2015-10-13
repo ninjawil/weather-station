@@ -26,7 +26,21 @@
 
 #!/usr/bin/env python
 
-'''Gathers data from rain gauge'''
+'''Counts ticks from the reed switch of a rain gauge via an interrupt driven
+    callback function. This count is stored in the precipiattion rate variable
+    and is reset every loop.
+
+    Script loops until stopped by the user.
+
+    Data is stored to an RRD file at the update time pulled from the RRD file.
+
+    Current precipitation accumulated value is pulled from the RRD file and 
+    incremented by the counted ticks from the rain gauge.
+
+    At midnight, the precipitation accumulated value is reset.
+
+    If there is no RRD file or its set up is different from requirement, the 
+    script will abort.'''
 
 
 #===============================================================================
