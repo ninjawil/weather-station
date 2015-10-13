@@ -50,7 +50,7 @@ import rrdtool
 #===============================================================================
 # CREATE RRD FILE
 #===============================================================================
-def create_rrd_file(file_dir, file_name, sensor_set, rra_set, update_rate, 
+def create_file(file_dir, file_name, sensor_set, rra_set, update_rate, 
                     heartbeat, start_time):
     
     '''Creates a RRD file'''
@@ -92,10 +92,33 @@ def create_rrd_file(file_dir, file_name, sensor_set, rra_set, update_rate,
 #===============================================================================
 # UPDATE RRD FILE
 #===============================================================================
-def update_rrd_file(file_name,data_values):
+def update_file(file_name,data_values):
     try:
         rrdtool.update(file_name, 'N:{values}'.format(
             values=':'.join([str(data_values[i]) for i in sorted(data_values)])))
         return 'OK'
     except rrdtool.error, e:
         return e
+
+
+#===============================================================================
+# INFO
+#===============================================================================
+def info(file_name):
+    return rrdtool.info(file_name)
+
+
+#===============================================================================
+# DS LIST
+#===============================================================================
+def ds_list(file_name):
+    info =  info(file_name)
+    return info[1]
+
+
+#===============================================================================
+# LAST UPDATE
+#===============================================================================
+def last_update(file_name):
+    info =  info(file_name)
+    return info['last_update']
