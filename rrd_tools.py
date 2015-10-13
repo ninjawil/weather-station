@@ -41,8 +41,8 @@ import time
 import rrdtool
 
 
- #===============================================================================
- class rrd_file:
+#===============================================================================
+class rrd_file:
  
     '''Sets up the RRD file 'a thingspeak account'''
  
@@ -110,13 +110,28 @@ import rrdtool
     # DS LIST
     #---------------------------------------------------------------------------
     def ds_list(self):
-        info =  info(self.file_name)
-        return info[1]
+        data = self.fetch('LAST', 'now', 'now')
+        return data[1]
 
 
     #---------------------------------------------------------------------------
     # LAST UPDATE
     #---------------------------------------------------------------------------
     def last_update(self):
-        info =  info(self.file_name)
+        info =  self.info()
         return info['last_update']
+
+
+    #---------------------------------------------------------------------------
+    # NEXT UPDATE
+    #---------------------------------------------------------------------------
+    def next_update(self, cf):
+        data = self.fetch(cf, 'now', 'now')
+        return data[0][1]
+
+
+    #---------------------------------------------------------------------------
+    # FETCH
+    #---------------------------------------------------------------------------
+    def fetch(self, cf, start, end):
+        return rrdtool.fetch(self.file_name, cf, '-s', str(start), '-e', str(end))

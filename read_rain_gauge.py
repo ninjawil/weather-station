@@ -48,7 +48,6 @@
 #===============================================================================
 
 # Standard Library
-import os
 import sys
 import threading
 import time
@@ -57,7 +56,6 @@ import logging
 import collections
 
 # Third party modules
-import rrdtool
 import pigpio
 
 # Application modules
@@ -109,10 +107,6 @@ def main():
  
     precip_tick_count = 0
     precip_accu       = 0
-    last_data_values  = []
-
-    rrd_tuple = collections.namedtuple('rrd_tuple', 
-        'start end step ds value') 
 
 
     #---------------------------------------------------------------------------
@@ -131,29 +125,33 @@ def main():
     #---------------------------------------------------------------------------
     try:
         pi = pigpio.pi()
+
     except ValueError:
-        print('Failed to connect to PIGPIO')
         logger.error('Failed to connect to PIGPIO ({value_error}). Exiting...'.format(
             value_error=ValueError))
         sys.exit()
 
 
     #---------------------------------------------------------------------------
-    # SET UP RRD DATA AND TOOL
+    # CHECK RRD FILE AND SET UP SENSOR VARIABLES
     #---------------------------------------------------------------------------
     try:
         rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
-        next_reading  = rrd.last_update()
+        
+        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
+            logger.error('Data sources in RRD file does not match set up')
+            sys.exit()
+
         logger.info('RRD fetch successful')
-        logger.info('Next sensor reading at {time}'.format(
-            time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
 
     except ValueError:
-        logger.info('RRD fetch failed. Exiting...')
+        logger.error('RRD fetch failed. Exiting...')
         sys.exit()
 
+    sensor_value = {x: 'U' for x in s.SENSOR_SET}
+
     sensor_settings = collections.namedtuple('sensor_settings',
-                                             'enable ref unit min max type value')
+                                             'enable ref unit min max type')
 
     sensor = {}
     for item in s.SENSOR_SET:
@@ -162,8 +160,7 @@ def main():
                                         s.SENSOR_SET[item][2],
                                         s.SENSOR_SET[item][3],
                                         s.SENSOR_SET[item][4],
-                                        s.SENSOR_SET[item][5],
-                                        'U')
+                                        s.SENSOR_SET[item][5])
 
 
     #---------------------------------------------------------------------------
@@ -183,6 +180,11 @@ def main():
             #-------------------------------------------------------------------
             # Delay to give update rate
             #-------------------------------------------------------------------
+            next_reading  = rrd.next_update('LAST')
+
+            logger.info('Next sensor reading at {time}'.format(
+                time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
+            
             sleep_length = next_reading - time.time()
             if sleep_length > 0:
                 time.sleep(sleep_length)
@@ -200,21 +202,18 @@ def main():
             # Get rain fall measurement
             #-------------------------------------------------------------------
             #Calculate precip rate and reset it
-            sensor['precip_rate'].value = precip_tick_count * s.PRECIP_TICK_MEASURE
+            sensor_value['precip_rate'] = precip_tick_count * s.PRECIP_TICK_MEASURE
             precip_tick_count = 0.000000
             logger.info('Pricipitation counter RESET')
             
 
             #Fetch data from round robin database
             rrd_data = []
-            rrd_data = rrdtool.fetch(s.RRDTOOL_RRD_FILE, 'LAST', 
-                                        '-s', str(s.UPDATE_RATE * -2))
+            rrd_tuple = collections.namedtuple( 'rrd_tuple', 
+                                                'start end step ds value') 
+            rrd_data = rrd.fetch('LAST', str(s.UPDATE_RATE * -2), 'now')
             rrd_data = rrd_tuple(rrd_data[0][0], rrd_data[0][1], rrd_data[0][2], 
                                  rrd_data[1], rrd_data[2])
-
-
-            #Sync task time to rrd database
-            next_reading  = rrd_data.end
             
 
             #Extract time and precip acc value from fetched tuple
@@ -236,21 +235,19 @@ def main():
             secs_since_last_reset = (loop_start_time - last_reset).total_seconds()
             secs_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) - last_entry_time
             if secs_since_last_feed_entry > secs_since_last_reset:
-                sensor['precip_acc'].value = 0.00
+                sensor_value['precip_acc'] = 0.00
                 logger.info('Pricipitation accumulated RESET')
             else:
-                sensor['precip_acc'].value = last_precip_accu
+                sensor_value['precip_acc'] = last_precip_accu
             
             #Add previous precip. acc'ed value to current precip. rate
-            sensor['precip_acc'].value += sensor['precip_rate'].value
+            sensor_value['precip_acc'] += sensor_value['precip_rate']
                 
 
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            result = rrd.update_file([sensor[i].value for i in sensor])
-
-            if result == 'OK':
+            if rrd.update_file(sensor_value) == 'OK':
                 logger.info('Update RRD file OK')
             else:
                 logger.error('Failed to update RRD file ({value_error})'.format(

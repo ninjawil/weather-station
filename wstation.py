@@ -48,7 +48,6 @@ import logging
 # Third party modules
 from crontab import CronTab
 
-
 # Application modules
 import settings as s
 import rrd_tools
@@ -88,23 +87,39 @@ def main():
 
     else:
         logger.info('RRD file found')
+
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
             logger.error('Data sources in RRD file does not match set up')
+            sys.exit()
 
 
 
     #---------------------------------------------------------------------------
-    # RUN SCRIPT
+    # RUN SCRIPTS
     #---------------------------------------------------------------------------
-    #read_rain_gauge.main()
 
     #Set up to read sensors using cron job
-    cron = CronTab()
-    job = cron.new(command='read_sensors.py')
-    if not cron.find_command('read_sensors.py'):
-        #job.minute.during(0,55).every(s.UPDATE_RATE/60)
+    try:
+        cmd='python /home/pi/weather/read_sensors.py'
+        cron = CronTab()
+        job = cron.new( command=cmd, comment='weather station job')
+        #if not cron.find_command(cmd):
+            #job.minute.during(0,55).every(s.UPDATE_RATE/60)
         job.minute.on(0, 5, 10, 15, 20 ,25, 30, 35 ,40, 45, 50, 55)
-        #job.minute.on([i for i in range(0, 60, s.UPDATE_RATE/60)])
+            #job.minute.on([i for i in range(0, 60, s.UPDATE_RATE/60)])
+        cron.write()
+        logger.info('CronTab file updated.')
+        logger.info(cron.render())
+
+    except ValueError:
+        logger.error('CronTab file could not be updated. Exiting...')
+        sys.exit()
+
+
+    logger.info('Start Read Rain Gauge script')
+    #read_rain_gauge.main()
+
+
 
 
 #===============================================================================

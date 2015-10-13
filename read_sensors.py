@@ -92,22 +92,28 @@ def main():
 
 
     #---------------------------------------------------------------------------
-    # SET UP RRD DATA AND TOOL
+    # CHECK RRD FILE AND SET UP SENSOR VARIABLES
     #---------------------------------------------------------------------------
     try:
         rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
-        next_reading  = rrd.last_update()
+
+        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
+            logger.error('Data sources in RRD file does not match set up. Exiting...')
+            sys.exit()
+
         logger.info('RRD fetch successful')
-        logger.info('Next sensor reading at {time}'.format(
-            time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
 
     except ValueError:
-        logger.info('RRD fetch failed. Exiting...')
+        logger.error('RRD fetch failed. Exiting...')
         sys.exit()
 
-    sensor_settings = collections.namedtuple('sensor_settings',
-                                             'enable ref unit min max type value')
 
+
+    sensor_value = {x: 'U' for x in s.SENSOR_SET}
+
+    sensor_settings = collections.namedtuple('sensor_settings',
+                                             'enable ref unit min max type')   
+    
     sensor = {}
     for item in s.SENSOR_SET:
         sensor[item] = sensor_settings( s.SENSOR_SET[item][0],
@@ -115,8 +121,7 @@ def main():
                                         s.SENSOR_SET[item][2],
                                         s.SENSOR_SET[item][3],
                                         s.SENSOR_SET[item][4],
-                                        s.SENSOR_SET[item][5],
-                                        'U')
+                                        s.SENSOR_SET[item][5])
 
 
     #-------------------------------------------------------------------
@@ -131,10 +136,10 @@ def main():
             time.sleep(0.2)  #Do not over poll DHT22
 
             if sensor['inside_temp'].enable:
-                sensor['inside_temp'].value = DHT22_sensor.temperature()
+                sensor_value['inside_temp'] = DHT22_sensor.temperature()
 
             if sensor['inside_hum'].enable: 
-                sensor['inside_hum'].value  = DHT22_sensor.humidity() 
+                sensor_value['inside_hum']  = DHT22_sensor.humidity() 
 
         except ValueError:
             logger.error('Failed to read DHT22 ({value_error})'.format(
@@ -149,7 +154,7 @@ def main():
 
         try:
             pi.set_mode(sensor['door_open'].ref, pigpio.INPUT)
-            sensor['door_open'].value = pi.read(sensor['door_open'].ref)
+            sensor_value['door_open'] = pi.read(sensor['door_open'].ref)
 
         except ValueError:
             logger.error('Failed to read door sensor ({value_error})'.format(
@@ -163,7 +168,7 @@ def main():
         logger.info('Reading value from DS18B20 sensor')
 
         try:
-            sensor['outside_temp'].value = DS18B20.get_temp(s.W1_DEVICE_PATH, 
+            sensor_value['outside_temp'] = DS18B20.get_temp(s.W1_DEVICE_PATH, 
                                                    sensor['outside_temp'].ref)
 
         except ValueError:
@@ -172,26 +177,22 @@ def main():
         
         #Log an error if failed to read sensor
         #Error value will exceed max on RRD file and be added as NaN
-        if sensor['outside_temp'].value > 900:
+        if sensor_value['outside_temp'] > 900:
             logger.error('Failed to read DS18B20 sensor (temp > 900)')
-
-
-    #-------------------------------------------------------------------
-    # Display data on screen
-    #-------------------------------------------------------------------
-    print(sensor)
+            sensor_value['outside_temp'] = 'U'
 
 
     #-------------------------------------------------------------------
     # Add data to RRD
     #-------------------------------------------------------------------
-    result = rrd.update_file([sensor[i].value for i in sensor])
+    result = rrd.update_file(sensor_value)
 
     if result == 'OK':
         logger.info('Update RRD file OK')
     else:
         logger.error('Failed to update RRD file ({value_error})'.format(
             value_error=result))
+        logger.error(sensor_value)
 
 
     #-------------------------------------------------------------------
