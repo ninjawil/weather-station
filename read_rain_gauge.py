@@ -132,7 +132,6 @@ def main():
     try:
         pi = pigpio.pi()
     except ValueError:
-        print('Failed to connect to PIGPIO')
         logger.error('Failed to connect to PIGPIO ({value_error}). Exiting...'.format(
             value_error=ValueError))
         sys.exit()
