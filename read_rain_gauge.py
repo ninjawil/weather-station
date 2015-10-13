@@ -53,35 +53,8 @@ import rrd_tools
 
 
 #===============================================================================
-# Set up logger
-#===============================================================================
-log_file = 'logs/read_rain_gauge.log'
-
-logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-logger = logging.getLogger(__name__)
-logger.info('--- Read Rain Gauge Script Started ---')
-
-
-
-#===============================================================================
-# LOAD DRIVERS
-#===============================================================================
-try:
-    pi = pigpio.pi()
-except ValueError:
-    print('Failed to connect to PIGPIO')
-    logger.error('Failed to connect to PIGPIO ({value_error})'.format(
-        value_error=ValueError))
-    logger.info('Exiting...')
-    sys.exit()
-
-
-#===============================================================================
 # GLOBAL VARIABLES
 #===============================================================================
-rain_thread_next_call    = time.time()
 last_rising_edge = None
 
 
@@ -108,8 +81,7 @@ def count_rain_ticks(gpio, level, tick):
     if pulse:
         last_rising_edge = tick  
         precip_tick_count += 1
-        logger.info('Rain tick pulse = {tick_count}'.format(tick_count=precip_tick_count))
-
+        
  
 
 #===============================================================================
@@ -121,7 +93,30 @@ def main():
 
     global precip_tick_count
     global precip_accu
-    global rain_thread_next_call
+    
+
+    #---------------------------------------------------------------------------
+    # SET UP LOGGER
+    #---------------------------------------------------------------------------
+    log_file = 'logs/read_rain_gauge.log'
+
+    logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    logger = logging.getLogger(__name__)
+    logger.info('--- Read Rain Gauge Script Started ---')
+
+
+    #---------------------------------------------------------------------------
+    # LOAD DRIVERS
+    #---------------------------------------------------------------------------
+    try:
+        pi = pigpio.pi()
+    except ValueError:
+        print('Failed to connect to PIGPIO')
+        logger.error('Failed to connect to PIGPIO ({value_error}). Exiting...'.format(
+            value_error=ValueError))
+        sys.exit()
 
 
     #---------------------------------------------------------------------------
@@ -130,8 +125,7 @@ def main():
            
     #Create RRD files if none exist
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
-        logger.info('RRD file not found')
-        logger.info('Exiting...')
+        logger.info('RRD file not found. Exiting...')
         sys.exit()
     else:
         #Fetch data from round robin database & extract next entry time to sync loop
