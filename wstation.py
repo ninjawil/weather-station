@@ -26,8 +26,14 @@
 
 #!/usr/bin/env python
 
-'''Gathers data from various sensors to capture weather conditiona and take
-apropriate actions in shed.'''
+'''Sets up the enviroment to run the weather station.
+
+    Begins by checking that an RRD file exists and that the data sources are 
+    correct. If no RRD file found then create a new one.
+
+    Initates scripts via cronjobs.
+
+    Rain gauge has a looping script - initiated by this script.'''
 
 
 #===============================================================================
@@ -37,12 +43,9 @@ apropriate actions in shed.'''
 # Standard Library
 import os
 import sys
-import time
-import datetime
 import logging
 
 # Third party modules
-import rrdtool as rrd
 from crontab import CronTab
 
 
@@ -73,17 +76,21 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
+    rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
+
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
-        rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
         logger.info(rrd.create_file(s.SENSOR_SET,
                                     s.RRDTOOL_RRA, 
                                     s.UPDATE_RATE, 
                                     s.RRDTOOL_HEARTBEAT,
                                     int(time.time() + s.UPDATE_RATE)))
         logger.info('RRD file not found. New file created')
+
     else:
-        #Fetch data from round robin database & extract next entry time to sync loop
         logger.info('RRD file found')
+        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
+            logger.error('Data sources in RRD file does not match set up')
+
 
 
     #---------------------------------------------------------------------------
