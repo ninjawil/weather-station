@@ -1,7 +1,5 @@
 #-------------------------------------------------------------------------------
 #
-# 'Controls shed weather station
-#
 # The MIT License (MIT)
 #
 # Copyright (c) 2015 William De Freitas
@@ -54,35 +52,30 @@ import rrd_tools as r
 
 
 #===============================================================================
-# Set up logger
-#===============================================================================
-log_file = 'logs/wstation.log'
-
-logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
-                    level=logging.INFO,
-                    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-logger = logging.getLogger(__name__)
-logger.info('--- Read Rain Gauge Script Started ---')
-
-
-
-#===============================================================================
 # MAIN
 #===============================================================================
 def main():
     
     '''Entry point for script'''
- 
+
+    #---------------------------------------------------------------------------
+    # SET UP LOGGER
+    #--------------------------------------------------------------------------- 
+    log_file = 'logs/wstation.log'
+
+    logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
+                        level=logging.INFO,
+                        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    logger = logging.getLogger(__name__)
+    logger.info('--- Read Rain Gauge Script Started ---')
+
+
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
-
-    #Create RRD files if none exist
     if not os.path.exists('{directory}/{file_name}'.format(
                                         directory=s.RRDTOOL_RRD_DIR, 
                                         file_name=s.RRDTOOL_RRD_FILE)):
-
-        logger.info('RRD file not found')
         logger.info(r.create_rrd_file(s.RRDTOOL_RRD_DIR, 
                                     s.RRDTOOL_RRD_FILE,
                                     s.SENSOR_SET,
@@ -90,8 +83,7 @@ def main():
                                     s.UPDATE_RATE, 
                                     s.RRDTOOL_HEARTBEAT,
                                     int(time.time() + s.UPDATE_RATE)))
-        logger.info('New RRD file created')
-
+        logger.info('RRD file not found. New file created')
     else:
         #Fetch data from round robin database & extract next entry time to sync loop
         logger.info('RRD file found')
