@@ -56,31 +56,27 @@ class rrd_file:
     def create_file(self, sensor_set, rra_set, update_rate, heartbeat, start_time):
         
         '''Creates a RRD file'''
-
+        
+        #Prepare RRD set
+        rrd_set = [self.file_name, 
+                    '--step', '{step}'.format(step=update_rate), 
+                    '--start', '{start_t:.0f}'.format(start_t=start_time)]
+                    
         #Prepare data sources
-        rrd_ds      = []
-        for i in sorted(sensor_set):
-            rrd_ds.append('DS:{ds_name}:{ds_type}:{ds_hb}:{ds_min}:{ds_max}'.format(
+        rrd_set.append(['DS:{ds_name}:{ds_type}:{ds_hb}:{ds_min}:{ds_max}'.format(
                                     ds_name=i,
                                     ds_type=sensor_set[i][5],
                                     ds_hb=str(heartbeat*update_rate),
                                     ds_min=sensor_set[i][3],
-                                    ds_max=sensor_set[i][4]))
+                                    ds_max=sensor_set[i][4]) 
+                        for i in sorted(sensor_set)])
 
         #Prepare RRA files
-        rra_files   = []
-        for i in range(0,len(rra_set),3):
-            rra_files.append('RRA:{cf}:0.5:{steps}:{rows}'.format(
+        rrd_set.append(['RRA:{cf}:0.5:{steps}:{rows}'.format(
                                     cf=rra_set[i],
                                     steps=str((rra_set[i+1]*60)/update_rate),
-                                    rows=str(((rra_set[i+2])*24*60)/rra_set[i+1])))
-
-        #Prepare RRD set
-        rrd_set = []
-        rrd_set = [self.file_name, 
-                    '--step', '{step}'.format(step=update_rate), 
-                    '--start', '{start_t:.0f}'.format(start_t=start_time)]
-        rrd_set +=  rrd_ds + rra_files
+                                    rows=str(((rra_set[i+2])*24*60)/rra_set[i+1]))
+                        for i in range(0,len(rra_set),3)])
 
         rrdtool.create(rrd_set)
 
