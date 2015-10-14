@@ -39,8 +39,11 @@
 
 # Standard Library
 import os
+import time
 import sys
 import logging
+import logging.handlers
+import subprocess
 
 # Third party modules
 from crontab import CronTab
@@ -48,6 +51,27 @@ from crontab import CronTab
 # Application modules
 import settings as s
 import rrd_tools
+
+
+#===============================================================================
+# Check script is running
+#===============================================================================
+def check_process_is_running(script_name):
+    try:
+        cmd1 = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
+        cmd2 = subprocess.Popen(['grep', '-v', 'grep'], 
+                                stdin=cmd1.stdout, 
+                                stdout=subprocess.PIPE)
+        cmd3 = subprocess.Popen(['grep', script_name], 
+                                stdin=cmd2.stdout, 
+                                stdout=subprocess.PIPE)
+        
+        output = cmd3.communicate()[0]  
+
+        return output
+
+    except Exception, e:
+        return e
 
 
 #===============================================================================
@@ -112,20 +136,31 @@ def main():
         cmd='python /home/pi/weather/read_sensors.py'
         cron = CronTab()
         job = cron.new(command= cmd, comment= 'weather station job')
-        #if not cron.find_command(cmd):
-            #job.minute.during(0,55).every(s.UPDATE_RATE/60)
-        job.minute.on(0, 5, 10, 15, 20 ,25, 30, 35 ,40, 45, 50, 55)
-        cron.write()
-        logger.info('CronTab file updated.')
-        logger.debug(cron.render())
+        if not cron.find_command(cmd):
+            job.minute.every(s.UPDATE_RATE/60)
+            cron.write()
+            logger.info('CronTab file updated.')
+            logger.debug(cron.render())
+        else:
+            logger.info('Command already in CronTab file')
 
     except ValueError:
         logger.critical('CronTab file could not be updated. Exiting...')
         sys.exit()
 
+    #Run read rain gauge script if not already running
+    cmd = '/home/pi/weather/read_rain_gauge.py'
+    script_not_running = check_process_is_running(cmd)
+    if script_not_running:
+        logger.info('Scrip read_rain_gauge.py already runnning.')
+        logger.info(script_not_running)
+    else:
+        logger.info('Start Read Rain Gauge script')
+        status = subprocess.Popen(['python',cmd])
+        logger,info(status)
 
-    logger.info('Start Read Rain Gauge script')
-    #read_rain_gauge.main()
+
+    logger.info('--- Wstation Script Finished ---')
 
 
 #===============================================================================

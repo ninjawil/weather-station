@@ -48,6 +48,7 @@ import threading
 import time
 import datetime
 import logging
+import logging.handlers
 import collections
 
 # Third party modules
@@ -87,7 +88,7 @@ def count_rain_ticks(gpio, level, tick):
     if pulse:
         last_rising_edge = tick  
         precip_tick_count += 1
-        logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
+        #logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
         
  
 
@@ -108,29 +109,25 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    log_file = 'logs/read_rain_gauge.log'
+    log_file = '/home/pi/weather/logs/read_rain_gauge.log'
  
     logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
     logger.setLevel(logging.INFO)
-    fh = logging.TimedRotatingFileHandler(filename=log_file, 
-                                            when='D', 
-                                            interval=1, 
-                                            backupCount=7, 
-                                            encoding=None, 
-                                            delay=False, 
-                                            utc=True)
-    fh.setLevel(logging.INFO)
-    # create console handler with a higher log level
+        
+    fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 
+                                                    when='midnight', 
+                                                    backupCount=7, 
+                                                    utc=True)
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
     ch = logging.StreamHandler()
     ch.setLevel(logging.ERROR)
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-    fh.setFormatter(formatter)
     ch.setFormatter(formatter)
-    # add the handlers to the logger
-    logger.addHandler(fh)
     logger.addHandler(ch)
-    
+
     logger.info('--- Read Rain Gauge Script Started ---')
     
 
@@ -286,7 +283,7 @@ def main():
         #Stop processes
         rain_gauge.cancel()
         
-        logger.info('--- Finished ---')
+        logger.info('--- Read Rain Gauge Finished ---')
         
 
 #===============================================================================

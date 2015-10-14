@@ -43,6 +43,7 @@
 import sys
 import time
 import logging
+import logging.handlers
 import collections
 
 # Third party modules
@@ -67,7 +68,7 @@ def main():
     #---------------------------------------------------------------------------
     # Load PIGPIO
     #---------------------------------------------------------------------------
-    log_file = 'logs/read_sensors.log'
+    log_file = '/home/pi/weather/logs/read_sensors.log'
 
     logger = logging.getLogger(__name__)
     formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
