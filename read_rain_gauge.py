@@ -47,7 +47,7 @@ import sys
 import threading
 import time
 import datetime
-import logging
+import log
 import collections
 
 # Third party modules
@@ -108,28 +108,7 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    log_file = 'logs/read_rain_gauge.log'
- 
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    fh = logging.TimedRotatingFileHandler(filename=log_file, 
-                                            when='D', 
-                                            interval=1, 
-                                            backupCount=7, 
-                                            encoding=None, 
-                                            delay=False, 
-                                            utc=True)
-    fh.setLevel(logging.INFO)
-    # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
-    # add the handlers to the logger
-    logger.addHandler(fh)
-    logger.addHandler(ch)
+    logger = log.setup('root', '/home/pi/weather/logs/read_rain_gauge.log')
     
     logger.info('--- Read Rain Gauge Script Started ---')
     
@@ -141,8 +120,8 @@ def main():
         pi = pigpio.pi()
 
     except ValueError:
-        logger.error('Failed to connect to PIGPIO ({value_error}). Exiting...'.format(
-            value_error=ValueError))
+        logger.critical('Failed to connect to PIGPIO ({error_v}). Exiting...'.format(
+            error_v=ValueError))
         sys.exit()
 
 
@@ -153,13 +132,13 @@ def main():
         rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
         
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.error('Data sources in RRD file does not match set up')
+            logger.critical('Data sources in RRD file does not match set up')
             sys.exit()
 
         logger.info('RRD fetch successful')
 
     except ValueError:
-        logger.error('RRD fetch failed. Exiting...')
+        logger.critical('RRD fetch failed. Exiting...')
         sys.exit()
 
     sensor_value = {x: 'U' for x in s.SENSOR_SET}
