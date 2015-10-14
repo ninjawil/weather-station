@@ -40,7 +40,7 @@
 # Standard Library
 import os
 import sys
-import logging
+import log
 
 # Third party modules
 from crontab import CronTab
@@ -60,24 +60,7 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #--------------------------------------------------------------------------- 
-    log_file = '/home/pi/weather/logs/wstation.log'
-
-    logger = logging.getLogger(__name__)
-    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-    logger.setLevel(logging.INFO)
-        
-    fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 
-                                                    when='midnight', 
-                                                    backupCount=7, 
-                                                    utc=True)
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    logger = log.setup('root', '/home/pi/weather/logs/wstation.log')
 
     logger.info('--- Read Rain Gauge Script Started ---')
 
@@ -103,6 +86,7 @@ def main():
             sys.exit()
 
 
+
     #---------------------------------------------------------------------------
     # RUN SCRIPTS
     #---------------------------------------------------------------------------
@@ -126,7 +110,6 @@ def main():
 
     logger.info('Start Read Rain Gauge script')
     #read_rain_gauge.main()
-
 
 #===============================================================================
 # BOILER PLATE
