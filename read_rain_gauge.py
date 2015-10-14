@@ -29,16 +29,11 @@
 '''Counts ticks from the reed switch of a rain gauge via an interrupt driven
     callback function. This count is stored in the precipiattion rate variable
     and is reset every loop.
-
     Script loops until stopped by the user.
-
     Data is stored to an RRD file at the update time pulled from the RRD file.
-
     Current precipitation accumulated value is pulled from the RRD file and 
     incremented by the counted ticks from the rain gauge.
-
     At midnight, the precipitation accumulated value is reset.
-
     If there is no RRD file or its set up is different from requirement, the 
     script will abort.'''
 
@@ -92,6 +87,7 @@ def count_rain_ticks(gpio, level, tick):
     if pulse:
         last_rising_edge = tick  
         precip_tick_count += 1
+        logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
         
  
 
@@ -113,12 +109,30 @@ def main():
     # SET UP LOGGER
     #---------------------------------------------------------------------------
     log_file = 'logs/read_rain_gauge.log'
-    logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
-        level=logging.INFO,
-        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+ 
     logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    fh = logging.TimedRotatingFileHandler(filename=log_file, 
+                                            when='D', 
+                                            interval=1, 
+                                            backupCount=7, 
+                                            encoding=None, 
+                                            delay=False, 
+                                            utc=True)
+    fh.setLevel(logging.INFO)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+    
     logger.info('--- Read Rain Gauge Script Started ---')
-
+    
 
     #---------------------------------------------------------------------------
     # LOAD DRIVERS
@@ -162,6 +176,9 @@ def main():
                                         s.SENSOR_SET[item][4],
                                         s.SENSOR_SET[item][5])
 
+    logger.debug(sensor_value)
+    logger.debug(sensor)
+
 
     #---------------------------------------------------------------------------
     # SET UP RAIN SENSOR HARDWARE
@@ -194,7 +211,7 @@ def main():
             # Get loop start time
             #-------------------------------------------------------------------
             loop_start_time = datetime.datetime.now()
-            logger.info('Loop start time: {start_time}'.format(
+            logger.debug('Loop start time: {start_time}'.format(
                 start_time=loop_start_time.strftime('%Y-%m-%d %H:%M:%S')))
 
 
@@ -204,7 +221,7 @@ def main():
             #Calculate precip rate and reset it
             sensor_value['precip_rate'] = precip_tick_count * s.PRECIP_TICK_MEASURE
             precip_tick_count = 0.000000
-            logger.info('Pricipitation counter RESET')
+            logger.debug('Precip tick counter RESET')
             
 
             #Fetch data from round robin database
@@ -228,9 +245,12 @@ def main():
             
             if last_precip_accu is None:
                 last_precip_accu = 0.00
+
+            logger.debug('Precip Acc from RRD = {rrd_precip_acc}'.format(
+                rrd_precip_acc=last_precip_accu))
                     
 
-            ##Reset precip acc 
+            ##Reset precip acc at midnight
             last_reset = loop_start_time.replace(hour=0, minute=0, second=0, microsecond=0)   
             secs_since_last_reset = (loop_start_time - last_reset).total_seconds()
             secs_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) - last_entry_time
@@ -239,7 +259,7 @@ def main():
                 logger.info('Pricipitation accumulated RESET')
             else:
                 sensor_value['precip_acc'] = last_precip_accu
-            
+
             #Add previous precip. acc'ed value to current precip. rate
             sensor_value['precip_acc'] += sensor_value['precip_rate']
                 
@@ -247,6 +267,8 @@ def main():
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
+            logger.debug(sensor_value)
+
             if rrd.update_file(sensor_value) == 'OK':
                 logger.info('Update RRD file OK')
             else:
