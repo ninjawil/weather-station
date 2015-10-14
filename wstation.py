@@ -27,12 +27,9 @@
 #!/usr/bin/env python
 
 '''Sets up the enviroment to run the weather station.
-
     Begins by checking that an RRD file exists and that the data sources are 
     correct. If no RRD file found then create a new one.
-
     Initates scripts via cronjobs.
-
     Rain gauge has a looping script - initiated by this script.'''
 
 
@@ -63,12 +60,25 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #--------------------------------------------------------------------------- 
-    log_file = 'logs/wstation.log'
+    log_file = '/home/pi/weather/logs/wstation.log'
 
-    logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
-                        level=logging.INFO,
-                        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
     logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    logger.setLevel(logging.INFO)
+        
+    fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 
+                                                    when='midnight', 
+                                                    backupCount=7, 
+                                                    utc=True)
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
     logger.info('--- Read Rain Gauge Script Started ---')
 
 
@@ -78,7 +88,7 @@ def main():
     rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
 
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
-        logger.info(rrd.create_file(s.SENSOR_SET,
+        logger.debug(rrd.create_file(s.SENSOR_SET,
                                     s.RRDTOOL_RRA, 
                                     s.UPDATE_RATE, 
                                     s.RRDTOOL_HEARTBEAT,
@@ -89,9 +99,8 @@ def main():
         logger.info('RRD file found')
 
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.error('Data sources in RRD file does not match set up')
+            logger.critical('Data sources in RRD file does not match set up')
             sys.exit()
-
 
 
     #---------------------------------------------------------------------------
@@ -102,24 +111,21 @@ def main():
     try:
         cmd='python /home/pi/weather/read_sensors.py'
         cron = CronTab()
-        job = cron.new( command=cmd, comment='weather station job')
+        job = cron.new(command= cmd, comment= 'weather station job')
         #if not cron.find_command(cmd):
             #job.minute.during(0,55).every(s.UPDATE_RATE/60)
         job.minute.on(0, 5, 10, 15, 20 ,25, 30, 35 ,40, 45, 50, 55)
-            #job.minute.on([i for i in range(0, 60, s.UPDATE_RATE/60)])
         cron.write()
         logger.info('CronTab file updated.')
-        logger.info(cron.render())
+        logger.debug(cron.render())
 
     except ValueError:
-        logger.error('CronTab file could not be updated. Exiting...')
+        logger.critical('CronTab file could not be updated. Exiting...')
         sys.exit()
 
 
     logger.info('Start Read Rain Gauge script')
     #read_rain_gauge.main()
-
-
 
 
 #===============================================================================
