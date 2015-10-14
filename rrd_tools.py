@@ -48,6 +48,7 @@ class rrd_file:
  
     def __init__(self, filename):
         self.file_name = filename
+        self.logger = logging.getLogger('root')
  
  
     #---------------------------------------------------------------------------
@@ -84,6 +85,8 @@ class rrd_file:
 
         rrdtool.create(rrd_set)
 
+        self.logger.debug(rrd_set)
+
         return rrd_set
 
 
@@ -96,6 +99,7 @@ class rrd_file:
                 values=':'.join([str(data_values[i]) for i in sorted(data_values)])))
             return 'OK'
         except rrdtool.error, e:
+            self.logger.error('RRDtool update FAIL ({error_v})'.format(error_v= e))
             return e
 
 
@@ -111,6 +115,8 @@ class rrd_file:
     #---------------------------------------------------------------------------
     def ds_list(self):
         data = self.fetch('LAST', 'now', 'now')
+        self.logger.debug('RRDtool ds_list fetch value:')
+        self.logger.debug(data)
         return data[1]
 
 
@@ -127,6 +133,8 @@ class rrd_file:
     #---------------------------------------------------------------------------
     def next_update(self, cf):
         data = self.fetch(cf, 'now', 'now')
+        self.logger.debug('RRDtool next_update fetch value:')
+        self.logger.debug(data)
         return data[0][1]
 
 
