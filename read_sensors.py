@@ -65,26 +65,9 @@ def main():
 
 
     #---------------------------------------------------------------------------
-    # Load PIGPIO
+    # Set up logger
     #---------------------------------------------------------------------------
-    log_file = 'logs/read_sensors.log'
-
-    logger = logging.getLogger(__name__)
-    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-    logger.setLevel(logging.INFO)
-        
-    fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 
-                                                    when='midnight', 
-                                                    backupCount=7, 
-                                                    utc=True)
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    logger = log.setup('root', '/home/pi/weather/logs/read_sensors.log')
 
     logger.info('--- Read Sensor Script Started ---')   
     
@@ -102,7 +85,7 @@ def main():
 
 
     #---------------------------------------------------------------------------
-    # CHECK RRD FILE AND SET UP SENSOR VARIABLES
+    # Check Rrd File And Set Up Sensor Variables
     #---------------------------------------------------------------------------
     try:
         rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
