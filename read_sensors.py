@@ -42,7 +42,7 @@
 # Standard Library
 import sys
 import time
-import logging
+import log
 import collections
 
 # Third party modules
