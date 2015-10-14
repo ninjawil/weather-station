@@ -27,13 +27,10 @@
 #!/usr/bin/env python
 
 ''' Script sets up hardware as long as sensor is enabled.
-
     Reads the data from the sensor and then updates the RRD file.
-
     Sensor value is initiated with 'U' which passed to the rrdtool will be 
     recorded as NaN. If reading sensor data fails the value is not updated and
     'U' will remain. 
-
     The script will not exit on sensor failure only once it finishes or if a RRD
     file is not found or PIGPIO does not load correctly.'''
 
@@ -72,10 +69,23 @@ def main():
     #---------------------------------------------------------------------------
     log_file = 'logs/read_sensors.log'
 
-    logging.basicConfig(filename='{file_name}'.format(file_name=log_file), 
-                        level=logging.INFO,
-                        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
     logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    logger.setLevel(logging.INFO)
+        
+    fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 
+                                                    when='midnight', 
+                                                    backupCount=7, 
+                                                    utc=True)
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
     logger.info('--- Read Sensor Script Started ---')   
     
 
@@ -86,8 +96,8 @@ def main():
         pi = pigpio.pi()
 
     except ValueError:
-        logger.error('Failed to connect to PIGPIO ({value_error}). Exiting...'.format(
-            value_error=ValueError))
+        logger.critical('Failed to connect to PIGPIO ({error_v}). Exiting...'.format(
+            error_v=ValueError))
         sys.exit()
 
 
@@ -98,13 +108,16 @@ def main():
         rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
 
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.error('Data sources in RRD file does not match set up. Exiting...')
+            logger.critical('Data sources in RRD file does not match set up.')
+            logger.critical(rrd.ds_list())
+            logger.critical(list(s.SENSOR_SET.keys()))
+            logger.critical('Exiting...')
             sys.exit()
 
         logger.info('RRD fetch successful')
 
     except ValueError:
-        logger.error('RRD fetch failed. Exiting...')
+        logger.critical('RRD fetch failed. Exiting...')
         sys.exit()
 
 
@@ -127,9 +140,7 @@ def main():
     #-------------------------------------------------------------------
     # Get inside temperature and humidity
     #-------------------------------------------------------------------
-    if sensor['inside_temp'].enable or sensor['inside_hum'].enable:
-        logger.info('Reading value from DHT22 sensor')
-  
+    if sensor['inside_temp'].enable or sensor['inside_hum'].enable: 
         try:
             DHT22_sensor = DHT22.sensor(pi, sensor['inside_temp'].ref)
             DHT22_sensor.trigger()
@@ -141,6 +152,8 @@ def main():
             if sensor['inside_hum'].enable: 
                 sensor_value['inside_hum']  = DHT22_sensor.humidity() 
 
+            logger.info('Reading value from DHT22 sensor... OK')
+
         except ValueError:
             logger.error('Failed to read DHT22 ({value_error})'.format(
                 value_error=ValueError))
@@ -150,11 +163,10 @@ def main():
     # Check door status
     #-------------------------------------------------------------------
     if sensor['door_open'].enable:
-        logger.info('Reading value from door sensor')
-
         try:
             pi.set_mode(sensor['door_open'].ref, pigpio.INPUT)
             sensor_value['door_open'] = pi.read(sensor['door_open'].ref)
+            logger.info('Reading value from door sensor... OK')
 
         except ValueError:
             logger.error('Failed to read door sensor ({value_error})'.format(
@@ -165,21 +177,21 @@ def main():
     # Get outside temperature
     #-------------------------------------------------------------------
     if sensor['outside_temp'].enable:
-        logger.info('Reading value from DS18B20 sensor')
 
         try:
             sensor_value['outside_temp'] = DS18B20.get_temp(s.W1_DEVICE_PATH, 
                                                    sensor['outside_temp'].ref)
 
+            if sensor_value['outside_temp'] > 900:
+                logger.error('Failed to read DS18B20 sensor (temp > 900)')
+                sensor_value['outside_temp'] = 'U'
+            else:
+                logger.info('Reading value from DS18B20 sensor... OK')
+
         except ValueError:
             logger.error('Failed to read DS18B20 ({value_error})'.format(
                 value_error=ValueError))
         
-        #Log an error if failed to read sensor
-        #Error value will exceed max on RRD file and be added as NaN
-        if sensor_value['outside_temp'] > 900:
-            logger.error('Failed to read DS18B20 sensor (temp > 900)')
-            sensor_value['outside_temp'] = 'U'
 
 
     #-------------------------------------------------------------------
