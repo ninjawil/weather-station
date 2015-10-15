@@ -36,13 +36,14 @@
 # Standard Library
 import os
 import time
+import collections
 
 # Third party modules
 import rrdtool
 
 
 #===============================================================================
-class rrd_file:
+class RrdFile:
  
     '''Sets up the RRD file 'a thingspeak account'''
  
@@ -55,8 +56,12 @@ class rrd_file:
     #---------------------------------------------------------------------------
     def create_file(self, sensor_set, rra_set, update_rate, heartbeat, start_time):
         
-        '''Creates a RRD file'''
+        '''Creates a RRD file based on a dictionary of sensor settings, and a list
+        of RRA file settings.'''
         
+        ss = collections.namedtuple('ss', 'enable ref unit min max type')
+        sensor = {k: ss(*sensor_set[k]) for k in sensor_set}
+
         #Prepare RRD set
         rrd_set = [self.file_name, 
                     '--step', '{step}'.format(step=update_rate), 
@@ -65,10 +70,10 @@ class rrd_file:
         #Prepare data sources
         rrd_set.append(['DS:{ds_name}:{ds_type}:{ds_hb}:{ds_min}:{ds_max}'.format(
                                     ds_name=i,
-                                    ds_type=sensor_set[i][5],
+                                    ds_type=sensor_set[i].type,
                                     ds_hb=str(heartbeat*update_rate),
-                                    ds_min=sensor_set[i][3],
-                                    ds_max=sensor_set[i][4]) 
+                                    ds_min=sensor_set[i].min,
+                                    ds_max=sensor_set[i].max) 
                         for i in sorted(sensor_set)])
 
         #Prepare RRA files
@@ -86,11 +91,17 @@ class rrd_file:
     #---------------------------------------------------------------------------
     # UPDATE RRD FILE
     #---------------------------------------------------------------------------
-    def update_file(self, data_values):
+    def update_file(self, time, data_values):
+
+        '''Runs an rrd update from a list of values and a time since epoch time
+        stamp. Returns an OK or an error value if unsuccesful.'''
+
         try:
-            rrdtool.update(self.file_name, 'N:{values}'.format(
-                values=':'.join([str(data_values[i]) for i in sorted(data_values)])))
+            rrdtool.update(self.file_name, '{update_time}:{values}'.format(
+                update_time= str(time),
+                values= ':'.join(data_values))))
             return 'OK'
+
         except rrdtool.error, e:
             return e
 
@@ -99,6 +110,7 @@ class rrd_file:
     # INFO
     #---------------------------------------------------------------------------
     def info(self):
+        '''Provides rrdinfo command'''
         return rrdtool.info(self.file_name)
 
 
@@ -106,28 +118,29 @@ class rrd_file:
     # DS LIST
     #---------------------------------------------------------------------------
     def ds_list(self):
-        data = self.fetch('LAST', 'now', 'now')
-        return data[1]
+        '''Returns a list of data sources'''        
+        return self.fetch()[1]
 
 
     #---------------------------------------------------------------------------
     # LAST UPDATE
     #---------------------------------------------------------------------------
     def last_update(self):
-        info =  self.info()
-        return info['last_update']
+        '''Returns the time of the last update'''
+        return self.info()['last_update']
 
 
     #---------------------------------------------------------------------------
     # NEXT UPDATE
     #---------------------------------------------------------------------------
-    def next_update(self, cf):
-        data = self.fetch(cf, 'now', 'now')
-        return data[0][1]
+    def next_update(self, cf='LAST'):
+        '''Returns the time for the next update'''
+        return self.fetch(cf=cf)[0][1]
 
 
     #---------------------------------------------------------------------------
     # FETCH
     #---------------------------------------------------------------------------
-    def fetch(self, cf, start, end):
+    def fetch(self, cf='LAST', start='now', end='now'):
+        '''Returns the result of an rrdfetch command'''
         return rrdtool.fetch(self.file_name, cf, '-s', str(start), '-e', str(end))
