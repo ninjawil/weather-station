@@ -33,6 +33,8 @@
 # Import modules
 #===============================================================================
 import logging
+import logging.handlers
+import time
 
 
 #===============================================================================
@@ -41,9 +43,9 @@ import logging
 def setup(name, log_file):
    
     formatter = logging.Formatter(
-    	fmt='%(asctime)s [%(levelname)-8s] %(module)-15s : %(message)s')
-
-        
+        fmt='%(asctime)s [%(levelname)-5s] %(module)-15s : %(message)s')
+    logging.Formatter.converter = time.gmtime
+    
     fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 
                                                     when='midnight', 
                                                     backupCount=7, 
@@ -52,7 +54,7 @@ def setup(name, log_file):
     fh.setFormatter(formatter)
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
+    ch.setLevel(logging.DEBUG)
     ch.setFormatter(formatter)
     
     logger = logging.getLogger(name)
