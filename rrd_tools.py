@@ -99,7 +99,7 @@ class RrdFile:
         try:
             rrdtool.update(self.file_name, '{update_time}:{values}'.format(
                 update_time= str(time),
-                values= ':'.join(data_values))))
+                values= ':'.join(map(str, data_values))))
             return 'OK'
 
         except rrdtool.error, e:

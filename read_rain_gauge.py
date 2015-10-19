@@ -113,7 +113,7 @@ def main():
  
     logger = logging.getLogger(__name__)
     formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
         
     fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 
                                                     when='midnight', 
@@ -124,7 +124,7 @@ def main():
     logger.addHandler(fh)
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
+    ch.setLevel(logging.DEBUG)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
@@ -261,7 +261,8 @@ def main():
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            result = rrd.update_file('N', [v for k, v in sorted(sensor_value))
+            logger.debug([v for (k, v) in sorted(sensor_value.items())])
+            result = rrd.update_file('N', [v for (k, v) in sorted(sensor_value.items())])
 
             if result == 'OK':
                 logger.info('Update RRD file OK')
@@ -281,7 +282,7 @@ def main():
     #---------------------------------------------------------------------------
     # Stop processes
     #---------------------------------------------------------------------------
-   finally:
+    finally:
         rain_gauge.cancel()       
         logger.info('--- Read Rain Gauge Finished ---')
         

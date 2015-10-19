@@ -83,7 +83,7 @@ def main():
 
     logger = logging.getLogger(__name__)
     formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
         
     fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 
                                                     when='midnight', 
@@ -94,7 +94,7 @@ def main():
     logger.addHandler(fh)
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
+    ch.setLevel(logging.DEBUG)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
