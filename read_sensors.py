@@ -174,8 +174,8 @@ def main():
     #-------------------------------------------------------------------
     if sensor['outside_temp'].enable:
         try:
-            out_sensor = DS18B20.DS18B20(s.W1_DEVICE_PATH, sensor['outside_temp'].ref)
-            sensor_value['outside_temp'] = DS18B20.get_temp()
+            out_sensor = DS18B20.DS18B20(sensor['outside_temp'].ref, s.W1_DEVICE_PATH)
+            sensor_value['outside_temp'] = out_sensor.get_temp()
 
             if sensor_value['outside_temp'] > 900:
                 logger.warning('Failed to read DS18B20 sensor (temp > 900)')
