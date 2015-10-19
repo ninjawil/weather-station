@@ -47,13 +47,13 @@ import sys
 import threading
 import time
 import datetime
-import log
 import collections
 
 # Third party modules
 import pigpio
 
 # Application modules
+import log
 import settings as s
 import rrd_tools
 
@@ -87,7 +87,7 @@ def count_rain_ticks(gpio, level, tick):
     if pulse:
         last_rising_edge = tick  
         precip_tick_count += 1
-        logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
+        #logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
         
  
 
@@ -109,7 +109,7 @@ def main():
     # SET UP LOGGER
     #---------------------------------------------------------------------------
     logger = log.setup('root', '/home/pi/weather/logs/read_rain_gauge.log')
-    
+
     logger.info('--- Read Rain Gauge Script Started ---')
     
 
@@ -126,35 +126,33 @@ def main():
 
 
     #---------------------------------------------------------------------------
-    # CHECK RRD FILE AND SET UP SENSOR VARIABLES
+    # CHECK RRD FILE
     #---------------------------------------------------------------------------
     try:
-        rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
+        rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
         
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.critical('Data sources in RRD file does not match set up')
+            logger.error('Data sources in RRD file does not match set up.')
+            logger.error(rrd.ds_list())
+            logger.error(list(s.SENSOR_SET.keys()))
+            logger.error('Exiting...')
             sys.exit()
-
-        logger.info('RRD fetch successful')
+        else:
+            logger.info('RRD fetch successful.')
 
     except ValueError:
         logger.critical('RRD fetch failed. Exiting...')
         sys.exit()
 
+
+    #---------------------------------------------------------------------------
+    # SET UP SENSOR VARIABLES
+    #---------------------------------------------------------------------------
     sensor_value = {x: 'U' for x in s.SENSOR_SET}
 
-    sensor_settings = collections.namedtuple('sensor_settings',
-                                             'enable ref unit min max type')
-
-    sensor = {}
-    for item in s.SENSOR_SET:
-        sensor[item] = sensor_settings( s.SENSOR_SET[item][0],
-                                        s.SENSOR_SET[item][1],
-                                        s.SENSOR_SET[item][2],
-                                        s.SENSOR_SET[item][3],
-                                        s.SENSOR_SET[item][4],
-                                        s.SENSOR_SET[item][5])
-
+    ss = collections.namedtuple('ss', 'enable ref unit min max type')
+    sensor = {k: ss(*s.SENSOR_SET[k]) for k in s.SENSOR_SET}
+    
     logger.debug(sensor_value)
     logger.debug(sensor)
 
@@ -176,9 +174,9 @@ def main():
             #-------------------------------------------------------------------
             # Delay to give update rate
             #-------------------------------------------------------------------
-            next_reading  = rrd.next_update('LAST')
+            next_reading  = rrd.next_update()
 
-            logger.info('Next sensor reading at {time}'.format(
+            logger.debug('Next sensor reading at {time}'.format(
                 time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
             
             sleep_length = next_reading - time.time()
@@ -205,10 +203,9 @@ def main():
 
             #Fetch data from round robin database
             rrd_data = []
-            rrd_tuple = collections.namedtuple( 'rrd_tuple', 
-                                                'start end step ds value') 
-            rrd_data = rrd.fetch('LAST', str(s.UPDATE_RATE * -2), 'now')
-            rrd_data = rrd_tuple(rrd_data[0][0], rrd_data[0][1], rrd_data[0][2], 
+            rrd_data = rrd.fetch(start=str(s.UPDATE_RATE * -2), end='now')
+            rt = collections.namedtuple( 'rt', 'start end step ds value') 
+            rrd_data = rt(rrd_data[0][0], rrd_data[0][1], rrd_data[0][2], 
                                  rrd_data[1], rrd_data[2])
             
 
@@ -246,13 +243,15 @@ def main():
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            logger.debug(sensor_value)
+            logger.debug([v for (k, v) in sorted(sensor_value.items())])
+            result = rrd.update_file('N', [v for (k, v) in sorted(sensor_value.items())])
 
-            if rrd.update_file(sensor_value) == 'OK':
+            if result == 'OK':
                 logger.info('Update RRD file OK')
             else:
                 logger.error('Failed to update RRD file ({value_error})'.format(
                     value_error=result))
+                logger.error(sensor_value)
 
 
     #---------------------------------------------------------------------------
@@ -260,12 +259,14 @@ def main():
     #---------------------------------------------------------------------------
     except KeyboardInterrupt:
         logger.info('USER ACTION: End command')
-    
+
+
+    #---------------------------------------------------------------------------
+    # Stop processes
+    #---------------------------------------------------------------------------
     finally:
-        #Stop processes
-        rain_gauge.cancel()
-        
-        logger.info('--- Finished ---')
+        rain_gauge.cancel()       
+        logger.info('--- Read Rain Gauge Finished ---')
         
 
 #===============================================================================

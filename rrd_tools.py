@@ -35,15 +35,15 @@
 
 # Standard Library
 import os
-import time
 import logging
+import collections
 
 # Third party modules
 import rrdtool
 
 
 #===============================================================================
-class rrd_file:
+class RrdFile:
  
     '''Sets up the RRD file 'a thingspeak account'''
  
@@ -57,32 +57,32 @@ class rrd_file:
     #---------------------------------------------------------------------------
     def create_file(self, sensor_set, rra_set, update_rate, heartbeat, start_time):
         
-        '''Creates a RRD file'''
-
-        #Prepare data sources
-        rrd_ds      = []
-        for i in sorted(sensor_set):
-            rrd_ds.append('DS:{ds_name}:{ds_type}:{ds_hb}:{ds_min}:{ds_max}'.format(
-                                    ds_name=i,
-                                    ds_type=sensor_set[i][5],
-                                    ds_hb=str(heartbeat*update_rate),
-                                    ds_min=sensor_set[i][3],
-                                    ds_max=sensor_set[i][4]))
-
-        #Prepare RRA files
-        rra_files   = []
-        for i in range(0,len(rra_set),3):
-            rra_files.append('RRA:{cf}:0.5:{steps}:{rows}'.format(
-                                    cf=rra_set[i],
-                                    steps=str((rra_set[i+1]*60)/update_rate),
-                                    rows=str(((rra_set[i+2])*24*60)/rra_set[i+1])))
+        '''Creates a RRD file based on a dictionary of sensor settings, and a list
+        of RRA file settings.'''
+        
+        ss = collections.namedtuple('ss', 'enable ref unit min max type')
+        sensor = {k: ss(*sensor_set[k]) for k in sensor_set}
 
         #Prepare RRD set
-        rrd_set = []
         rrd_set = [self.file_name, 
                     '--step', '{step}'.format(step=update_rate), 
                     '--start', '{start_t:.0f}'.format(start_t=start_time)]
-        rrd_set +=  rrd_ds + rra_files
+                    
+        #Prepare data sources
+        rrd_set.append(['DS:{ds_name}:{ds_type}:{ds_hb}:{ds_min}:{ds_max}'.format(
+                                    ds_name=i,
+                                    ds_type=sensor_set[i].type,
+                                    ds_hb=str(heartbeat*update_rate),
+                                    ds_min=sensor_set[i].min,
+                                    ds_max=sensor_set[i].max) 
+                        for i in sorted(sensor_set)])
+
+        #Prepare RRA files
+        rrd_set.append(['RRA:{cf}:0.5:{steps}:{rows}'.format(
+                                    cf=rra_set[i],
+                                    steps=str((rra_set[i+1]*60)/update_rate),
+                                    rows=str(((rra_set[i+2])*24*60)/rra_set[i+1]))
+                        for i in range(0,len(rra_set),3)])
 
         rrdtool.create(rrd_set)
 
@@ -94,11 +94,17 @@ class rrd_file:
     #---------------------------------------------------------------------------
     # UPDATE RRD FILE
     #---------------------------------------------------------------------------
-    def update_file(self, data_values):
+    def update_file(self, time, data_values):
+
+        '''Runs an rrd update from a list of values and a time since epoch time
+        stamp. Returns an OK or an error value if unsuccesful.'''
+
         try:
-            rrdtool.update(self.file_name, 'N:{values}'.format(
-                values=':'.join([str(data_values[i]) for i in sorted(data_values)])))
+            rrdtool.update(self.file_name, '{update_time}:{values}'.format(
+                update_time= str(time),
+                values= ':'.join(map(str, data_values))))
             return 'OK'
+
         except rrdtool.error, e:
             self.logger.error('RRDtool update FAIL ({error_v})'.format(error_v= e))
             return e
@@ -108,6 +114,7 @@ class rrd_file:
     # INFO
     #---------------------------------------------------------------------------
     def info(self):
+        '''Provides rrdinfo command'''
         return rrdtool.info(self.file_name)
 
 
@@ -115,32 +122,32 @@ class rrd_file:
     # DS LIST
     #---------------------------------------------------------------------------
     def ds_list(self):
-        data = self.fetch('LAST', 'now', 'now')
-        self.logger.debug('RRDtool ds_list fetch value:')
-        self.logger.debug(data)
-        return data[1]
+        '''Returns a list of data sources'''        
+        return self.fetch()[1]
 
 
     #---------------------------------------------------------------------------
     # LAST UPDATE
     #---------------------------------------------------------------------------
     def last_update(self):
-        info =  self.info()
-        return info['last_update']
+        '''Returns the time of the last update'''
+        return self.info()['last_update']
 
 
     #---------------------------------------------------------------------------
     # NEXT UPDATE
     #---------------------------------------------------------------------------
-    def next_update(self, cf):
-        data = self.fetch(cf, 'now', 'now')
-        self.logger.debug('RRDtool next_update fetch value:')
-        self.logger.debug(data)
-        return data[0][1]
+    def next_update(self, cf='LAST'):
+        '''Returns the time for the next update'''
+        return self.fetch(cf=cf)[0][1]
 
 
     #---------------------------------------------------------------------------
     # FETCH
     #---------------------------------------------------------------------------
-    def fetch(self, cf, start, end):
-        return rrdtool.fetch(self.file_name, cf, '-s', str(start), '-e', str(end))
+    def fetch(self, cf='LAST', start='now', end='now'):
+        '''Returns the result of an rrdfetch command'''
+        data = rrdtool.fetch(self.file_name, cf, '-s', str(start), '-e', str(end))
+        self.logger.debug('RRDtool ds_list fetch value:')
+        self.logger.debug(data)
+        return data

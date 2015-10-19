@@ -39,15 +39,33 @@
 
 # Standard Library
 import os
+import time
 import sys
-import log
+import subprocess
 
 # Third party modules
 from crontab import CronTab
 
 # Application modules
+import log
 import settings as s
 import rrd_tools
+
+
+#===============================================================================
+# Check script is running
+#===============================================================================
+def check_process_is_running(script_name):
+    try:
+        cmd1 = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
+        cmd2 = subprocess.Popen(['grep', '-v', 'grep'], stdin=cmd1.stdout, 
+                                stdout=subprocess.PIPE)
+        cmd3 = subprocess.Popen(['grep', script_name], stdin=cmd2.stdout, 
+                                stdout=subprocess.PIPE)
+        return cmd3.communicate()[0] 
+
+    except Exception, e:
+        return e
 
 
 #===============================================================================
@@ -68,7 +86,7 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
-    rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
+    rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
 
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
         logger.debug(rrd.create_file(s.SENSOR_SET,
@@ -78,17 +96,17 @@ def main():
                                     int(time.time() + s.UPDATE_RATE)))
         logger.info('RRD file not found. New file created')
 
-    else:
-        logger.info('RRD file found')
-
-        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.critical('Data sources in RRD file does not match set up')
+    elif sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
+            logger.error('Data sources in RRD file does not match set up.')
             sys.exit()
+
+    else:
+        logger.info('RRD file found and checked OK')
 
 
 
     #---------------------------------------------------------------------------
-    # RUN SCRIPTS
+    # SCRIPTS
     #---------------------------------------------------------------------------
 
     #Set up to read sensors using cron job
@@ -96,20 +114,32 @@ def main():
         cmd='python /home/pi/weather/read_sensors.py'
         cron = CronTab()
         job = cron.new(command= cmd, comment= 'weather station job')
-        #if not cron.find_command(cmd):
-            #job.minute.during(0,55).every(s.UPDATE_RATE/60)
-        job.minute.on(0, 5, 10, 15, 20 ,25, 30, 35 ,40, 45, 50, 55)
-        cron.write()
-        logger.info('CronTab file updated.')
-        logger.debug(cron.render())
+        if not cron.find_command(cmd):
+            job.minute.every(s.UPDATE_RATE/60)
+            cron.write()
+            logger.info('CronTab file updated.')
+            logger.debug(cron.render())
+        else:
+            logger.info('Command already in CronTab file')
 
     except ValueError:
-        logger.critical('CronTab file could not be updated. Exiting...')
+        logger.error('CronTab file could not be updated. Exiting...')
         sys.exit()
 
 
-    logger.info('Start Read Rain Gauge script')
-    #read_rain_gauge.main()
+    #Run read rain gauge script if not already running
+    cmd = '/home/pi/weather/read_rain_gauge.py'
+    script_not_running = check_process_is_running(cmd)
+    if script_not_running:
+        logger.info('Script read_rain_gauge.py already runnning.')
+        logger.info(script_not_running)
+    else:
+        logger.info('Start Read Rain Gauge script')
+        status = subprocess.Popen(['python', cmd])
+        logger.info(status)
+
+
+    logger.info('--- Wstation Script Finished ---')
 
 #===============================================================================
 # BOILER PLATE

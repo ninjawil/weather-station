@@ -55,7 +55,6 @@ W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
 
 # --- RRDTool set up ---
-RRDTOOL_RRD_DIR      = 'data'
 RRDTOOL_RRD_FILE     = '/home/pi/weather/data/weather_data.rrd'
 RRDTOOL_HEARTBEAT    = 2 # multiplier
 
@@ -79,14 +78,6 @@ THINGSPEAK_CHANNEL_ID        = '39722'
 
 # --- Set up rain fall reed switch ----
 PRECIP_TICK_MEASURE   = 0.3 #millimeters per tick
-PRECIP_ACC_RESET_TIME = (00,00,00,00) #hour, minute, second, microsecond
-
-ENABLE  = 0
-PIN_REF = 1
-UNIT    = 2
-MIN     = 3
-MAX     = 4
-TYPE    = 5 
 
 SENSOR_SET= {   'inside_temp':  (True, PIN_11, '*C', -50, 100, 'GAUGE'),
                 'inside_hum':   (True, PIN_11, '%',  -1,  101, 'GAUGE'),

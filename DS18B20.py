@@ -1,6 +1,4 @@
-#-----------------------------------------------------------------------
-#
-# Reads data from a DS18B20 temperature sensor
+#-------------------------------------------------------------------------------
 #
 # The MIT License (MIT)
 #
@@ -24,57 +22,59 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 #!/usr/bin/env python
 
-#=======================================================================
-# Import modules
-#=======================================================================
+#===============================================================================
+# IMPORT MODULES
+#===============================================================================
 import os
-import sys
 import time
 
 
-#=======================================================================
+#===============================================================================
 # LOAD DRIVERS
-#=======================================================================
+#===============================================================================
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
 
 
-#=======================================================================
-# READ RAW DATA FROM W1 SLAVE
-#=======================================================================
-def w1_slave_read(w1_device_path, device_id):
+#===============================================================================
+class DS18B20:
+ 
+    '''Sets up a DS18B20 sensor'''
+ 
+    def __init__(self, device_id, device_path):
+        self.id = device_id
+        self.path = device_path
+ 
+ 
+    #---------------------------------------------------------------------------
+    # READ RAW DATA FROM W1 SLAVE
+    #---------------------------------------------------------------------------
+    def w1_slave_read(self):
+        '''Read w1 slave'''
+        with open(self.path + self.id + '/w1_slave', 'r') as f:
+            return f.readlines()
 
-    device_id = w1_device_path+device_id+'/w1_slave'
 
-    f=open(device_id,'r')
-    lines=f.readlines()
-    f.close()
+    #---------------------------------------------------------------------------
+    # READ DATA FROM DS18B20
+    #---------------------------------------------------------------------------
+    def get_temp(self):
 
-    return lines
+        lines = self.w1_slave_read()
 
+        #If unsuccessful first read loop until temperature acquired
+        while lines[0].strip()[-3:] != 'YES':
+            time.sleep(0.2)
+            lines = self.w1_slave_read()
 
-#=======================================================================
-# READ DATA FROM DS18B20
-#=======================================================================
-def get_temp(w1_device_path, device_id):
+        temp_output = lines[1].find('t=')
 
-    lines = w1_slave_read(w1_device_path, device_id)
+        if temp_output != -1:
+            return float(lines[1].strip()[temp_output+2:]) / 1000.0
+        else:
+            return None
 
-    #If unsuccessful first read loop until temperature acquired
-    while lines[0].strip()[-3:] != 'YES':
-        time.sleep(0.2)
-        lines = w1_slave_read(device_id)
-
-    temp_output = lines[1].find('t=')
-
-    if temp_output != -1:
-        temp_string = lines[1].strip()[temp_output+2:]
-        temp_c = float(temp_string) / 1000.0
-    else:
-        temp_c = 999.99
-
-    return temp_c

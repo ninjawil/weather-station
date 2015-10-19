@@ -12,8 +12,6 @@ Records
     + precipiation rate
     + accumulated precipitation in 24 hours with at configurable reset time
 
-Flashes an LED on and OFF every second to indicate operation.
-
 Data recorded is sent to thingspeak.
  + need to set up a crontab job to loop sync the rrd file with thingspeak
 
@@ -33,8 +31,6 @@ make
 make install
 ```
 
-
-
 #### Requests
 Download and install from http://www.python-requests.org/en/latest/user/install/
 
@@ -52,3 +48,7 @@ dtoverlay=w1-gpio
 ```
 
 #### python-crontab
+To install:
+```
+pip install python-crontab
+```
