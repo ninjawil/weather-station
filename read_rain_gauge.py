@@ -54,6 +54,7 @@ import pigpio
 
 # Application modules
 import log
+import logging
 import settings as s
 import rrd_tools
 
@@ -73,6 +74,8 @@ def count_rain_ticks(gpio, level, tick):
     
     global precip_tick_count
     global last_rising_edge
+
+    logger = logging.getLogger('root')
     
     pulse = False
     
@@ -87,7 +90,7 @@ def count_rain_ticks(gpio, level, tick):
     if pulse:
         last_rising_edge = tick  
         precip_tick_count += 1
-        #logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
+        logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
         
  
 
@@ -154,7 +157,6 @@ def main():
     sensor = {k: ss(*s.SENSOR_SET[k]) for k in s.SENSOR_SET}
     
     logger.debug(sensor_value)
-    logger.debug(sensor)
 
 
     #---------------------------------------------------------------------------
@@ -205,8 +207,12 @@ def main():
             last_entry_time = rrd.last_update()
 
             last_reset = loop_start.replace(hour=0, minute=0, second=0, microsecond=0)   
-            tdelta = last_reset - datetime.datetime.fromtimestamp(last_entry_time)
-            
+            tdelta = datetime.datetime.fromtimestamp(last_entry_time) - last_reset
+            tdelta = tdelta.total_seconds()
+            logger.debug('last entry = {last_entry}'.format(last_entry= last_entry_time))
+            logger.debug('last_reset = {last_reset_t}'.format(last_reset_t= last_reset))
+            logger.debug('tdelta = {delta_t}'.format(delta_t= tdelta))
+
             if tdelta >= 0.00:
                 #Fetch data from round robin database
                 try:

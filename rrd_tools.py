@@ -148,6 +148,10 @@ class RrdFile:
     def fetch(self, cf='LAST', start='now', end='now'):
         '''Returns the result of an rrdfetch command'''
         data = rrdtool.fetch(self.file_name, cf, '-s', str(start), '-e', str(end))
-        self.logger.debug('RRDtool ds_list fetch value:')
+        self.logger.debug(
+            'RRDtool fetch value cf={cf_} start={start_t} end={end_t}:'.format(
+                                        cf_=cf, 
+                                        start_t= start, 
+                                        end_t= end))
         self.logger.debug(data)
         return data
