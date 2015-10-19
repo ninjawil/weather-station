@@ -175,7 +175,6 @@ def main():
             # Delay to give update rate
             #-------------------------------------------------------------------
             next_reading  = rrd.next_update()
-
             logger.debug('Next sensor reading at {time}'.format(
                 time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
             
@@ -187,57 +186,55 @@ def main():
             #-------------------------------------------------------------------
             # Get loop start time
             #-------------------------------------------------------------------
-            loop_start_time = datetime.datetime.now()
-            logger.debug('Loop start time: {start_time}'.format(
-                start_time=loop_start_time.strftime('%Y-%m-%d %H:%M:%S')))
+            loop_start = datetime.datetime.now()
+            logger.info('Loop start time: {start_time}'.format(
+                start_time=loop_start.strftime('%Y-%m-%d %H:%M:%S')))
 
 
             #-------------------------------------------------------------------
             # Get rain fall measurement
             #-------------------------------------------------------------------
-            #Calculate precip rate and reset it
+            sensor_value['precip_acc'] = 0.000000
             sensor_value['precip_rate'] = precip_tick_count * s.PRECIP_TICK_MEASURE
             precip_tick_count = 0.000000
             logger.debug('Precip tick counter RESET')
             
 
-            #Fetch data from round robin database
-            rrd_data = []
-            rrd_data = rrd.fetch(start=str(s.UPDATE_RATE * -2), end='now')
-            rt = collections.namedtuple( 'rt', 'start end step ds value') 
-            rrd_data = rt(rrd_data[0][0], rrd_data[0][1], rrd_data[0][2], 
-                                 rrd_data[1], rrd_data[2])
-            
+            #If last entry was before midnight this moninng do not use accumulated
+            # precipitation value taken from round robin database
+            last_entry_time = rrd.last_update()
 
-            #Extract time and precip acc value from fetched tuple
-            loc = 0
-            last_precip_accu = None
-            data_location = rrd_data.ds.index('precip_acc')
-            while last_precip_accu is None and -loc < len(rrd_data.value):
-                loc -= 1
-                last_precip_accu = rrd_data.value[loc][data_location]
-                
-            last_entry_time = rrd_data.end + (loc * s.UPDATE_RATE)
+            last_reset = loop_start.replace(hour=0, minute=0, second=0, microsecond=0)   
+            tdelta = last_reset - datetime.datetime.fromtimestamp(last_entry_time)
             
-            if last_precip_accu is None:
-                last_precip_accu = 0.00
+            if tdelta >= 0.00:
+                #Fetch data from round robin database
+                try:
+                    rrd_data = []
+                    rrd_data = rrd.fetch(start=last_entry_time, end=last_entry_time)
+                    logger.debug(rrd_data)
+                    rt = collections.namedtuple( 'rt', 'start end step ds value')
+                    rrd_data = rt(rrd_data[0][0], rrd_data[0][1], rrd_data[0][2], 
+                                            rrd_data[1], rrd_data[2])
 
-            logger.debug('Precip Acc from RRD = {rrd_precip_acc}'.format(
-                rrd_precip_acc=last_precip_accu))
+                    sensor_value['precip_acc'] = float(
+                        rrd_data.value[rrd_data.ds.index('precip_acc')] or 0)
                     
+                    logger.info('Data fetched from RRD file')
 
-            ##Reset precip acc at midnight
-            last_reset = loop_start_time.replace(hour=0, minute=0, second=0, microsecond=0)   
-            secs_since_last_reset = (loop_start_time - last_reset).total_seconds()
-            secs_since_last_feed_entry = time.mktime(loop_start_time.timetuple()) - last_entry_time
-            if secs_since_last_feed_entry > secs_since_last_reset:
-                sensor_value['precip_acc'] = 0.00
-                logger.info('Pricipitation accumulated RESET')
-            else:
-                sensor_value['precip_acc'] = last_precip_accu
+                except ValueError, e:
+                    logger.error('Could not fetch data from RRD file!')
+
 
             #Add previous precip. acc'ed value to current precip. rate
             sensor_value['precip_acc'] += sensor_value['precip_rate']
+
+
+            #Log values
+            logger.info('Precip_acc:  {precip_acc}'.format(
+                                        precip_acc= sensor_value['precip_acc']))
+            logger.info('Precip_rate: {precip_rate}'.format(
+                                        precip_rate= sensor_value['precip_rate']))
                 
 
             #-------------------------------------------------------------------
@@ -259,6 +256,13 @@ def main():
     #---------------------------------------------------------------------------
     except KeyboardInterrupt:
         logger.info('USER ACTION: End command')
+
+
+    #---------------------------------------------------------------------------
+    # Other error captured
+    #---------------------------------------------------------------------------
+    except Exception, e:
+        logger.error('Script Error', exc_info=True)
 
 
     #---------------------------------------------------------------------------
