@@ -94,16 +94,24 @@ class RrdFile:
     #---------------------------------------------------------------------------
     # UPDATE RRD FILE
     #---------------------------------------------------------------------------
-    def update_file(self, time, data_values):
+    def update_file(self, timestamp='N', ds_name=None, values=None):
 
         '''Runs an rrd update from a list of values and a time since epoch time
         stamp. Returns an OK or an error value if unsuccesful.'''
 
+        self.logger.debug('-t{ds}, {update_time}:{data}'.format(
+                ds= ':'.join(ds_name),
+                update_time= str(timestamp),
+                data= ':'.join(map(str, values))))
+
         try:
-            rrdtool.update(self.file_name, '{update_time}:{values}'.format(
-                update_time= str(time),
-                values= ':'.join(map(str, data_values))))
-            return 'OK'
+            if ds_name and values:
+                rrdtool.update(self.file_name, 
+                                '-t{ds}'.format(ds= ':'.join(ds_name)),
+                                '{update_time}:{data}'.format(
+                                                update_time= str(timestamp),
+                                                data= ':'.join(map(str, values))))
+                return 'OK'
 
         except rrdtool.error, e:
             self.logger.error('RRDtool update FAIL ({error_v})'.format(error_v= e))

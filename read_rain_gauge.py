@@ -245,8 +245,12 @@ def main():
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            logger.debug([v for (k, v) in sorted(sensor_value.items())])
-            result = rrd.update_file(rrd.next_update(), [v for (k, v) in sorted(sensor_value.items())])
+            logger.debug('Update time = {update_time}'.format(update_time= 'N'))#rrd.next_update()))
+            logger.debug([v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
+            
+            result = rrd.update_file(timestamp= 'N',
+                ds_name= [k for (k, v) in sorted(sensor_value.items()) if v!='U'],
+                values= [v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
 
             if result == 'OK':
                 logger.info('Update RRD file OK')
