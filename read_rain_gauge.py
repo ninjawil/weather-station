@@ -217,14 +217,13 @@ def main():
                 #Fetch data from round robin database
                 try:
                     rrd_data = []
-                    rrd_data = rrd.fetch(start=last_entry_time, end=last_entry_time)
-                    logger.debug(rrd_data)
+                    rrd_data = rrd.fetch(start=last_entry_time-300, end=last_entry_time)
                     rt = collections.namedtuple( 'rt', 'start end step ds value')
                     rrd_data = rt(rrd_data[0][0], rrd_data[0][1], rrd_data[0][2], 
                                             rrd_data[1], rrd_data[2])
 
                     sensor_value['precip_acc'] = float(
-                        rrd_data.value[rrd_data.ds.index('precip_acc')] or 0)
+                        rrd_data.value[len(rrd_data.value)-2][rrd_data.ds.index('precip_acc')] or 0)
                     
                     logger.info('Data fetched from RRD file')
 
@@ -247,7 +246,7 @@ def main():
             # Add data to RRD
             #-------------------------------------------------------------------
             logger.debug([v for (k, v) in sorted(sensor_value.items())])
-            result = rrd.update_file('N', [v for (k, v) in sorted(sensor_value.items())])
+            result = rrd.update_file(rrd.next_update(), [v for (k, v) in sorted(sensor_value.items())])
 
             if result == 'OK':
                 logger.info('Update RRD file OK')

@@ -115,7 +115,7 @@ def main():
         cron = CronTab()
         job = cron.new(command= cmd, comment= 'weather station job')
         if not cron.find_command(cmd):
-            job.minute.every(s.UPDATE_RATE/60)
+            job.minute.during(4, 59).every(s.UPDATE_RATE/60)
             cron.write()
             logger.info('CronTab file updated.')
             logger.debug(cron.render())

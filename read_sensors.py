@@ -174,6 +174,7 @@ def main():
     #-------------------------------------------------------------------
     # Add data to RRD
     #-------------------------------------------------------------------
+    logger.debug('Update time = {update_time}'.format(update_time= 'N'))#rrd.next_update()))
     logger.debug([v for (k, v) in sorted(sensor_value.items())])
     result = rrd.update_file('N', [v for (k, v) in sorted(sensor_value.items())])
 
