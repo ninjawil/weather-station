@@ -207,9 +207,9 @@ def main():
             last_entry_time = rrd.last_update()
 
             last_reset = loop_start.replace(hour=0, minute=0, second=0, microsecond=0)   
-            tdelta = datetime.datetime.fromtimestamp(last_entry_time) - last_reset
+            tdelta = datetime.datetime.utcfromtimestamp(last_entry_time) - last_reset
             tdelta = tdelta.total_seconds()
-            logger.debug('last entry = {last_entry}'.format(last_entry= last_entry_time))
+            logger.debug('last entry = {last_entry}'.format(last_entry= datetime.datetime.utcfromtimestamp(last_entry_time)))
             logger.debug('last_reset = {last_reset_t}'.format(last_reset_t= last_reset))
             logger.debug('tdelta = {delta_t}'.format(delta_t= tdelta))
 
