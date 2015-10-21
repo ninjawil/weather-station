@@ -188,7 +188,7 @@ def main():
             #-------------------------------------------------------------------
             # Get loop start time
             #-------------------------------------------------------------------
-            loop_start = datetime.datetime.now()
+            loop_start = datetime.datetime.utcnow()
             logger.info('Loop start time: {start_time}'.format(
                 start_time=loop_start.strftime('%Y-%m-%d %H:%M:%S')))
 
@@ -207,32 +207,54 @@ def main():
             last_entry_time = rrd.last_update()
 
             last_reset = loop_start.replace(hour=0, minute=0, second=0, microsecond=0)   
-            tdelta = datetime.datetime.utcfromtimestamp(last_entry_time) - last_reset
-            tdelta = tdelta.total_seconds()
-            logger.debug('last entry = {last_entry}'.format(last_entry= datetime.datetime.utcfromtimestamp(last_entry_time)))
-            logger.debug('last_reset = {last_reset_t}'.format(last_reset_t= last_reset))
+            last_reset = int(time.mktime(last_reset.timetuple()))
+            tdelta = last_entry_time - last_reset
+
+            logger.debug('last entry = {l_entry}'.format(l_entry= last_entry_time))
+            logger.debug('last_reset = {l_reset_t}'.format(l_reset_t= last_reset))
             logger.debug('tdelta = {delta_t}'.format(delta_t= tdelta))
 
             if tdelta >= 0.00:
-                #Fetch data from round robin database
                 try:
-                    rrd_data = []
-                    rrd_data = rrd.fetch(start=last_entry_time-300, end=last_entry_time)
-                    rt = collections.namedtuple( 'rt', 'start end step ds value')
-                    rrd_data = rt(rrd_data[0][0], rrd_data[0][1], rrd_data[0][2], 
-                                            rrd_data[1], rrd_data[2])
+                    #Fetch today's data from round robin database
+                    data = []
+                    data = rrd.fetch(start=last_reset, end=last_entry_time)
 
+                    rt = collections.namedtuple( 'rt', 'start end step ds value')
+                    data = rt(data[0][0], data[0][1], data[0][2], 
+                                            data[1], data[2])
+
+
+                    #Create list with today's precip rate values
+                    loc = data.ds.index('precip_rate')
+                    todays_p_rate = [data.value[i][loc] for i in range(0, len(data.value)-1)]
+
+                    logger.debug('Todays p rate')
+                    logger.debug(todays_p_rate)
+
+                    #Get second to last entry as last entry is next update
                     sensor_value['precip_acc'] = float(
-                        rrd_data.value[len(rrd_data.value)-2][rrd_data.ds.index('precip_acc')] or 0)
+                        data.value[len(data.value)-2][data.ds.index('precip_acc')] or 0)
+                                       
+                    #If any values missing from today, prevent accumulation
+                    if None in todays_p_rate:
+                        sensor_value['precip_acc'] = 'U'
+                        logger.error('Values missing in todays precip rate')
+
+                    elif sum(todays_p_rate) != sensor_value['precip_acc']:
+                        logger.debug('Fetched p acc value:  {p_acc}'.format(
+                                        p_acc= sensor_value['precip_acc']))
+                        logger.debug('Sum of todays Precip_rate: {p_rate}'.format(
+                                        p_rate= sum(todays_p_rate)))
+                        sensor_value['precip_acc'] = 'U'
+                        logger.error('Lastest precip acc value does not much summation of precip rates')
                     
-                    logger.info('Data fetched from RRD file')
+                    else:
+                        #Add previous precip. acc'ed value to current precip. rate
+                        sensor_value['precip_acc'] += sensor_value['precip_rate']
 
                 except ValueError, e:
                     logger.error('Could not fetch data from RRD file!')
-
-
-            #Add previous precip. acc'ed value to current precip. rate
-            sensor_value['precip_acc'] += sensor_value['precip_rate']
 
 
             #Log values
