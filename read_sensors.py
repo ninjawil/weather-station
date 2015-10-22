@@ -165,9 +165,9 @@ def main():
             else:
                 logger.info('Reading value from DS18B20 sensor... OK')
 
-        except ValueError:
+        except Exception, e:
             logger.warning('Failed to read DS18B20 ({value_error})'.format(
-                value_error=ValueError))
+                value_error=ValueError), exc_info=True)
         
 
 

@@ -37,15 +37,21 @@
 broadcom_ref     = True
 
 if broadcom_ref:
-    PIN_11   = 17
-    PIN_12   = 18
-    PIN_13   = 27
-    PIN_15   = 22
-else:
-    PIN_11   = 11
-    PIN_12   = 12
-    PIN_13   = 13
-    PIN_15   = 15
+    PIN_11 = 17
+    PIN_12 = 18
+    PIN_13 = 27
+    PIN_15 = 22
+    PIN_37 = 26
+    PIN_38 = 20
+    PIN_40 = 21
+else: 
+    PIN_11 = 11
+    PIN_12 = 12
+    PIN_13 = 13
+    PIN_15 = 15
+    PIN_37 = 37
+    PIN_38 = 38
+    PIN_40 = 40
 
 
 # --- System set up ---
@@ -79,10 +85,10 @@ THINGSPEAK_CHANNEL_ID        = '39722'
 # --- Set up rain fall reed switch ----
 PRECIP_TICK_MEASURE   = 0.3 #millimeters per tick
 
-SENSOR_SET= {   'inside_temp':  (True, PIN_11, '*C', -50, 100, 'GAUGE'),
-                'inside_hum':   (True, PIN_11, '%',  -1,  101, 'GAUGE'),
-                'door_open':    (True, PIN_13, '',   -1,  2,   'GAUGE'),
-                'precip_rate':  (True, PIN_15, 'mm', -5,  50,  'GAUGE'),
-                'precip_acc':   (True, PIN_15, 'mm', -5,  500, 'GAUGE'),
+SENSOR_SET= {   'inside_temp':  (True, PIN_37, '*C', -50, 100, 'GAUGE'),
+                'inside_hum':   (True, PIN_37, '%',  -1,  101, 'GAUGE'),
+                'door_open':    (True, PIN_40, '',   -1,  2,   'GAUGE'),
+                'precip_rate':  (True, PIN_38, 'mm', -5,  50,  'GAUGE'),
+                'precip_acc':   (True, PIN_38, 'mm', -5,  500, 'GAUGE'),
                 'outside_temp': (True, '28-0414705bceff',
                                                '*C', -50, 50,  'GAUGE')}

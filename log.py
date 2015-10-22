@@ -43,7 +43,7 @@ import time
 def setup(name, log_file):
    
     formatter = logging.Formatter(
-        fmt='%(asctime)s [%(levelname)-5s] %(module)-15s : %(message)s')
+        fmt='%(asctime)s [%(levelname)-7s] %(module)-15s : %(message)s')
     logging.Formatter.converter = time.gmtime
     
     fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 

@@ -36,7 +36,7 @@ import time
 #===============================================================================
 # LOAD DRIVERS
 #===============================================================================
-os.system('modprobe w1-gpio')
+os.system('modprobe w1-gpio gpiopin=19')
 os.system('modprobe w1-therm')
 
 
