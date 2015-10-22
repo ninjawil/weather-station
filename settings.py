@@ -59,7 +59,7 @@ RRDTOOL_RRD_FILE     = '/home/pi/weather/data/weather_data.rrd'
 RRDTOOL_HEARTBEAT    = 2 # multiplier
 
 # Consolidation type, Resolution (minutes), Recording Period (days)
-RRDTOOL_RRA          = ('LAST',       5,  0.125, 
+RRDTOOL_RRA          = ('LAST',       5,      1.05, 
                         'AVERAGE',   15,      1,
                         'AVERAGE',   30,      2,
                         'AVERAGE',  120,      7,

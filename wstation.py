@@ -89,11 +89,11 @@ def main():
     rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
 
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
-        logger.debug(rrd.create_file(s.SENSOR_SET,
-                                    s.RRDTOOL_RRA, 
-                                    s.UPDATE_RATE, 
-                                    s.RRDTOOL_HEARTBEAT,
-                                    int(time.time() + s.UPDATE_RATE)))
+        rrd.create_file(s.SENSOR_SET, 
+                        s.RRDTOOL_RRA, 
+                        s.UPDATE_RATE, 
+                        s.RRDTOOL_HEARTBEAT, 
+                        int(time.time() + s.UPDATE_RATE))
         logger.info('RRD file not found. New file created')
 
     elif sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):

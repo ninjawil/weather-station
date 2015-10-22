@@ -69,24 +69,24 @@ class RrdFile:
                     '--start', '{start_t:.0f}'.format(start_t=start_time)]
                     
         #Prepare data sources
-        rrd_set.append(['DS:{ds_name}:{ds_type}:{ds_hb}:{ds_min}:{ds_max}'.format(
+        rrd_set += ['DS:{ds_name}:{ds_type}:{ds_hb}:{ds_min}:{ds_max}'.format(
                                     ds_name=i,
-                                    ds_type=sensor_set[i].type,
+                                    ds_type=sensor[i].type,
                                     ds_hb=str(heartbeat*update_rate),
-                                    ds_min=sensor_set[i].min,
-                                    ds_max=sensor_set[i].max) 
-                        for i in sorted(sensor_set)])
+                                    ds_min=sensor[i].min,
+                                    ds_max=sensor[i].max) 
+                        for i in sorted(sensor)]
 
         #Prepare RRA files
-        rrd_set.append(['RRA:{cf}:0.5:{steps}:{rows}'.format(
+        rrd_set += ['RRA:{cf}:0.5:{steps}:{rows}'.format(
                                     cf=rra_set[i],
                                     steps=str((rra_set[i+1]*60)/update_rate),
                                     rows=str(((rra_set[i+2])*24*60)/rra_set[i+1]))
-                        for i in range(0,len(rra_set),3)])
-
-        rrdtool.create(rrd_set)
+                        for i in range(0,len(rra_set),3)]
 
         self.logger.debug(rrd_set)
+
+        rrdtool.create(rrd_set)
 
         return rrd_set
 

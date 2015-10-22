@@ -218,7 +218,8 @@ def main():
                 try:
                     #Fetch today's data from round robin database
                     data = []
-                    data = rrd.fetch(start=last_reset, end=last_entry_time)
+                    data = rrd.fetch(start=last_entry_time - s.UPDATE_RATE, 
+                                     end=last_entry_time)
 
                     rt = collections.namedtuple( 'rt', 'start end step ds value')
                     data = rt(data[0][0], data[0][1], data[0][2], 
