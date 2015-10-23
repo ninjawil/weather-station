@@ -34,6 +34,7 @@
 # Standard Library
 import sys
 import datetime
+import collections
 
 # Third party modules
 
@@ -135,26 +136,33 @@ def main():
     logger.debug('Last TS feed data:')
     logger.debug(last_feed)
 
-    last_entry_time = rrd.last_update()
-
     #Thingspeak returns a -1 if there are no records
     if last_feed == '-1':
-        last_feed = last_entry_time
+        last_feed = rrd.last_update()
         
-    logger.info('Last TS feed: {last_feed_time}'.format(
-            last_feed_time=last_feed.strftime('%Y-%m-%d %H:%M:%S')))
+    logger.info('Last TS feed: {last_feed_time}'.format(last_feed_time=last_feed))
 
-
-       
+   
     #---------------------------------------------------------------------------
     # Fetch values from rrd
     #---------------------------------------------------------------------------
- 
+    rrd_entry = rrd.fetch(start= rrd.last_update() - s.UPDATE_RATE)
+
+    rt = collections.namedtuple( 'rt', 'start end step ds value')
+    rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
+                    rrd_entry[1], rrd_entry[2]) 
 
 
     #---------------------------------------------------------------------------
     # Create a list with new thingspeak updates
     #---------------------------------------------------------------------------
+    send_list = {}
+    for key in s.SENSOR_SET.keys():
+        #send_list[sensor_list[key]] = 
+        logger.debug(rrd_entry.value[rrd_entry.ds.index(key)])
+
+    logger.debug(send_list)
+
             
   
     #---------------------------------------------------------------------------
