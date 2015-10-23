@@ -122,9 +122,9 @@ def main():
     try:
         pi = pigpio.pi()
 
-    except ValueError:
-        logger.critical('Failed to connect to PIGPIO ({error_v}). Exiting...'.format(
-            error_v=ValueError))
+    except Exception, e:
+        logger.error('Failed to connect to PIGPIO ({error_v}). Exiting...'.format(
+            error_v=e))
         sys.exit()
 
 
@@ -143,8 +143,9 @@ def main():
         else:
             logger.info('RRD fetch successful.')
 
-    except ValueError:
-        logger.critical('RRD fetch failed. Exiting...')
+    except Exception, e:
+        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
+            error_v=e))
         sys.exit()
 
 
@@ -218,7 +219,7 @@ def main():
                 try:
                     #Fetch today's data from round robin database
                     data = []
-                    data = rrd.fetch(start=last_entry_time - s.UPDATE_RATE, 
+                    data = rrd.fetch(start=last_reset, 
                                      end=last_entry_time)
 
                     rt = collections.namedtuple( 'rt', 'start end step ds value')
@@ -254,8 +255,9 @@ def main():
                         #Add previous precip. acc'ed value to current precip. rate
                         sensor_value['precip_acc'] += sensor_value['precip_rate']
 
-                except ValueError, e:
-                    logger.error('Could not fetch data from RRD file!')
+                except Exception, e:
+                    logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
+                        error_v=e))
 
 
             #Log values
