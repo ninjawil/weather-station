@@ -31,75 +31,143 @@
 #===============================================================================
 # Import modules
 #===============================================================================
-import rrdtool
-import thingspeak
+# Standard Library
+import sys
+import datetime
 
+# Third party modules
+
+# Application modules
+import thingspeak
+import rrd_tools
+import settings as s
+import log
 
 
 #===============================================================================
 # MAIN
 #===============================================================================
 def main():
+
+    '''Synchronizes thingspeak account with the data in the local Round Robin
+        database.
+
+        Starts by grabing some data from thingspeak to check all sensors are 
+        present.
+
+        Then checks all sensors are also present in the RRD database.
+
+        If any of these checks fail, the script ends with an error.
+
+
+    '''
+   
+
+    #---------------------------------------------------------------------------
+    # SET UP LOGGER
+    #---------------------------------------------------------------------------
+    logger = log.setup('root', '/home/pi/weather/logs/rrd_ts_sync.log')
+
+    logger.info('--- RRD To Thingspeak Sync Script Started ---')   
     
-    update_rate = 300 #seconds
-    rrdtool_file = ''
-    thingspeak_write_api_key = ''
-    rrd_data = {}
-    
 
-    # --- Set up thingspeak account ---
-    thingspeak_acc = thingspeak.ThingspeakAcc(s.THINGSPEAK_HOST_ADDR,
-                                                s.THINGSPEAK_API_KEY_FILENAME,
-                                                s.THINGSPEAK_CHANNEL_ID)
-
-
-    # --- Interogate thingspeak for set up ---
-    
-
-    # --- Check if RRD file exists ---
-    if not os.path.exists(rrdtool_file):
-            return
-
-
-    # --- Check if RRD file variables match TS variables ---
-
-  
-    # --- Set next loop time ---
-    next_update = time.time() + update_rate
-
-
-    # ========== Timed Loop ==========
+    #---------------------------------------------------------------------------
+    # SET UP THINGSPEAK ACCOUNT
+    #---------------------------------------------------------------------------
     try:
-        while True:
-            
-            # -- Get last feed upddate from thingspeak ---
-            
+        ts_acc = thingspeak.TSChannel(s.THINGSPEAK_HOST_ADDR,
+                                      file= s.THINGSPEAK_API_KEY_FILENAME,
+                                      ch_id= s.THINGSPEAK_CHANNEL_ID)
+        
+        ch_feed = ts_acc.get_a_channel_field_feed(field_id= 1, 
+                                                parameters= {'results': 1})
+
+        sensor_list = {}
+
+        #Checks each sensor is present in thignspeak and if it is create a dict
+        #with the field location of the sensor
+        for key in s.SENSOR_SET.keys():
+            if key.replace('_', ' ') not in ch_feed["channel"].values():
+                logger.error('Data sources in the set up not present in thingspeak fields.')
+                logger.error(ch_feed["channel"].values())
+                logger.error(s.SENSOR_SET.keys())
+                logger.error('Exiting...')
+                sys.exit()
+            else:
+                sensor_list[key] = ch_feed["channel"].keys()[ch_feed["channel"].values().index(key.replace('_', ' '))]
+     
+        logger.debug(sensor_list)
+
+        logger.info('Thingspeak fetch successful.')
+
+    except Exception, e:
+        logger.error('Thingspeak fetch failed ({error_v}). Exiting...'.format(
+            error_v=e), exc_info=True)
+        sys.exit()
+
+
+    #---------------------------------------------------------------------------
+    # CHECK RRD FILE
+    #---------------------------------------------------------------------------
+    try:
+        rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
+        
+        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
+            logger.error('Data sources in RRD file does not match set up.')
+            logger.error(rrd.ds_list())
+            logger.error(list(s.SENSOR_SET.keys()))
+            logger.error('Exiting...')
+            sys.exit()
+        else:
+            logger.info('RRD fetch successful.')
+
+    except Exception, e:
+        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
+            error_v=e), exc_info=True)
+        sys.exit()
+
+   
+    #---------------------------------------------------------------------------
+    # Get last feed upddate from thingspeak
+    #---------------------------------------------------------------------------
+    last_feed = ts_acc.get_last_entry_in_channel_feed()
+
+    logger.debug('Last TS feed data:')
+    logger.debug(last_feed)
+
+    last_entry_time = rrd.last_update()
+
+    #Thingspeak returns a -1 if there are no records
+    if last_feed == '-1':
+        last_feed = last_entry_time
+        
+    logger.info('Last TS feed: {last_feed_time}'.format(
+            last_feed_time=last_feed.strftime('%Y-%m-%d %H:%M:%S')))
+
+
        
-            # --- Fetch values from rrd ---
-            data_values = rrdtool.fetch(rrdtool_file, 'LAST', 
-                                        '-s', str(update_rate * -2))
+    #---------------------------------------------------------------------------
+    # Fetch values from rrd
+    #---------------------------------------------------------------------------
+ 
 
 
-            # --- Create a list with new thingspeak updates ---
+    #---------------------------------------------------------------------------
+    # Create a list with new thingspeak updates
+    #---------------------------------------------------------------------------
             
   
-            # --- Send data to thingspeak ---
-            response = thingspeak_acc.update_channel(sensor_data)
+    #---------------------------------------------------------------------------
+    # Send data to thingspeak
+    #---------------------------------------------------------------------------
 
 
-            # --- Check response from update attempt ---
+    #---------------------------------------------------------------------------
+    # Check response from update attempt
+    #---------------------------------------------------------------------------
             
 
-            # --- Delay to give update rate ---
-            sleep_length = next_update - time.time()
-            if sleep_length > 0:
-                time.sleep(sleep_length)
 
-
-    # ========== User exit command ==========
-    except KeyboardInterrupt:
-        sys.exit(0)
-            
 
 #===============================================================================
 # Boiler plate
