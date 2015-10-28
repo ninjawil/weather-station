@@ -83,7 +83,7 @@ THINGSPEAK_CHANNEL_ID        = '39722'
 
 
 # --- Set up rain fall reed switch ----
-PRECIP_TICK_MEASURE   = 0.3 #millimeters per tick
+PRECIP_TICK_MEASURE   = 0.300 #millimeters per tick
 
 SENSOR_SET= {   'inside_temp':  (True, PIN_37, '*C', -50, 100, 'GAUGE'),
                 'inside_hum':   (True, PIN_37, '%',  -1,  101, 'GAUGE'),
