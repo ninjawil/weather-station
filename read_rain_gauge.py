@@ -66,6 +66,13 @@ last_rising_edge = None
 
 
 #===============================================================================
+# FLOAT COMPARISON
+#===============================================================================
+def approx_equal(a, b, tol):
+     return abs(a - b) < tol
+
+
+#===============================================================================
 # EDGE CALLBACK FUNCTION TO COUNT RAIN TICKS
 #===============================================================================
 def count_rain_ticks(gpio, level, tick):
@@ -197,9 +204,9 @@ def main():
             #-------------------------------------------------------------------
             # Get rain fall measurement
             #-------------------------------------------------------------------
-            sensor_value['precip_acc'] = 0.000000
+            sensor_value['precip_acc'] = 0.00
             sensor_value['precip_rate'] = precip_tick_count * s.PRECIP_TICK_MEASURE
-            precip_tick_count = 0.000000
+            precip_tick_count = 0.00
             logger.debug('Precip tick counter RESET')
             
 
@@ -243,7 +250,7 @@ def main():
                         sensor_value['precip_acc'] = 'U'
                         logger.error('Values missing in todays precip rate')
 
-                    elif sum(todays_p_rate) != sensor_value['precip_acc']:
+                    elif approx_equal(sum(todays_p_rate), sensor_value['precip_acc'], 0.00999):
                         logger.debug('Fetched p acc value:  {p_acc}'.format(
                                         p_acc= sensor_value['precip_acc']))
                         logger.debug('Sum of todays Precip_rate: {p_rate}'.format(
