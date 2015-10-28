@@ -68,7 +68,7 @@ last_rising_edge = None
 #===============================================================================
 # FLOAT COMPARISON
 #===============================================================================
-def approx_equal(a, b, tol):
+def approx_equal(a, b, tol=0.0001):
      return abs(a - b) < tol
 
 
@@ -250,7 +250,7 @@ def main():
                         sensor_value['precip_acc'] = 'U'
                         logger.error('Values missing in todays precip rate')
 
-                    elif approx_equal(sum(todays_p_rate), sensor_value['precip_acc'], 0.00999):
+                    elif approx_equal(sum(todays_p_rate), sensor_value['precip_acc']):
                         logger.debug('Fetched p acc value:  {p_acc}'.format(
                                         p_acc= sensor_value['precip_acc']))
                         logger.debug('Sum of todays Precip_rate: {p_rate}'.format(
