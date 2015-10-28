@@ -277,6 +277,8 @@ def main():
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
+            sensor_value['precip_rate'] = float('{0:.2f}'.format(sensor_value['precip_rate']))
+            sensor_value['precip_acc'] = float('{0:.2f}'.format(sensor_value['precip_acc'])
             logger.debug('Update time = {update_time}'.format(update_time= 'N'))#rrd.next_update()))
             logger.debug([v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
             
