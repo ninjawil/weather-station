@@ -73,10 +73,10 @@ def main():
     logger.info('--- RRD To Thingspeak Sync Script Started ---')   
     
 
-    #---------------------------------------------------------------------------
-    # SET UP THINGSPEAK ACCOUNT
-    #---------------------------------------------------------------------------
     try:
+        #-----------------------------------------------------------------------
+        # SET UP THINGSPEAK ACCOUNT
+        #-----------------------------------------------------------------------
         ts_acc = thingspeak.TSChannel(s.THINGSPEAK_HOST_ADDR,
                                       file= s.THINGSPEAK_API_KEY_FILENAME,
                                       ch_id= s.THINGSPEAK_CHANNEL_ID)
@@ -102,16 +102,10 @@ def main():
 
         logger.info('Thingspeak fetch successful.')
 
-    except Exception, e:
-        logger.error('Thingspeak fetch failed ({error_v}). Exiting...'.format(
-            error_v=e), exc_info=True)
-        sys.exit()
 
-
-    #---------------------------------------------------------------------------
-    # CHECK RRD FILE
-    #---------------------------------------------------------------------------
-    try:
+        #-----------------------------------------------------------------------
+        # CHECK RRD FILE
+        #-----------------------------------------------------------------------
         rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
         
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
@@ -123,66 +117,80 @@ def main():
         else:
             logger.info('RRD fetch successful.')
 
+              
+        #-----------------------------------------------------------------------
+        # Get last feed update from thingspeak and RRD
+        #-----------------------------------------------------------------------
+        last_ts_feed = ts_acc.get_last_entry_in_channel_feed()
+        last_rrd_feed = rrd.last_update()
+
+        logger.debug('Last TS feed data:')
+        logger.debug(last_ts_feed)
+
+        #Thingspeak returns a -1 if there are no records
+        if last_ts_feed == '-1':
+            last_ts_feed = last_rrd_feed
+        else:
+            last_ts_feed = datetime.datetime.strptime(last_ts_feed['created_at'], '%Y-%m-%dT%H:%M:%SZ')
+            last_ts_feed = int(time.mktime(last_ts_feed.utctimetuple()))
+        
+        logger.info('Last TS feed:  {last_ts_feed_time} {long_time}'.format(
+            last_ts_feed_time= last_ts_feed,
+            long_time= time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(last_ts_feed))))
+
+        logger.info('Last RRD feed: {last_ts_feed_time} {long_time}'.format(
+            last_ts_feed_time= last_rrd_feed,
+            long_time= time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(last_rrd_feed))))
+        
+       
+        #-----------------------------------------------------------------------
+        # Fetch values from rrd
+        #-----------------------------------------------------------------------
+        rrd_entry = rrd.fetch(start= last_ts_feed - s.UPDATE_RATE)
+
+        rt = collections.namedtuple( 'rt', 'start end step ds value')
+        rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
+                        rrd_entry[1], rrd_entry[2]) 
+
+        logger.info('Number of entries to update: {feeds}'.format(
+                            feeds= len(rrd_entry.value)-2))
+
+
+        #-----------------------------------------------------------------------
+        # Create a list with new thingspeak updates and send it to TS
+        #-----------------------------------------------------------------------
+        for i in range(1, len(rrd_entry.value)-1):
+            next_entry_time = rrd_entry.start + ((i + 1) * s.UPDATE_RATE)
+            
+            send_list = {'created_at': '{time}'.format(
+                            time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_entry_time))),
+                         'timezone':'Etc/UTC'}
+
+            for key in sorted(s.SENSOR_SET.keys()):
+                value = rrd_entry.value[i][rrd_entry.ds.index(key)]
+                if value is not None:
+                    send_list[sensor_list[key]] = str(value)
+
+            logger.info(send_list)
+            response = ts_acc.update_channel(send_list)
+            logger.info('Thingspeak update: {reason}'.format(reason= response.reason))
+            
+            #Thingspeak update rate is limited to 15s per entry
+            time.sleep(20)
+
+            if response.status_code is not 200:
+                response = ts_acc.update_channel(send_list)
+                logger.error('Retry: {reason}'.format(reason= response.reason))
+                time.sleep(20)
+
+        
+        logger.info('--- Script Finished ---')
+
+
     except Exception, e:
-        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
+        logger.error('Update failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
         sys.exit()
-
-   
-    #---------------------------------------------------------------------------
-    # Get last feed upddate from thingspeak
-    #---------------------------------------------------------------------------
-    last_feed = ts_acc.get_last_entry_in_channel_feed()
-
-    logger.debug('Last TS feed data:')
-    logger.debug(last_feed)
-
-    #Thingspeak returns a -1 if there are no records
-    if last_feed == '-1':
-        last_feed = rrd.last_update()
-        
-    logger.info('Last TS feed: {last_feed_time}'.format(last_feed_time=last_feed))
-
-   
-    #---------------------------------------------------------------------------
-    # Fetch values from rrd
-    #---------------------------------------------------------------------------
-    rrd_entry = rrd.fetch(start= rrd.last_update() - s.UPDATE_RATE)
-
-    rt = collections.namedtuple( 'rt', 'start end step ds value')
-    rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
-                    rrd_entry[1], rrd_entry[2]) 
-
-
-    #---------------------------------------------------------------------------
-    # Create a list with new thingspeak updates
-    #---------------------------------------------------------------------------
-    feed_entry = 0
-    
-    send_list = {'created_at': '{time}'.format(
-                    time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(last_feed))),
-                 'timezone':'Etc/UTC'}
-
-    for key in sorted(s.SENSOR_SET.keys()):
-        value = rrd_entry.value[feed_entry][rrd_entry.ds.index(key)]
-        if value is not None:
-            send_list[sensor_list[key]] = str(value)
-
-    logger.info('send_list:')
-    logger.info(send_list)
-
-            
-    #---------------------------------------------------------------------------
-    # Send data to thingspeak
-    #---------------------------------------------------------------------------
-    ts_acc.update_channel(send_list)
-
-
-    #---------------------------------------------------------------------------
-    # Check response from update attempt
-    #---------------------------------------------------------------------------
-            
-
 
 
 #===============================================================================

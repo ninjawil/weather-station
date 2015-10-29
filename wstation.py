@@ -111,16 +111,25 @@ def main():
 
     #Set up to read sensors using cron job
     try:
-        cmd='python /home/pi/weather/read_sensors.py'
         cron = CronTab()
-        job = cron.new(command= cmd, comment= 'weather station job')
-        if not cron.find_command(cmd):
-            job.minute.during(4, 59).every(s.UPDATE_RATE/60)
-            cron.write()
-            logger.info('CronTab file updated.')
-            logger.debug(cron.render())
+        sensor_cmd ='python /home/pi/weather/read_sensors.py'
+        ts_cmd ='python /home/pi/weather/rrd_ts_sync.py'
+
+        if cron.find_command(sensor_cmd) and cron.find_command(ts_cmd):
+            logger.info('All commands already in CronTab file')
         else:
-            logger.info('Command already in CronTab file')
+            if not cron.find_command(sensor_cmd):
+                sensor_job = cron.new(command= sensor_cmd, comment= 'weather station job')
+                sensor_job.minute.during(4, 59).every(s.UPDATE_RATE/60)
+                logger.info('CronTab file updated with sensor read script.')
+
+            if not cron.find_command(ts_cmd):
+                ts_job = cron.new(command= ts_cmd, comment= 'weather station thingspeak job')
+                ts_job.minute.during(2, 32).every(30)
+                logger.info('CronTab file updated with thingspeak script.')
+
+            cron.write()
+            logger.debug(cron.render())
 
     except ValueError:
         logger.error('CronTab file could not be updated. Exiting...')
