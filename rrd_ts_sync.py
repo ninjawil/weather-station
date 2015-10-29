@@ -34,6 +34,7 @@
 # Standard Library
 import sys
 import datetime
+import time
 import collections
 
 # Third party modules
@@ -97,7 +98,7 @@ def main():
             else:
                 sensor_list[key] = ch_feed["channel"].keys()[ch_feed["channel"].values().index(key.replace('_', ' '))]
      
-        logger.debug(sensor_list)
+        logger.info(sensor_list)
 
         logger.info('Thingspeak fetch successful.')
 
@@ -156,18 +157,25 @@ def main():
     #---------------------------------------------------------------------------
     # Create a list with new thingspeak updates
     #---------------------------------------------------------------------------
-    send_list = {}
-    for key in s.SENSOR_SET.keys():
-        #send_list[sensor_list[key]] = 
-        logger.debug(rrd_entry.value[rrd_entry.ds.index(key)])
+    feed_entry = 0
+    
+    send_list = {'created_at': '{time}'.format(
+                    time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(last_feed))),
+                 'timezone':'Etc/UTC'}
 
-    logger.debug(send_list)
+    for key in sorted(s.SENSOR_SET.keys()):
+        value = rrd_entry.value[feed_entry][rrd_entry.ds.index(key)]
+        if value is not None:
+            send_list[sensor_list[key]] = str(value)
+
+    logger.info('send_list:')
+    logger.info(send_list)
 
             
-  
     #---------------------------------------------------------------------------
     # Send data to thingspeak
     #---------------------------------------------------------------------------
+    ts_acc.update_channel(send_list)
 
 
     #---------------------------------------------------------------------------
