@@ -250,13 +250,13 @@ def main():
                         sensor_value['precip_acc'] = 'U'
                         logger.error('Values missing in todays precip rate')
 
-                    elif approx_equal(sum(todays_p_rate), sensor_value['precip_acc']):
+                    elif not approx_equal(sum(todays_p_rate), sensor_value['precip_acc']):
+                        logger.error('Lastest precip acc value does not match summation of precip rates')
                         logger.debug('Fetched p acc value:  {p_acc}'.format(
                                         p_acc= sensor_value['precip_acc']))
                         logger.debug('Sum of todays Precip_rate: {p_rate}'.format(
                                         p_rate= sum(todays_p_rate)))
                         sensor_value['precip_acc'] = 'U'
-                        logger.error('Lastest precip acc value does not much summation of precip rates')
                     
                     else:
                         #Add previous precip. acc'ed value to current precip. rate
@@ -268,8 +268,10 @@ def main():
 
 
             #Round values to 2 decimal places
-            sensor_value['precip_rate'] = float('{0:.2f}'.format(sensor_value['precip_rate']))
-            sensor_value['precip_acc'] = float('{0:.2f}'.format(sensor_value['precip_acc'])
+            if sensor_value['precip_rate'] is not 'U':
+                sensor_value['precip_rate'] = float('{0:.2f}'.format(sensor_value['precip_rate']))           
+            if sensor_value['precip_acc'] is not 'U':
+                sensor_value['precip_acc'] = float('{0:.2f}'.format(sensor_value['precip_acc']))
             
             #Log values
             logger.info('Precip_acc:  {precip_acc}'.format(
@@ -281,7 +283,7 @@ def main():
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            logger.debug('Update time = {update_time}'.format(update_time= 'N'))#rrd.next_update()))
+            logger.debug('Update time = {update_time}'.format(update_time= 'N'))
             logger.debug([v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
             
             result = rrd.update_file(timestamp= 'N',
