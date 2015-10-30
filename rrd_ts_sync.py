@@ -172,15 +172,22 @@ def main():
                     send_list[sensor_list[key]] = str(value)
 
             logger.info(send_list)
+
             response = ts_acc.update_channel(send_list)
             logger.info('Thingspeak update: {reason}'.format(reason= response.reason))
             
-            #Thingspeak update rate is limited to 15s per entry
-            time.sleep(20)
-
-            if response.status_code is not 200:
+            n = 0
+            while response.status_code is not 200 and n < 3
+                time.sleep(20)
                 response = ts_acc.update_channel(send_list)
                 logger.error('Retry: {reason}'.format(reason= response.reason))
+                n += 1 
+
+            if n >= 3:
+                logger.error('Failed to update Thingspeak. Exiting...')
+                sys.exit()          
+            else:
+                #Thingspeak update rate is limited to 15s per entry
                 time.sleep(20)
 
         
