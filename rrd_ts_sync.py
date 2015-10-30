@@ -49,7 +49,7 @@ import log
 #===============================================================================
 # SYNC
 #===============================================================================
-def sync(ts_host, ts_filename, ts_channel_id, sensors, update, rrd_file):
+def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
 
     '''
     Synchronizes thingspeak account with the data in the local Round Robin
@@ -61,7 +61,14 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, update, rrd_file):
     Then checks all sensors are also present in the RRD database.
 
     If any of these checks fail, the script ends with an error.
-
+    
+    Inputs
+        ts_host        - thingspeak host address
+        ts_filename    - thingspeak file location with Write API Key
+        ts_channel_id  - thingspeak channel id
+        sensors        - list of names of each sensor
+        rrd_res        - rrd resolution in seconds
+        rrd_file       - rrd file location
     '''
    
 
@@ -142,7 +149,7 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, update, rrd_file):
         #-----------------------------------------------------------------------
         # Fetch values from rrd
         #-----------------------------------------------------------------------
-        rrd_entry = rrd.fetch(start= last_ts_feed - update)
+        rrd_entry = rrd.fetch(start= last_ts_feed - rrd_res)
 
         rt = collections.namedtuple( 'rt', 'start end step ds value')
         rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
@@ -156,7 +163,7 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, update, rrd_file):
         # Create a list with new thingspeak updates and send it to TS
         #-----------------------------------------------------------------------
         for i in range(1, len(rrd_entry.value)-1):
-            next_entry_time = rrd_entry.start + ((i + 1) * update)
+            next_entry_time = rrd_entry.start + ((i + 1) * rrd_res)
             
             tx_data = {'created_at': '{time}'.format(
                             time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_entry_time))),
