@@ -47,20 +47,20 @@ import log
 
 
 #===============================================================================
-# MAIN
+# SYNC
 #===============================================================================
-def main():
+def sync(ts_host, ts_filename, ts_channel_id, sensors, update, rrd_file):
 
-    '''Synchronizes thingspeak account with the data in the local Round Robin
+    '''
+    Synchronizes thingspeak account with the data in the local Round Robin
         database.
 
-        Starts by grabing some data from thingspeak to check all sensors are 
+    Starts by grabing some data from thingspeak to check all sensors are 
         present.
 
-        Then checks all sensors are also present in the RRD database.
+    Then checks all sensors are also present in the RRD database.
 
-        If any of these checks fail, the script ends with an error.
-
+    If any of these checks fail, the script ends with an error.
 
     '''
    
@@ -72,46 +72,42 @@ def main():
 
     logger.info('--- RRD To Thingspeak Sync Script Started ---')   
     
-
     try:
         #-----------------------------------------------------------------------
         # SET UP THINGSPEAK ACCOUNT
         #-----------------------------------------------------------------------
-        ts_acc = thingspeak.TSChannel(s.THINGSPEAK_HOST_ADDR,
-                                      file= s.THINGSPEAK_API_KEY_FILENAME,
-                                      ch_id= s.THINGSPEAK_CHANNEL_ID)
+        ts_acc = thingspeak.TSChannel(ts_host, file= ts_filename, ch_id= ts_channel_id)
         
         ch_feed = ts_acc.get_a_channel_field_feed(field_id= 1, 
                                                 parameters= {'results': 1})
 
-        sensor_list = {}
+        sensor_to_field = {}
 
-        #Checks each sensor is present in thignspeak and if it is create a dict
+        #Checks each sensor is present in thingspeak and if it is create a dict
         #with the field location of the sensor
-        for key in s.SENSOR_SET.keys():
-            if key.replace('_', ' ') not in ch_feed["channel"].values():
+        for sensor in sensors:
+            if sensor.replace('_', ' ') not in ch_feed["channel"].values():
                 logger.error('Data sources in the set up not present in thingspeak fields.')
                 logger.error(ch_feed["channel"].values())
-                logger.error(s.SENSOR_SET.keys())
+                logger.error(sensors)
                 logger.error('Exiting...')
                 sys.exit()
             else:
-                sensor_list[key] = ch_feed["channel"].keys()[ch_feed["channel"].values().index(key.replace('_', ' '))]
+                sensor_to_field[sensor] = ch_feed["channel"].keys()[ch_feed["channel"].values().index(key.replace('_', ' '))]
      
-        logger.info(sensor_list)
-
+        logger.info(sensor_to_field)
         logger.info('Thingspeak fetch successful.')
 
 
         #-----------------------------------------------------------------------
         # CHECK RRD FILE
         #-----------------------------------------------------------------------
-        rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
+        rrd = rrd_tools.RrdFile(rrd_file)
         
-        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
+        if sorted(rrd.ds_list()) != sorted(sensors):
             logger.error('Data sources in RRD file does not match set up.')
             logger.error(rrd.ds_list())
-            logger.error(list(s.SENSOR_SET.keys()))
+            logger.error(sensors)
             logger.error('Exiting...')
             sys.exit()
         else:
@@ -146,7 +142,7 @@ def main():
         #-----------------------------------------------------------------------
         # Fetch values from rrd
         #-----------------------------------------------------------------------
-        rrd_entry = rrd.fetch(start= last_ts_feed - s.UPDATE_RATE)
+        rrd_entry = rrd.fetch(start= last_ts_feed - update)
 
         rt = collections.namedtuple( 'rt', 'start end step ds value')
         rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
@@ -160,26 +156,27 @@ def main():
         # Create a list with new thingspeak updates and send it to TS
         #-----------------------------------------------------------------------
         for i in range(1, len(rrd_entry.value)-1):
-            next_entry_time = rrd_entry.start + ((i + 1) * s.UPDATE_RATE)
+            next_entry_time = rrd_entry.start + ((i + 1) * update)
             
-            send_list = {'created_at': '{time}'.format(
+            tx_data = {'created_at': '{time}'.format(
                             time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_entry_time))),
                          'timezone':'Etc/UTC'}
 
-            for key in sorted(s.SENSOR_SET.keys()):
-                value = rrd_entry.value[i][rrd_entry.ds.index(key)]
+            #Transmit data to be in the format {'field1': '18.232'} 
+            for sensor in sorted(sensors):
+                value = rrd_entry.value[i][rrd_entry.ds.index(sensor)]
                 if value is not None:
-                    send_list[sensor_list[key]] = str(value)
+                    tx_data[sensor_to_field[sensor]] = str(value)
 
-            logger.info(send_list)
-            response = ts_acc.update_channel(send_list)
+            logger.info(tx_data)
+            response = ts_acc.update_channel(tx_data)
             logger.info('Thingspeak update: {reason}'.format(reason= response.reason))
             
             #Thingspeak update rate is limited to 15s per entry
             time.sleep(20)
 
             if response.status_code is not 200:
-                response = ts_acc.update_channel(send_list)
+                response = ts_acc.update_channel(tx_data)
                 logger.error('Retry: {reason}'.format(reason= response.reason))
                 time.sleep(20)
 
@@ -193,6 +190,14 @@ def main():
         sys.exit()
 
 
+#===============================================================================
+# MAIN
+#===============================================================================
+def main():
+    sync(s.THINGSPEAK_HOST_ADDR, s.THINGSPEAK_API_KEY_FILENAME, s.THINGSPEAK_CHANNEL_ID,
+         list(s.SENSOR_SET.keys()), s.UPDATE_RATE, s.RRDTOOL_RRD_FILE)
+
+    
 #===============================================================================
 # Boiler plate
 #===============================================================================
