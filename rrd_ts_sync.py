@@ -183,7 +183,7 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
             time.sleep(20)
             
             n = 0
-            while response.status_code is not 200 and n < 3
+            while response.status_code is not 200 and n < 3:
                 time.sleep(20)
                 response = ts_acc.update_channel(tx_data)
                 logger.error('Retry: {reason}'.format(reason= response.reason))
