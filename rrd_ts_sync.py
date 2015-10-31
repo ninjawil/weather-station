@@ -100,7 +100,7 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
                 logger.error('Exiting...')
                 sys.exit()
             else:
-                sensor_to_field[sensor] = ch_feed["channel"].keys()[ch_feed["channel"].values().index(key.replace('_', ' '))]
+                sensor_to_field[sensor] = ch_feed["channel"].keys()[ch_feed["channel"].values().index(sensor.replace('_', ' '))]
      
         logger.info(sensor_to_field)
         logger.info('Thingspeak fetch successful.')
