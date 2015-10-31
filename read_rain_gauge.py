@@ -43,11 +43,13 @@
 #===============================================================================
 
 # Standard Library
+import os
 import sys
 import threading
 import time
 import datetime
 import collections
+import subprocess
 
 # Third party modules
 import pigpio
@@ -63,6 +65,26 @@ import rrd_tools
 # GLOBAL VARIABLES
 #===============================================================================
 last_rising_edge = None
+
+
+#===============================================================================
+# Check script is running
+#===============================================================================
+def check_process_is_running(script_name):
+    try:
+        cmd1 = subprocess.Popen(['ps', '-ef'], stdout=subprocess.PIPE)
+        cmd2 = subprocess.Popen(['grep', '-v', 'grep'], stdin=cmd1.stdout, 
+                                stdout=subprocess.PIPE)
+        cmd3 = subprocess.Popen(['grep', '-v', str(os.getpid())], stdin=cmd2.stdout, 
+                                stdout=subprocess.PIPE)
+        cmd4 = subprocess.Popen(['grep', '-v', str(os.getppid())], stdin=cmd3.stdout, 
+                                stdout=subprocess.PIPE)
+        cmd5 = subprocess.Popen(['grep', script_name], stdin=cmd4.stdout, 
+                                stdout=subprocess.PIPE)
+        return cmd5.communicate()[0] 
+
+    except Exception, e:
+        return e
 
 
 #===============================================================================
@@ -114,14 +136,34 @@ def main():
     precip_tick_count = 0
     precip_accu       = 0
 
+    script_name = os.path.basename(sys.argv[0])
+
 
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
     logger = log.setup('root', '/home/pi/weather/logs/read_rain_gauge.log')
 
-    logger.info('--- Read Rain Gauge Script Started ---')
-    
+    logger.info('')
+    logger.info('--- Script {script} Started ---'.format(script= script_name))
+
+
+    #---------------------------------------------------------------------------
+    # CHECK SCRIPT IS NOT ALREADY RUNNING
+    #---------------------------------------------------------------------------    
+    try:
+        other_script_found = check_process_is_running(script_name)
+
+        if other_script_found:
+            logger.critical('Script already runnning. Exiting...')
+            logger.error(other_script_found)
+            sys.exit()
+
+    except Exception, e:
+        logger.error('System check failed ({error_v}). Exiting...'.format(
+            error_v=e))
+        sys.exit()
+
 
     #---------------------------------------------------------------------------
     # LOAD DRIVERS
@@ -244,23 +286,24 @@ def main():
                     #Get second to last entry as last entry is next update
                     sensor_value['precip_acc'] = float(
                         data.value[len(data.value)-2][data.ds.index('precip_acc')] or 0)
+                    logger.debug('Last value: {v}'.format(v= sensor_value['precip_acc']))
                                        
                     #If any values missing from today, prevent accumulation
-                    if None in todays_p_rate:
-                        sensor_value['precip_acc'] = 'U'
-                        logger.error('Values missing in todays precip rate')
+                    # if None in todays_p_rate:
+                    #     sensor_value['precip_acc'] = 'U'
+                    #     logger.error('Values missing in todays precip rate')
 
-                    elif not approx_equal(sum(todays_p_rate), sensor_value['precip_acc']):
-                        logger.error('Lastest precip acc value does not match summation of precip rates')
-                        logger.debug('Fetched p acc value:  {p_acc}'.format(
-                                        p_acc= sensor_value['precip_acc']))
-                        logger.debug('Sum of todays Precip_rate: {p_rate}'.format(
-                                        p_rate= sum(todays_p_rate)))
-                        sensor_value['precip_acc'] = 'U'
+                    # elif not approx_equal(sum(todays_p_rate), sensor_value['precip_acc']):
+                    #     logger.error('Lastest precip acc value does not match summation of precip rates')
+                    #     logger.debug('Fetched p acc value:  {p_acc}'.format(
+                    #                     p_acc= sensor_value['precip_acc']))
+                    #     logger.debug('Sum of todays Precip_rate: {p_rate}'.format(
+                    #                     p_rate= sum(todays_p_rate)))
+                    #     sensor_value['precip_acc'] = 'U'
                     
-                    else:
+                    #else:
                         #Add previous precip. acc'ed value to current precip. rate
-                        sensor_value['precip_acc'] += sensor_value['precip_rate']
+                    sensor_value['precip_acc'] += sensor_value['precip_rate']
 
                 except Exception, e:
                     logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
@@ -303,6 +346,7 @@ def main():
     #---------------------------------------------------------------------------
     except KeyboardInterrupt:
         logger.info('USER ACTION: End command')
+        sys.exit()
 
 
     #---------------------------------------------------------------------------
@@ -310,6 +354,7 @@ def main():
     #---------------------------------------------------------------------------
     except Exception, e:
         logger.error('Script Error', exc_info=True)
+        sys.exit()
 
 
     #---------------------------------------------------------------------------

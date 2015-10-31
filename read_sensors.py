@@ -40,6 +40,7 @@
 #===============================================================================
 
 # Standard Library
+import os
 import sys
 import time
 import collections
@@ -64,12 +65,16 @@ def main():
     '''Entry point for script'''
 
 
+    script_name = os.path.basename(sys.argv[0])
+
+
     #---------------------------------------------------------------------------
     # Set up logger
     #---------------------------------------------------------------------------
     logger = log.setup('root', '/home/pi/weather/logs/read_sensors.log')
 
-    logger.info('--- Read Sensor Script Started ---')   
+    logger.info('')
+    logger.info('--- Script {script} Started ---'.format(script= script_name))  
     
 
     #---------------------------------------------------------------------------
@@ -80,7 +85,7 @@ def main():
 
     except Exception, e:
         logger.error('Failed to connect to PIGPIO ({error_v}). Exiting...'.format(
-            error_v=e))
+            error_v=e), exc_info=True)
         sys.exit()
 
 
@@ -101,7 +106,7 @@ def main():
 
     except Exception, e:
         logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
-            error_v=e))
+            error_v=e), exc_info=True)
         sys.exit()
 
 

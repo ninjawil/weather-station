@@ -78,7 +78,7 @@ RRDTOOL_RRA          = ('LAST',       5,      1.05,
 
 # --- Set up thingspeak ----
 THINGSPEAK_HOST_ADDR         = 'https://api.thingspeak.com'
-THINGSPEAK_API_KEY_FILENAME  = 'thingspeak.txt'
+THINGSPEAK_API_KEY_FILENAME  = '/home/pi/weather/thingspeak.txt'
 THINGSPEAK_CHANNEL_ID        = '39722'
 
 
