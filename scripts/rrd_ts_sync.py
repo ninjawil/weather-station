@@ -71,13 +71,17 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
         rrd_file       - rrd file location
     '''
    
+   
+    script_name = os.path.basename(sys.argv[0])
+
 
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
     logger = log.setup('root', '/home/pi/weather/logs/rrd_ts_sync.log')
 
-    logger.info('--- RRD To Thingspeak Sync Script Started ---')   
+    logger.info('')
+    logger.info('--- Script {script} Started ---'.format(script= script_name))  
     
     try:
         #-----------------------------------------------------------------------

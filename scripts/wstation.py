@@ -75,12 +75,17 @@ def main():
     
     '''Entry point for script'''
 
+
+    script_name = os.path.basename(sys.argv[0])
+
+
     #---------------------------------------------------------------------------
     # SET UP LOGGER
-    #--------------------------------------------------------------------------- 
-    logger = log.setup('root', '/home/pi/weather/logs/wstation.log')
+    #---------------------------------------------------------------------------
+    logger = log.setup('root', '/home/pi/weather/logs/read_rain_gauge.log')
 
-    logger.info('--- Read Rain Gauge Script Started ---')
+    logger.info('')
+    logger.info('--- Script {script} Started ---'.format(script= script_name))
 
 
     #---------------------------------------------------------------------------
