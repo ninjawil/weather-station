@@ -37,6 +37,7 @@
 import os
 import logging
 import collections
+import subprocess
 
 # Third party modules
 import rrdtool
@@ -163,3 +164,49 @@ class RrdFile:
                                         end_t= end))
         self.logger.debug(data)
         return data
+
+
+    #---------------------------------------------------------------------------
+    # FETCH
+    #---------------------------------------------------------------------------
+    def export(self, start='-1d', end='now', step='300', ds_list=None, 
+                output_file=None):
+        '''Exports RRD to XML'''
+
+        try:
+
+            if ds_list:
+                exp_cmd = ['rrdtool','xport','-s', '{start_t}'.format(start_t=start),
+                           '-e', '{end_t}'.format(end_t=end)]
+       
+                i = 0
+                for ds in ds_list:
+                    i += 1
+                    exp_cmd.append('DEF:a{n}={rrd_file}:{ds_name}:LAST'.format(
+                                                    n= i,
+                                                    rrd_file=self.file_name,
+                                                    ds_name= ds))
+                    exp_cmd.append('XPORT:a{n}:"{ds_name}"'.format(
+                                                    n= i, 
+                                                    ds_name= ds))
+
+
+                # !!!!!!!!!!!!!!!!
+                # No binding for xport on python-rrdtool 1.4.7
+                # rrdtool.xport(exp_cmd)
+                # !!!!!!!!!!!!!!!!
+
+                fileout = open(output_file, "w")
+                self.logger.info(' '.join(exp_cmd))
+                subprocess.Popen(exp_cmd, stdout= fileout)
+                fileout.close()            
+
+
+                return 'OK'
+
+        except rrdtool.error, e:
+            self.logger.error('RRDtool export FAIL ({error_v})'.format(error_v= e))
+            return e
+
+
+
