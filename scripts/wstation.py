@@ -112,8 +112,8 @@ def main():
     #Set up to read sensors using cron job
     try:
         cron = CronTab()
-        sensor_cmd ='python /home/pi/weather/read_sensors.py'
-        ts_cmd ='python /home/pi/weather/rrd_ts_sync.py'
+        sensor_cmd ='python /home/pi/weather/scripts/read_sensors.py'
+        ts_cmd ='python /home/pi/weather/scripts/rrd_ts_sync.py'
 
         if cron.find_command(sensor_cmd) and cron.find_command(ts_cmd):
             logger.info('All commands already in CronTab file')
@@ -137,7 +137,7 @@ def main():
 
 
     #Run read rain gauge script if not already running
-    cmd = '/home/pi/weather/read_rain_gauge.py'
+    cmd = '/home/pi/weather/scripts/read_rain_gauge.py'
     script_not_running = check_process_is_running(cmd)
     if script_not_running:
         logger.info('Script read_rain_gauge.py already runnning.')
