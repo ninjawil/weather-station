@@ -64,6 +64,9 @@ class RrdFile:
         ss = collections.namedtuple('ss', 'enable ref unit min max type')
         sensor = {k: ss(*sensor_set[k]) for k in sensor_set}
 
+        rd = collections.namedtuple('ss', 'cf res period')
+        rra = {k: rd(*rra_set[k]) for k in rra_set}
+
         #Prepare RRD set
         rrd_set = [self.file_name, 
                     '--step', '{step}'.format(step=update_rate), 
@@ -80,10 +83,10 @@ class RrdFile:
 
         #Prepare RRA files
         rrd_set += ['RRA:{cf}:0.5:{steps}:{rows}'.format(
-                                    cf=rra_set[i],
-                                    steps=str((rra_set[i+1]*60)/update_rate),
-                                    rows=str(((rra_set[i+2])*24*60)/rra_set[i+1]))
-                        for i in range(0,len(rra_set),4)]
+                                    cf=rra[i].cf,
+                                    steps=str((rra[i].res*60)/update_rate),
+                                    rows=str((rra[i].period*24*60)/rra_set[i+1]))
+                        for i in sorted(rra)]
 
         self.logger.debug(rrd_set)
 
