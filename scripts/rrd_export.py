@@ -109,8 +109,14 @@ def main():
     #---------------------------------------------------------------------------
     # Export RRD to XML
     #---------------------------------------------------------------------------
+    for i in range(0, len(rra_set), 4):
+        rrd.export( start= '-{days}d'.format(str(s.RRDTOOL_RRA[i+2])), 
+                    end= 'now', 
+                    step= s.RRDTOOL_RRA[i+1] * 60, 
+                    ds_list= list(s.SENSOR_SET.keys()), 
+                    output_file= s.RRDTOOL_RRA[i+4], 
+                    cf= s.RRDTOOL_RRA[i])
 
-    rrd.export(ds_list=list(s.SENSOR_SET.keys()))
 
 
 
