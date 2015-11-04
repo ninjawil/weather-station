@@ -174,22 +174,20 @@ class RrdFile:
         '''Exports RRD to XML'''
 
         try:
-
             if ds_list:
                 exp_cmd = ['rrdtool','xport',
                            '-s', '{start_t}'.format(start_t=start),
                            '-e', '{end_t}'.format(end_t=end),
                            '--step', '{res}'.format(res= step)]
 
-                for ds in ds_list:
-                    exp_cmd.append('DEF:{vname}={rrd_file}:{ds_name}:{cons}'.format(
-                                                    vname= ds,
-                                                    rrd_file=self.file_name,
-                                                    ds_name= ds,
-                                                    cons= cf))
-                    exp_cmd.append('XPORT:{vname}:"{ds_name}"'.format(
-                                                    vname= ds, 
-                                                    ds_name= ds))
+                exp_cmd += ['DEF:{vname}={rrd_file}:{ds_name}:{cons}'.format(
+                                                            vname= ds,
+                                                            rrd_file=self.file_name,
+                                                            ds_name= ds,
+                                                            cons= cf),
+                            'XPORT:{vname}:"{ds_name}"'.format(vname= ds, ds_name= ds)
+                            for ds in sorted(ds_list)]
+
 
                 # !!!!!!!!!!!!!!!!
                 # No binding for xport on python-rrdtool 1.4.7
