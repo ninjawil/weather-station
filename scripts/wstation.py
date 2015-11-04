@@ -41,14 +41,13 @@
 import os
 import time
 import sys
-import logging
-import logging.handlers
 import subprocess
 
 # Third party modules
 from crontab import CronTab
 
 # Application modules
+import log
 import settings as s
 import rrd_tools
 
@@ -59,16 +58,11 @@ import rrd_tools
 def check_process_is_running(script_name):
     try:
         cmd1 = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
-        cmd2 = subprocess.Popen(['grep', '-v', 'grep'], 
-                                stdin=cmd1.stdout, 
+        cmd2 = subprocess.Popen(['grep', '-v', 'grep'], stdin=cmd1.stdout, 
                                 stdout=subprocess.PIPE)
-        cmd3 = subprocess.Popen(['grep', script_name], 
-                                stdin=cmd2.stdout, 
+        cmd3 = subprocess.Popen(['grep', script_name], stdin=cmd2.stdout, 
                                 stdout=subprocess.PIPE)
-        
-        output = cmd3.communicate()[0]  
-
-        return output
+        return cmd3.communicate()[0] 
 
     except Exception, e:
         return e
@@ -84,24 +78,7 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #--------------------------------------------------------------------------- 
-    log_file = '/home/pi/weather/logs/wstation.log'
-
-    logger = logging.getLogger(__name__)
-    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-    logger.setLevel(logging.INFO)
-        
-    fh = logging.handlers.TimedRotatingFileHandler(filename=log_file, 
-                                                    when='midnight', 
-                                                    backupCount=7, 
-                                                    utc=True)
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    logger = log.setup('root', '/home/pi/weather/logs/wstation.log')
 
     logger.info('--- Read Rain Gauge Script Started ---')
 
@@ -109,59 +86,69 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
-    rrd = rrd_tools.rrd_file(s.RRDTOOL_RRD_FILE)
+    rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
 
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
-        logger.debug(rrd.create_file(s.SENSOR_SET,
-                                    s.RRDTOOL_RRA, 
-                                    s.UPDATE_RATE, 
-                                    s.RRDTOOL_HEARTBEAT,
-                                    int(time.time() + s.UPDATE_RATE)))
+        rrd.create_file(s.SENSOR_SET, 
+                        s.RRDTOOL_RRA, 
+                        s.UPDATE_RATE, 
+                        s.RRDTOOL_HEARTBEAT, 
+                        int(time.time() + s.UPDATE_RATE))
         logger.info('RRD file not found. New file created')
 
-    else:
-        logger.info('RRD file found')
-
-        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.critical('Data sources in RRD file does not match set up')
+    elif sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
+            logger.error('Data sources in RRD file does not match set up.')
             sys.exit()
+
+    else:
+        logger.info('RRD file found and checked OK')
+
 
 
     #---------------------------------------------------------------------------
-    # RUN SCRIPTS
+    # SCRIPTS
     #---------------------------------------------------------------------------
 
     #Set up to read sensors using cron job
     try:
-        cmd='python /home/pi/weather/read_sensors.py'
         cron = CronTab()
-        job = cron.new(command= cmd, comment= 'weather station job')
-        if not cron.find_command(cmd):
-            job.minute.every(s.UPDATE_RATE/60)
-            cron.write()
-            logger.info('CronTab file updated.')
-            logger.debug(cron.render())
+        sensor_cmd ='python /home/pi/weather/scripts/read_sensors.py'
+        ts_cmd ='python /home/pi/weather/scripts/rrd_ts_sync.py'
+
+        if cron.find_command(sensor_cmd) and cron.find_command(ts_cmd):
+            logger.info('All commands already in CronTab file')
         else:
-            logger.info('Command already in CronTab file')
+            if not cron.find_command(sensor_cmd):
+                sensor_job = cron.new(command= sensor_cmd, comment= 'weather station job')
+                sensor_job.minute.during(4, 59).every(s.UPDATE_RATE/60)
+                logger.info('CronTab file updated with sensor read script.')
+
+            if not cron.find_command(ts_cmd):
+                ts_job = cron.new(command= ts_cmd, comment= 'weather station thingspeak job')
+                ts_job.minute.during(2, 32).every(30)
+                logger.info('CronTab file updated with thingspeak script.')
+
+            cron.write()
+            logger.debug(cron.render())
 
     except ValueError:
-        logger.critical('CronTab file could not be updated. Exiting...')
+        logger.error('CronTab file could not be updated. Exiting...')
         sys.exit()
 
+
     #Run read rain gauge script if not already running
-    cmd = '/home/pi/weather/read_rain_gauge.py'
+    cmd = '/home/pi/weather/scripts/read_rain_gauge.py'
     script_not_running = check_process_is_running(cmd)
     if script_not_running:
-        logger.info('Scrip read_rain_gauge.py already runnning.')
+        logger.info('Script read_rain_gauge.py already runnning.')
         logger.info(script_not_running)
     else:
         logger.info('Start Read Rain Gauge script')
-        status = subprocess.Popen(['python',cmd])
-        logger,info(status)
+        status = subprocess.Popen(['python', cmd])
+        logger.info(status)
 
 
     logger.info('--- Wstation Script Finished ---')
-
 
 #===============================================================================
 # BOILER PLATE
