@@ -38,6 +38,7 @@ import os
 import time
 import sys
 import subprocess
+import collections
 
 # Third party modules
 
@@ -109,13 +110,16 @@ def main():
     #---------------------------------------------------------------------------
     # Export RRD to XML
     #---------------------------------------------------------------------------
-    for i in range(0, len(rra_set), 4):
-        rrd.export( start= '-{days}d'.format(str(s.RRDTOOL_RRA[i+2])), 
+    rd = collections.namedtuple('ss', 'cf res period')
+    rra_set = {k: rd(*s.RRDTOOL_RRA[k]) for k in s.RRDTOOL_RRA}
+
+    for key in sorted(rra_set.keys()):
+        rrd.export( start= '-{days}d'.format(rra_set[key].period), 
                     end= 'now', 
-                    step= s.RRDTOOL_RRA[i+1] * 60, 
+                    step= rra_set[key].res * 60, 
                     ds_list= list(s.SENSOR_SET.keys()), 
-                    output_file= s.RRDTOOL_RRA[i+4], 
-                    cf= s.RRDTOOL_RRA[i])
+                    output_file= key, 
+                    cf= rra_set[key].cf)
 
 
 
