@@ -82,7 +82,9 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '/home/pi/weather/logs/read_rain_gauge.log')
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= s.SYS_FOLDER,
+                                                    script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))
@@ -91,9 +93,13 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
-    rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
+    rrd_file = '{fd1}{fd2}{fl}'.format( fd1= s.SYS_FOLDER,
+                                        fd2= s.DATA_FOLDER,
+                                        fl= sRRDTOOL_RRD_FILE)
 
-    if not os.path.exists(s.RRDTOOL_RRD_FILE):
+    rrd = rrd_tools.RrdFile(rrd_file)
+
+    if not os.path.exists(rrd_file):
         rrd.create_file(s.SENSOR_SET, 
                         s.RRDTOOL_RRA, 
                         s.UPDATE_RATE, 
@@ -117,8 +123,8 @@ def main():
     #Set up to read sensors using cron job
     try:
         cron = CronTab()
-        sensor_cmd ='python /home/pi/weather/scripts/read_sensors.py'
-        ts_cmd ='python /home/pi/weather/scripts/rrd_ts_sync.py'
+        sensor_cmd ='python {fd}/scripts/read_sensors.py'.format(fd= s.SYS_FOLDER)
+        ts_cmd ='python {fd}/scripts/rrd_ts_sync.py'.format(fd= s.SYS_FOLDER)
 
         if cron.find_command(sensor_cmd) and cron.find_command(ts_cmd):
             logger.info('All commands already in CronTab file')
@@ -142,7 +148,7 @@ def main():
 
 
     #Run read rain gauge script if not already running
-    cmd = '/home/pi/weather/scripts/read_rain_gauge.py'
+    cmd = '{fd}/scripts/read_rain_gauge.py'.format(fd= s.SYS_FOLDER)
     script_not_running = check_process_is_running(cmd)
     if script_not_running:
         logger.info('Script read_rain_gauge.py already runnning.')
