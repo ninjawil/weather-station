@@ -64,16 +64,16 @@ DEBOUNCE_MICROS      = 0.250 #seconds
 RRDTOOL_RRD_FILE     = '/home/pi/weather/data/weather_data.rrd'
 RRDTOOL_HEARTBEAT    = 2 # multiplier
 
-# Consolidation type, Resolution (minutes), Recording Period (days)
-RRDTOOL_RRA          = ('LAST',       5,      1.05, 
-                        'AVERAGE',   15,      1,
-                        'AVERAGE',   30,      2,
-                        'AVERAGE',  120,      7,
-                        'AVERAGE',  240,     31,
-                        'AVERAGE',  720,     93,
-                        'AVERAGE', 1440,    365,
-                        'MIN',     1440,    365,
-                        'MAX',     1440,    365)
+# Consolidation type, Resolution (minutes), Recording Period (days), XML filename
+RRDTOOL_RRA =  ('LAST',       5,  0.125, '/home/pi/weather/data/wd_last_3h.xml',
+                'AVERAGE',   15,      1, '/home/pi/weather/data/wd_avg_1d.xml',
+                'AVERAGE',   30,      2, '/home/pi/weather/data/wd_avg_2d.xml',
+                'AVERAGE',  120,      7, '/home/pi/weather/data/wd_avg_1w.xml',
+                'AVERAGE',  240,     31, '/home/pi/weather/data/wd_avg_1m.xml',
+                'AVERAGE',  720,     93, '/home/pi/weather/data/wd_avg_3m.xml',
+                'AVERAGE', 1440,    365, '/home/pi/weather/data/wd_avg_1y.xml',
+                'MIN',     1440,    365, '/home/pi/weather/data/wd_min_1y.xml',
+                'MAX',     1440,    365, '/home/pi/weather/data/wd_max_1y.xml')
  
 
 # --- Set up thingspeak ----
