@@ -123,7 +123,9 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '/home/pi/weather/logs/read_rain_gauge.log')
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= s.SYS_FOLDER,
+                                                    script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))
@@ -162,7 +164,9 @@ def main():
     # CHECK RRD FILE
     #---------------------------------------------------------------------------
     try:
-        rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
+        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                        fd2= s.DATA_FOLDER,
+                                                        fl= sRRDTOOL_RRD_FILE)
         
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
             logger.error('Data sources in RRD file does not match set up.')
