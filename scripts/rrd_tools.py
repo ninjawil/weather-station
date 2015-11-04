@@ -83,7 +83,7 @@ class RrdFile:
                                     cf=rra_set[i],
                                     steps=str((rra_set[i+1]*60)/update_rate),
                                     rows=str(((rra_set[i+2])*24*60)/rra_set[i+1]))
-                        for i in range(0,len(rra_set),3)]
+                        for i in range(0,len(rra_set),4)]
 
         self.logger.debug(rrd_set)
 
@@ -167,45 +167,46 @@ class RrdFile:
 
 
     #---------------------------------------------------------------------------
-    # FETCH
+    # EXPORT
     #---------------------------------------------------------------------------
     def export(self, start='-1d', end='now', step='300', ds_list=None, 
-                output_file=None):
+                output_file=None, cf='LAST'):
         '''Exports RRD to XML'''
 
         try:
 
             if ds_list:
-                exp_cmd = ['rrdtool','xport','-s', '{start_t}'.format(start_t=start),
-                           '-e', '{end_t}'.format(end_t=end)]
-       
-                i = 0
-                for ds in ds_list:
-                    i += 1
-                    exp_cmd.append('DEF:a{n}={rrd_file}:{ds_name}:LAST'.format(
-                                                    n= i,
-                                                    rrd_file=self.file_name,
-                                                    ds_name= ds))
-                    exp_cmd.append('XPORT:a{n}:"{ds_name}"'.format(
-                                                    n= i, 
-                                                    ds_name= ds))
+                exp_cmd = ['rrdtool','xport',
+                           '-s', '{start_t}'.format(start_t=start),
+                           '-e', '{end_t}'.format(end_t=end),
+                           '--step', '{res}'.format(res= step)]
 
+                for ds in ds_list:
+                    exp_cmd.append('DEF:{vname}={rrd_file}:{ds_name}:{cons}'.format(
+                                                    vname= ds,
+                                                    rrd_file=self.file_name,
+                                                    ds_name= ds,
+                                                    cons= cf))
+                    exp_cmd.append('XPORT:{vname}:"{ds_name}"'.format(
+                                                    vname= ds, 
+                                                    ds_name= ds))
 
                 # !!!!!!!!!!!!!!!!
                 # No binding for xport on python-rrdtool 1.4.7
+                # exp_cmd has 'rrdtool','xport' added to run it from subprocess
                 # rrdtool.xport(exp_cmd)
                 # !!!!!!!!!!!!!!!!
 
-                fileout = open(output_file, "w")
-                self.logger.info(' '.join(exp_cmd))
+                self.logger.debug(' '.join(exp_cmd))
                 subprocess.Popen(exp_cmd, stdout= fileout)
-                fileout.close()            
 
+                with open(output_file, 'w') as f:
+                    f.write(fileout)
 
                 return 'OK'
 
-        except rrdtool.error, e:
-            self.logger.error('RRDtool export FAIL ({error_v})'.format(error_v= e))
+        except ValueError, e:
+            self.logger.critical('RRDtool export FAIL ({error_v})'.format(error_v= e))
             return e
 
 
