@@ -1,0 +1,53 @@
+.row {
+	margin-left: 0px;
+	margin-right: 0px;
+}
+
+.console {
+    font-family: Verdana, Geneva, sans-serif;
+    color: #616161;
+    max-width: 270px;
+    text-align: center;
+}
+
+.date {	
+    font-size: medium;
+    margin: 15px;	
+}
+
+.errors {
+	text-align: left;
+	font-style: italic;
+	vertical-align: bottom;
+    font-size: medium;	
+    margin-top: 30px;
+    color: red;
+}
+
+.textwrap {
+	float: left;
+	margin: 10px;
+}
+
+.reading-group {
+    background-color: #eee;
+    border-radius: .8em;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.reading-value {
+	font-weight: bold;
+    font-size: xx-large;
+}
+
+.reading-unit {
+	font-size: large;
+	font-weight: normal;
+}
+
+.reading-name {
+	font-style: italic;
+    font-size: small;
+}
+
