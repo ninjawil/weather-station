@@ -12,15 +12,25 @@
                 <h1>Weather Station</h1>
             </div>
 
-            <div id="error display" class="col-md-6" data-toggle="modal" data-target="#errormodal">
+            <div id="error display" class="col-md-6" alt="error image" data-toggle="modal" data-target="#errormodal">
                 <img class="img-responsive textwrap" src="images/warning.png">
                 <div class="errors">
                     Read rain sensor script not runnng!!!
                 </div>
             </div>
-            <div id="update time" class="col-md-2 console date">
+            <div title="Last update" class="col-md-1 console date">
                 <div class="row">21:30</div>
                 <div class="row">2015-11-12</div>
+            </div>
+            <div class="col-md-1 images-right">
+                <div class="col-md-6">
+                    <a href="https://thingspeak.com/channels/39722/private_show">
+                        <img title="Go to thingspeak.com" class="img-responsive" alt="graph image" src="images/graph.png" data-toggle="modal" data-target="#settings">
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <img title="settings" class="img-responsive" alt="cog image" src="images/settings.png" data-toggle="modal" data-target="#settings">
+                </div>
             </div>
         </div>
         <div class="row">
@@ -92,7 +102,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-11">
                 <h3>Selection</h3S>
             </div>
         </div>
@@ -115,5 +125,23 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="modal fade" id="settings" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">Settings</h4>
+                </div>
+                <div class="modal-body">
+                    <img class="img-responsive" src="http://placekitten.com/555/300">
+                    This was my first project in this class. I learned a lot about HTML and CSS.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     </body>
 </html>
