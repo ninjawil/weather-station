@@ -1,3 +1,8 @@
+body {
+    margin: 0px;
+    padding: 0px;
+}
+
 .row {
 	margin-left: 0px;
 	margin-right: 0px;
@@ -23,6 +28,14 @@
     margin-top: 30px;
     color: red;
 }
+
+.images-right {
+    padding-left: 0px;
+    padding-right: 0px;
+    padding-top: 10px;
+    height: 70px;
+}
+
 
 .textwrap {
 	float: left;
@@ -50,4 +63,3 @@
 	font-style: italic;
     font-size: small;
 }
-
