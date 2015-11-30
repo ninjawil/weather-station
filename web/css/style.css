@@ -10,6 +10,14 @@
     color: red;
 }
 
+.date {
+	margin-top: 5px;
+	font-size: medium;
+	text-align: center;
+	font-weight: bold;
+	font-family: inherit;
+}
+
 .buttons {
 	min-width: 60px;
 }
