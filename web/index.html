@@ -5,9 +5,10 @@
 	<meta charset="UTF-8">
 	<title>Weather Station</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
-	<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 </head>
 
 <body>
@@ -19,7 +20,7 @@
                 <h1>Weather Station</h1>
             </div>
 
-            <div id="error display" title="Error Message" class="col-md-4 error-msg">
+            <div id="error display" title="Error Message" class="col-md-4 error-msg" data-toggle="modal" data-target="#modal_errors">
             	<div class="media">
 			        <a href="#" class="pull-left">
 			            <img src="images/warning.png" class="img-responsive" alt="error image">
@@ -39,12 +40,12 @@
 
             	<div id="thingspeak button" class="col-xs-3 col-md-2 buttons">
                     <a href="https://thingspeak.com/channels/39722/private_show">
-                        <img title="Go to thingspeak.com" class="img" alt="graph image" src="images/graph.png" data-toggle="modal" data-target="#settings">
+                        <img title="Go to thingspeak.com" class="img" alt="graph image" src="images/graph.png">
                     </a>
                 </div>
 
                 <div id="settings button" class="col-xs-3 col-md-2 buttons">
-                    <img title="Settings" class="img" alt="cog image" src="images/settings.png" data-toggle="modal" data-target="#settings">
+                	<img title="Settings" class="img" alt="cog image" src="images/settings.png" data-toggle="modal" data-target="#modal_settings">
                 </div>
             </div>
         </div>
@@ -128,6 +129,42 @@
             </div>
 
         </div>
-     </div>
+
+
+	    <!-- Modal -->
+	    <div id="modal_errors" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	        <div class="modal-dialog">
+	            <div class="modal-content">
+	                <div class="modal-header">
+	                    <h4 class="modal-title" id="myModalLabel">Errors and Warnings</h4>
+	                </div>
+	                <div class="modal-body">
+	                    <img class="img-responsive" src="http://placekitten.com/555/300">
+	                    This was my first project in this class. I learned a lot about HTML and CSS.
+	                </div>
+	                <div class="modal-footer">
+	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+
+	    <div id="modal_settings" class="modal fade" role="dialog">
+	        <div class="modal-dialog">
+	            <div class="modal-content">
+	                <div class="modal-header">
+	                    <h4 class="modal-title" id="myModalLabel">Settings</h4>
+	                </div>
+	                <div class="modal-body">
+	                    <img class="img-responsive" src="http://placekitten.com/555/300">
+	                    This was my first project in this class. I learned a lot about HTML and CSS.
+	                </div>
+	                <div class="modal-footer">
+	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+    </div>
 </body>
 </html>  
