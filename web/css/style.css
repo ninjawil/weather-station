@@ -1,0 +1,49 @@
+
+.error-msg {
+	margin-top: 10px;
+}
+
+.error-text {
+	text-align: left;
+	font-style: italic;
+    font-size: medium;	
+    color: red;
+}
+
+.buttons {
+	min-width: 60px;
+}
+
+.banner-right {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.console {
+    font-family: Verdana, Geneva, sans-serif;
+    color: #616161;
+    min-width: 270px;
+}
+
+.reading-group {
+    background-color: #eee;
+    border-radius: .8em;
+    padding: 5px;
+    margin: 0px;
+    margin-bottom: 10px;
+}
+
+.reading-value {
+	font-weight: bold;
+    font-size: xx-large;
+}
+
+.reading-unit {
+	font-size: large;
+	font-weight: normal;
+}
+
+.reading-name {
+	font-style: italic;
+    font-size: small;
+}
