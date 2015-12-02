@@ -1,154 +1,104 @@
 <!DOCTYPE html>
+<!--
+ The MIT License (MIT)
+
+ Copyright (c) 2015 William De Freitas
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+-->
+
 <html>
-    <head>
-        <meta charset="utf-8">
-        <script type="text/javascript" src="js/jquery-1.11.3.js"></script>
-        <script type="text/javascript" src="js/bootstrap.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="css/bootstrap.css">
-        <link rel="stylesheet" type="text/css" href="css/style.css">
-    </head>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Weather Station</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="js/helper.js"></script>
+</head>
 
-    <body>
-        <div id="banner" class="row banner">
-            <div id="banner-left" class="col-md-3 text-center text-uppercase">
-                <h1>Weather Station</h1>
-            </div>
-
-            <div id="banner-center" class="col-md-6 banner-width" data-toggle="modal" data-target="#errormodal">
-                <div id="error symbol" class="col-md-1 error-sym">
-                    <img class="img-responsive textwrap" src="images/warning.png" alt="error image">
-                </div>
-                <div id="error msg" class="col-md-11 error-msg">
-                        Read rain sensor script not runnng!!!
-                </div>
-            </div>
-
-            <div id="banner-right" class="col-md-3">
-                <div id="update time" title="Last update" class="col-md-6 date">
-                    <div class="row">21:30</div>
-                    <div class="row">2015-11-12</div>
-                </div>
-
-                <div id="thingspeak button" class="col-md-3 button">
+<body>
+    <div class="container-fluid">
+        <div id="header" class="row clearfix">
+            <div id="title" class="col-md-4 text-uppercase"><h1>Weather Station</h1></div>
+            <div id="error_display" title="Error Message" class="col-md-4 error-msg"></div>              
+            <div id="right-side-header" class="col-md-4 header-right clearfix">
+	            <div id="update_time" title="Last update" class="col-xs-6 col-md-8 date"></div>
+            	<div id="thingspeak button" class="col-xs-3 col-md-2 buttons">
                     <a href="https://thingspeak.com/channels/39722/private_show">
-                        <img title="Go to thingspeak.com" class="img-responsive" alt="graph image" src="images/graph.png">
+                        <img title="Go to thingspeak.com" class="img" alt="graph image" src="images/graph.png">
                     </a>
                 </div>
-                <div id="settings button" class="col-md-3 button">
-                    <img title="settings" class="img-responsive" alt="cog image" src="images/settings.png" data-toggle="modal" data-target="#settings">
+                <div id="settings button" class="col-xs-3 col-md-2 buttons">
+                	<img title="Settings" class="img" alt="cog image" src="images/settings.png" data-toggle="modal" data-target="#modal_settings">
                 </div>
             </div>
         </div>
 
-        <div id="right-column" class="row text-center">
-            <div id="outside temp" class="col-md-2 console">
-                <div class="row reading-group">
-                    <div class="row reading-value">
-                        7.5
-                        <span class="reading-unit">°C</span>
-                    </div>
-                    <div class="row reading-name">
-                        Outside Temperature
-                    </div>
-                </div>
-                <div id="inside temp" class="row reading-group">
-                    <div class="row reading-value">
-                        27.5
-                        <span class="reading-unit">°C</span>
-                    </div>
-                    <div class="row reading-name">
-                        Inside Temperature
-                    </div>
-                </div>
-                <div id="inside hum" class="row reading-group">
-                    <div class="row reading-value">
-                        40.4
-                        <span class="reading-unit">%</span>
-                    </div>
-                    <div class="row reading-name">
-                        Inside Humidity
-                    </div>
-                </div>
-                <div id="precip rate" class="row reading-group">
-                    <div class="row reading-value">
-                        0.333
-                        <span class="reading-unit">mm</span>
-                    </div>
-                    <div class="row reading-name">
-                        Precipitation rate
-                    </div>
-                </div>
-                <div id="precip acc" class="row reading-group">
-                    <div class="row reading-value">
-                        4.4
-                        <span class="reading-unit">mm</span>
-                    </div>
-                    <div class="row reading-name">
-                        Accumulated Precipitation
-                    </div>
-                </div>
-                <div id="door open" class="row reading-group">
-                    <div class="row reading-value">
-                        Open
-                    </div>
-                    <div class="row reading-name">
-                        Door Status
-                    </div>
-                </div>
-                <div id="door open" class="row reading-group">
-                    <div class="row reading-value">
-                        Off
-                    </div>
-                    <div class="row reading-name">
-                        Heater Status
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-10">
+        <div id="main-display" class="row text-center">
+        	<div id="sidebar" class="col-md-2 sidebar"></div>
+            <div id="graphs" class="col-md-10 hidden-xs">
                 <img class="img-responsive" src="http://placehold.it/1500x600">
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-11">
-                <h3>Selection</h3S>
-            </div>
-        </div>
+
+
+	    <!-- Modal -->
+	    <div id="modal_errors" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	        <div class="modal-dialog">
+	            <div class="modal-content">
+	                <div class="modal-header">
+	                    <h4 class="modal-title" id="myModalLabel">Errors and Warnings</h4>
+	                </div>
+	                <div class="modal-body">
+	                    <img class="img-responsive" src="http://placekitten.com/555/300">
+	                    This was my first project in this class. I learned a lot about HTML and CSS.
+	                </div>
+	                <div class="modal-footer">
+	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+
+	    <div id="modal_settings" class="modal fade" role="dialog">
+	        <div class="modal-dialog">
+	            <div class="modal-content">
+	                <div class="modal-header">
+	                    <h4 class="modal-title" id="myModalLabel">Settings</h4>
+	                </div>
+	                <div class="modal-body">
+	                    <img class="img-responsive" src="http://placekitten.com/555/300">
+	                    This was my first project in this class. I learned a lot about HTML and CSS.
+	                </div>
+	                <div class="modal-footer">
+	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
     </div>
 
+    <script src="js/app.js"></script>
 
-        <!-- Modal -->
-        <div id="errormodal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title" id="myModalLabel">Errors and Warnings</h4>
-                    </div>
-                    <div class="modal-body">
-                        <img class="img-responsive" src="http://placekitten.com/555/300">
-                        This was my first project in this class. I learned a lot about HTML and CSS.
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="settings" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title" id="myModalLabel">Settings</h4>
-                    </div>
-                    <div class="modal-body">
-                        <img class="img-responsive" src="http://placekitten.com/555/300">
-                        This was my first project in this class. I learned a lot about HTML and CSS.
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </body>
-</html>
+</body>
+</html>  
