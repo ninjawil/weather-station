@@ -33,8 +33,9 @@ function pad(num, size) {
     return s.substr(s.length-size);
 }
 
+
 //-------------------------------------------------------------------------------
-function display_err(error_value) {
+function displayErrorMessage(errorValue) {
 
 	var errors = {};
 	errors = {
@@ -44,91 +45,166 @@ function display_err(error_value) {
 		4: ["Error", "There is an error!"]
 	};
 
-	var formattedErrorMsg = HTMLerrorMSG.replace("%error_type%", errors[error_value][0]);
-	formattedErrorMsg = formattedErrorMsg.replace("%error_msg%", "E"+ pad(error_value, 3) + " " + errors[error_value][1]);
+	var errorMessage = "E"+ pad(errorValue, 3) + " " + errors[errorValue][1];
+
+	var formattedErrorMsg = HTMLerrorMSG.replace("%error_type%", errors[errorValue][0]);
+	formattedErrorMsg = formattedErrorMsg.replace("%error_msg%", errorMessage);
 
 	$('#error_display').append(formattedErrorMsg);
 }
 
+
 //-------------------------------------------------------------------------------
-function display_time(t_since_epoch) {
+function displayTime(timeSinceEpoch) {
+
+	//Convert time since epoch to human dates (time needs to be in milliseconds)
+	var datetime = new Date(timeSinceEpoch * 1000);
+	datetime = datetime.toUTCString();
 
 	//Display time and date
-	$('#update_time').append(HTMLupdateTime.replace("%time%", "00:00"));	
-	$('#update_time').append(HTMLupdateDate.replace("%date%", "Thu 20 Dec 2015"));
+	$('#update_time').append(HTMLupdateTime.replace("%time%", datetime.slice(17)));	
+	$('#update_time').append(HTMLupdateDate.replace("%date%", datetime.slice(0, 17)));
+}
+
+
+//-------------------------------------------------------------------------------
+function displayValue(sensors) {
+
+	var formattedValueBox,
+		formattedValue
+
+	for(var sensor in sensors) {
+
+		formattedValueBox = HTMLvalueBox.replace("%id%", sensor);
+		formattedValueBox = formattedValueBox.replace("%description%", sensors[sensor].description);
+
+		var arrayLength = sensors[sensor].readings.entry_value.length,
+			value = 0;	
+
+		switch(sensor) {
+			case 'door_open':
+				value = (sensors[sensor].readings.entry_value[arrayLength-2] >= 0.5) ? 'Open' : 'Closed';
+				break;
+
+			case 'heater_stat':
+				value = (sensors[sensor].readings.entry_value[arrayLength-2] >= 0.5) ? 'On' : 'Off';
+				break;
+
+			default:
+				value = sensors[sensor].readings.entry_value[arrayLength-2];
+		}
+
+		formattedValue = HTMLvalue.replace("%value%", value);
+		formattedValue = formattedValue.replace("%unit%", sensors[sensor].unit);
+
+		//Display data
+		$("#sidebar").append(formattedValueBox);		
+		$('#' + sensor).prepend(formattedValue);
+	}
+
+	displayTime(sensors['door_open'].readings.entry_time[sensors['door_open'].readings.entry_value.length-2]);
+}
+
+
+//-------------------------------------------------------------------------------
+function xmlGetMetaData(filename, sensors) {
+
+	var request = new XMLHttpRequest();
+
+	request.open("GET", filename, false);
+	request.send();
+
+	var xml = request.responseXML;
+	var xml_sensors  = xml.getElementsByTagName("entry");
+	var xmlValue = xml.getElementsByTagName("row");
+
+	for(var i = 0; i < xml_sensors.length; i++) {
+		for(var j = 0; j < xmlValue.length; j++) {
+			var xmlEntryValue = Number(xmlValue[j].childNodes[i+1].childNodes[0].nodeValue).toPrecision(4),
+				xmlEntryTime = Number(xmlValue[j].childNodes[0].childNodes[0].nodeValue);
+			sensors[xml_sensors[i].childNodes[0].nodeValue].readings.entry_time.push(xmlEntryTime); 
+			sensors[xml_sensors[i].childNodes[0].nodeValue].readings.entry_value.push(xmlEntryValue);
+		}
+	}
+
+	return sensors;
 }
 
 //-------------------------------------------------------------------------------
-function display_value(sensor_name, value, unit, description) {
+function main() {
 
-	var formattedValueBox = HTMLvalueBox.replace("%id%", sensor_name);
-	formattedValueBox = formattedValueBox.replace("%description%", description);
+	var systemError = 3,
+		sensors = { 'outside_temp': {
+						description: 'Outside Temperature',
+						unit: '°C',
+						readings: {
+							entry_time: [],
+							entry_value: []
+						}
+					},
+					'inside_temp': {
+						description: 'Inside Temperature',
+						unit: '°C',
+						readings: {
+							entry_time: [],
+							entry_value: []
+						}
+					},
+					'inside_hum': {
+						description: 'Inside Humidity',
+						unit: '°C',
+						readings: {
+							entry_time: [],
+							entry_value: []
+						}
+					},
+					'precip_rate': {
+						description: 'Precipitation Rate',
+						unit: 'mm',
+						readings: {
+							entry_time: [],
+							entry_value: []
+						}
+					},
+					'precip_acc': {
+						description: 'Accumulated Precipitation',
+						unit: 'mm',
+						readings: {
+							entry_time: [],
+							entry_value: []
+						}
+					},
+					'door_open': {
+						description: 'Door Status',
+						unit: '',
+						readings: {
+							entry_time: [],
+							entry_value: []
+						}
+					},
+					'heater_stat': {
+						description: 'Heater Status',
+						unit: '',
+						readings: {
+							entry_time: [],
+							entry_value: []
+						}
+					}
+				};
 
+	if(systemError) {
+		displayErrorMessage(systemError);
+	};
 
-	//Display data
-	$("#console").append(formattedValueBox);		
+	var sensors = xmlGetMetaData("data/weather3h.xml", sensors);
 
-
-	var formattedValue = HTMLvalue.replace("%value%", value);
-	formattedValue = formattedValue.replace("%unit%", unit);
-
-	sensor_name = '#' + sensor_name;
-
-	//Display data
-	$(sensor_name).append(formattedValue);	
+	displayValue(sensors);
+	
 }
 
 
 //===============================================================================
-// MAIN
+// Main
 //===============================================================================
-var system_error = 3;
 
-var sensors = [];
-sensors = [
-	{
-		'name': 'outside_temp',
-		'description': 'Outside Temperature',
-		'unit': '*C'
-	},
-	{
-		'name': 'inside_temp',
-		'description': 'Inside Temperature',
-		'unit': '*C'
-	},
-	{
-		'name': 'inside_hum',
-		'description': 'Inside Humidity',
-		'unit': '*C'
-	},
-	{
-		'name': 'precip_rate',
-		'description': 'Precipitation Rate',
-		'unit': 'mm'
-	},
-	{
-		'name': 'precip_acc',
-		'description': 'Accumulated Precipitation',
-		'unit': 'mm'
-	},
-	{
-		'name': 'door_open',
-		'description': 'Door Status',
-		'unit': ''
-	},
-	{
-		'name': 'heater_stat',
-		'description': 'Heater Status',
-		'unit': ''
-	}
-];
-
-if(system_error > 0) {
-	display_err(system_error);
-};
-
-display_time(10202020);
-
-for(var i = 0, len = sensors.length; i < len; i++){
-	display_value(sensors[i].name, 27.2, sensors[i].unit, sensors[i].description);
-}
+main();
