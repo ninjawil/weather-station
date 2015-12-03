@@ -1,33 +1,21 @@
 
-.error-msg {
-	margin-top: 10px;
+.header {
+	margin-top: 5px;
+	padding: 5px;
 }
 
-.error-text {
-	text-align: left;
-	font-style: italic;
-    font-size: medium;	
-    color: red;
+.alert-mod {
+	margin-bottom: 0px;
 }
 
 .date {
-	margin-top: 5px;
 	font-size: medium;
 	text-align: center;
 	font-weight: bold;
 	font-family: inherit;
 }
 
-.buttons {
-	min-width: 60px;
-}
-
-.banner-right {
-	margin-top: 10px;
-	margin-bottom: 10px;
-}
-
-.console {
+.sidebar {
     font-family: Verdana, Geneva, sans-serif;
     color: #616161;
     min-width: 270px;
@@ -54,4 +42,15 @@
 .reading-name {
 	font-style: italic;
     font-size: small;
+}
+
+.log-display {
+	background-color: black;
+	color: #bfbfbf;
+	overflow: hidden;
+	word-wrap: normal;
+	text-align: left;
+	overflow-x: scroll;
+	overflow-y: scroll;
+	height: 270px;
 }
