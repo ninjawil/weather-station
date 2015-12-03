@@ -28,11 +28,13 @@
 //===============================================================================
 // HTML Values
 //===============================================================================
-var HTMLerrorMSG	= '<div class="media" data-toggle="modal" data-target="#modal_errors"><a href="#" class="pull-left"><img src="images/warning.png" class="img-responsive" alt="error image"></a><div class="media-body error-text"><h4 class="media-heading">%error_type%</h4><p>%error_msg%</p></div></div>';
+var HTMLerrorMSG	= '<div class="alert alert-danger alert-mod" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>  %error_type%</strong>%error_msg%</div>';
 
 var HTMLupdateTime = '<div class="row">%time%</div>';
 var HTMLupdateDate = '<div class="row">%date%</div>';
 
 var HTMLvalueBox = '<div id="%id%" class="row reading-group"><div class="row reading-name">%description%</div></div>';
 var HTMLvalue = '<div class="row reading-value">%value%<span class="reading-unit"> %unit%</span></div>';
+
+var HTMLlogBox = '<h4>%logFileName%</h4><pre id="%logName%" class="log-display"></pre>';
 
