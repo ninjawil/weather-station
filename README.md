@@ -56,3 +56,11 @@ To install:
 ```
 pip install python-crontab
 ```
+
+#### Webpage
+To install:
+```
+sudo apt-get install apache2
+cd /var/www
+sudo ln -s ~/weatherdata weather_data
+sudo ln -s ~/weatherlogs weather_logs
