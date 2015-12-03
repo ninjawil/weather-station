@@ -27,7 +27,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Weather Station</title>
+	<title>p80i</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
@@ -39,56 +39,63 @@
 <body>
     <div class="container-fluid">
         <div id="header" class="row clearfix">
-            <div id="title" class="col-md-4 text-uppercase"><h1>Weather Station</h1></div>
-            <div id="error_display" title="Error Message" class="col-md-4 error-msg"></div>              
-            <div id="right-side-header" class="col-md-4 header-right clearfix">
-	            <div id="update_time" title="Last update" class="col-xs-6 col-md-8 date"></div>
-            	<div id="thingspeak button" class="col-xs-3 col-md-2 buttons">
-                    <a href="https://thingspeak.com/channels/39722/private_show">
-                        <img title="Go to thingspeak.com" class="img" alt="graph image" src="images/graph.png">
-                    </a>
-                </div>
-                <div id="settings button" class="col-xs-3 col-md-2 buttons">
-                	<img title="Settings" class="img" alt="cog image" src="images/settings.png" data-toggle="modal" data-target="#modal_settings">
-                </div>
-            </div>
+            <div id="title" class="col-md-4 text-uppercase"><h1>p80i</h1></div>
+            <div id="error_display" title="Error Message" class="col-md-4 header"></div>  
+            <div id="blank" class="col-md-2 hidden-xs header"></div>            
+            <div id="update_time" title="Last update" class="col-md-2 date header"></div>
         </div>
 
         <div id="main-display" class="row text-center">
         	<div id="sidebar" class="col-md-2 sidebar"></div>
-            <div id="graphs" class="col-md-10 hidden-xs">
-                <img class="img-responsive" src="http://placehold.it/1500x600">
+            <div id="main" class="col-md-10">
+            	<nav class="navbar navbar-default">
+					<div class="container-fluid">
+				    	<div class="navbar-header hidden-xs">
+				      		<a class="navbar-brand">Plots</a>
+				    	</div>
+				    	<div>
+					      	<ul class="nav navbar-nav hidden-xs">
+						        <li class="active"><a href="#">3 hours</a></li>
+						        <li><a href="#">24 hours</a></li>
+						        <li><a href="#">48 hours</a></li>
+						        <li><a href="#">1 week</a></li>
+						        <li><a href="#">1 month</a></li> 
+						        <li><a href="#">3 months</a></li>
+						        <li><a href="#">1 year</a></li> 
+					      	</ul>
+					      	<ul class="nav navbar-nav navbar-right">
+						        <li><a href="https://thingspeak.com/channels/39722/private_show">ThingSpeak</a></li>
+						        <li class="dropdown">
+						          	<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+						          		<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+						          		<span class="caret"></span>
+						          	</a>
+						          	<ul class="dropdown-menu">
+							            <li><a href="#" data-toggle="modal" data-target="#modal_logs">View Logs</a></li>
+							            <li role="separator" class="divider"></li>
+							            <li><a href="#">Settings</a></li>
+						          	</ul>
+						        </li>
+						     </ul>
+				    	</div>
+				  	</div>
+				</nav>
             </div>
         </div>
 
 
 	    <!-- Modal -->
-	    <div id="modal_errors" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-	        <div class="modal-dialog">
+	    <div id="modal_logs" class="modal fade" role="dialog">
+	        <div class="modal-dialog-lg">
 	            <div class="modal-content">
 	                <div class="modal-header">
-	                    <h4 class="modal-title" id="myModalLabel">Errors and Warnings</h4>
+	                    <h4 class="modal-title" id="myModalLabel">Log Files</h4>
 	                </div>
 	                <div class="modal-body">
-	                    <img class="img-responsive" src="http://placekitten.com/555/300">
-	                    This was my first project in this class. I learned a lot about HTML and CSS.
-	                </div>
-	                <div class="modal-footer">
-	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-	                </div>
-	            </div>
-	        </div>
-	    </div>
-
-	    <div id="modal_settings" class="modal fade" role="dialog">
-	        <div class="modal-dialog">
-	            <div class="modal-content">
-	                <div class="modal-header">
-	                    <h4 class="modal-title" id="myModalLabel">Settings</h4>
-	                </div>
-	                <div class="modal-body">
-	                    <img class="img-responsive" src="http://placekitten.com/555/300">
-	                    This was my first project in this class. I learned a lot about HTML and CSS.
+	                	<div class="row">
+							<div id="log_modal_col_1" class="col-md-6"></div>
+							<div id="log_modal_col_2" class="col-md-6"></div>
+						</div>
 	                </div>
 	                <div class="modal-footer">
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
