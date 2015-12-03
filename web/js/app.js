@@ -33,8 +33,8 @@ function pad(num, size) {
     return s.substr(s.length-size);
 }
 
-
 //-------------------------------------------------------------------------------
+// Manages error messages depending on passed error code
 function displayErrorMessage(errorValue) {
 
 	var errors = {};
@@ -45,16 +45,17 @@ function displayErrorMessage(errorValue) {
 		4: ["Error", "There is an error!"]
 	};
 
-	var errorMessage = "E"+ pad(errorValue, 3) + " " + errors[errorValue][1];
+	var errorMessage = errors[errorValue][0] + " E"+ pad(errorValue, 3) + ": ";
 
-	var formattedErrorMsg = HTMLerrorMSG.replace("%error_type%", errors[errorValue][0]);
-	formattedErrorMsg = formattedErrorMsg.replace("%error_msg%", errorMessage);
+	var formattedErrorMsg = HTMLerrorMSG.replace("%error_type%", errorMessage);
+	formattedErrorMsg = formattedErrorMsg.replace("%error_msg%", errors[errorValue][1]);
 
 	$('#error_display').append(formattedErrorMsg);
 }
 
 
 //-------------------------------------------------------------------------------
+// Converts time since last epoch and displays it on the webpage
 function displayTime(timeSinceEpoch) {
 
 	//Convert time since epoch to human dates (time needs to be in milliseconds)
@@ -68,6 +69,7 @@ function displayTime(timeSinceEpoch) {
 
 
 //-------------------------------------------------------------------------------
+// Displays last updated values on web page
 function displayValue(sensors) {
 
 	var formattedValueBox,
@@ -102,11 +104,13 @@ function displayValue(sensors) {
 		$('#' + sensor).prepend(formattedValue);
 	}
 
+	// Display last update time
 	displayTime(sensors['door_open'].readings.entry_time[sensors['door_open'].readings.entry_value.length-2]);
 }
 
 
 //-------------------------------------------------------------------------------
+// Gets data from XML file and parses it to sensors array
 function xmlGetMetaData(filename, sensors) {
 
 	var request = new XMLHttpRequest();
@@ -130,10 +134,52 @@ function xmlGetMetaData(filename, sensors) {
 	return sensors;
 }
 
+
 //-------------------------------------------------------------------------------
+// Gets data from log file
+function logGetData(filename) {
+
+	$.ajax({
+        async:false,
+        url: '../logs/' + filename,
+        dataType: 'text',
+        success: function(data) 
+        	{
+	        	$('#' + filename.slice(0, -4)).append(data);
+            }
+        });
+}
+
+
+//-------------------------------------------------------------------------------
+// Organizes log boxes in modal
+function displayLogData(filename) {
+
+	var columnNumber = 1,
+		formattedHTMLlogBox = '';
+
+	for(var logFile in filename) {
+
+		//Prepare HTML with log file details
+		formattedHTMLlogBox = HTMLlogBox.replace('%logFileName%', filename[logFile]);
+		formattedHTMLlogBox = formattedHTMLlogBox.replace('%logName%', filename[logFile].slice(0, -4));
+		$('#log_modal_col_' + columnNumber).append(formattedHTMLlogBox);
+
+		//Write log data
+		logGetData(filename[logFile]);
+
+		//Alternate columns
+		columnNumber = (columnNumber === 1) ? 2 : 1;
+	}
+}
+
+
+//-------------------------------------------------------------------------------
+// Prepares data and displays it
 function main() {
 
-	var systemError = 3,
+	var systemError = 4,
+		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log'],
 		sensors = { 'outside_temp': {
 						description: 'Outside Temperature',
 						unit: '°C',
@@ -196,9 +242,11 @@ function main() {
 		displayErrorMessage(systemError);
 	};
 
-	var sensors = xmlGetMetaData("data/weather3h.xml", sensors);
+	var sensors = xmlGetMetaData("../data/weather3h.xml", sensors);
 
 	displayValue(sensors);
+	displayLogData(logFiles);
+
 	
 }
 
@@ -208,3 +256,4 @@ function main() {
 //===============================================================================
 
 main();
+
