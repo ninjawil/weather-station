@@ -137,11 +137,11 @@ function xmlGetMetaData(filename, sensors) {
 
 //-------------------------------------------------------------------------------
 // Gets data from log file
-function logGetData(filename) {
+function logGetData(directory, filename) {
 
 	$.ajax({
         async:false,
-        url: '../logs/' + filename,
+        url: directory + '_logs/' + filename,
         dataType: 'text',
         success: function(data) 
         	{
@@ -153,20 +153,20 @@ function logGetData(filename) {
 
 //-------------------------------------------------------------------------------
 // Organizes log boxes in modal
-function displayLogData(filename) {
+function displayLogData(directory, filenames) {
 
 	var columnNumber = 1,
 		formattedHTMLlogBox = '';
 
-	for(var logFile in filename) {
+	for(var logFile in filenames) {
 
 		//Prepare HTML with log file details
-		formattedHTMLlogBox = HTMLlogBox.replace('%logFileName%', filename[logFile]);
-		formattedHTMLlogBox = formattedHTMLlogBox.replace('%logName%', filename[logFile].slice(0, -4));
+		formattedHTMLlogBox = HTMLlogBox.replace('%logFileName%', filenames[logFile]);
+		formattedHTMLlogBox = formattedHTMLlogBox.replace('%logName%', filenames[logFile].slice(0, -4));
 		$('#log_modal_col_' + columnNumber).append(formattedHTMLlogBox);
 
 		//Write log data
-		logGetData(filename[logFile]);
+		logGetData(directory, filenames[logFile]);
 
 		//Alternate columns
 		columnNumber = (columnNumber === 1) ? 2 : 1;
@@ -179,6 +179,7 @@ function displayLogData(filename) {
 function main() {
 
 	var systemError = 4,
+		dir = 'weather',
 		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log'],
 		sensors = { 'outside_temp': {
 						description: 'Outside Temperature',
@@ -242,10 +243,10 @@ function main() {
 		displayErrorMessage(systemError);
 	};
 
-	var sensors = xmlGetMetaData("../data/weather3h.xml", sensors);
+	var sensors = xmlGetMetaData(dir+"_data/weather3h.xml", sensors);
 
 	displayValue(sensors);
-	displayLogData(logFiles);
+	displayLogData(dir, logFiles);
 
 	
 }
