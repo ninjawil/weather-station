@@ -26,7 +26,7 @@
 
 #!/usr/bin/env python
 
-'''Manages RRD export to XML'''
+'''Exports current RRD to XML'''
 
 
 #===============================================================================
@@ -35,44 +35,17 @@
 
 # Standard Library
 import os
+import time
 import sys
 import subprocess
-import shlex
 
 # Third party modules
-import rrdtool
 
 # Application modules
 import log
 import settings as s
-
-
-
-
-#===============================================================================
-# Export RRD data to xml
-#===============================================================================
-def rrdExport(start , step , sortieXML):
-    texte = "rrdtool xport -s {0} -e now --step {1} ".format(start, step)
-    texte += "DEF:a={0}:inside_temp:AVERAGE ".format(s.RRDTOOL_RRD_FILE)
-    texte += "DEF:b={0}:inside_hum:AVERAGE ".format(s.RRDTOOL_RRD_FILE)
-    texte += "DEF:c={0}:door_open:AVERAGE ".format(s.RRDTOOL_RRD_FILE)
-    texte += "DEF:d={0}:precip_rate:AVERAGE ".format(s.RRDTOOL_RRD_FILE)
-    texte += "DEF:e={0}:precip_acc:AVERAGE ".format(s.RRDTOOL_RRD_FILE)
-    texte += "DEF:f={0}:outside_temp:AVERAGE ".format(s.RRDTOOL_RRD_FILE)  
-    texte += "XPORT:a:""inside_temp"" "
-    texte += "XPORT:b:""inside_hum"" "
-    texte += "XPORT:c:""door_open"" "
-    texte += "XPORT:d:""precip_rate"" "
-    texte += "XPORT:e:""precip_acc"" "
-    texte += "XPORT:f:""outside_temp"" "
-
-
-    fileout = open("/home/pi/weather/data/"+sortieXML,"w")
-    args = shlex.split(texte)
-    subprocess.Popen(args, stdout=fileout)
-    fileout.close()
-
+import rrd_tools
+import check_process
 
 
 #===============================================================================
@@ -82,26 +55,72 @@ def main():
     
     '''Entry point for script'''
 
-    # ok extact 3 hours data
-    rrdExport("now-3h",300, "weather3h.xml")
 
-    #ok 24 hours
-    rrdExport("now-24h",900, "weather24h.xml")
+    script_name = os.path.basename(sys.argv[0])
 
-    #ok 48 hours
-    rrdExport("now-48h",1800, "weather48h.xml")
 
-    #ok 1 week
-    rrdExport("now-8d",3600, "weather1w.xml")
+    #---------------------------------------------------------------------------
+    # SET UP LOGGER
+    #---------------------------------------------------------------------------
+    logger = log.setup('root', '/home/pi/weather/logs/rrd_export.log')
 
-    #ok 1 month
-    rrdExport("now-1month",14400, "weather1m.xml")
+    logger.info('')
+    logger.info('--- Script {script} Started ---'.format(script= script_name))
 
-    #ok 3 month
-    rrdExport("now-3month",28800, "weather3m.xml")
 
-    #ok 1 year
-    rrdExport("now-1y",43200, "weather1y.xml")
+    #---------------------------------------------------------------------------
+    # CHECK SCRIPT IS NOT ALREADY RUNNING
+    #---------------------------------------------------------------------------    
+    try:
+        other_script_found = check_process.is_running(script_name)
+
+        if other_script_found:
+            logger.critical('Script already runnning. Exiting...')
+            logger.error(other_script_found)
+            sys.exit()
+
+    except Exception, e:
+        logger.error('System check failed ({error_v}). Exiting...'.format(
+            error_v=e))
+        sys.exit()
+
+
+    #---------------------------------------------------------------------------
+    # Check Rrd File And Set Up Sensor Variables
+    #---------------------------------------------------------------------------
+    try:
+        rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
+
+        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
+            logger.error('Data sources in RRD file does not match set up.')
+            logger.error(rrd.ds_list())
+            logger.error(list(s.SENSOR_SET.keys()))
+            logger.error('Exiting...')
+            sys.exit()
+        else:
+            logger.info('RRD fetch successful')
+
+    except Exception, e:
+        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(error_v=e), 
+                        exc_info=True)
+        sys.exit()
+
+
+    #---------------------------------------------------------------------------
+    # Export RRD to XML
+    #---------------------------------------------------------------------------
+    for(xml_file in s.RRDTOOL_RRA):
+        rrd.export( start= 'now-{rec_period}h'.format(rec_period= s.RRDTOOL_RRA[xml_file][2] * 24),
+                    end= 'now',
+                    cf= s.RRDTOOL_RRA[xml_file][0],
+                    step= s.RRDTOOL_RRA[xml_file][1] * 60,
+                    ds_list= list(s.SENSOR_SET.keys()),
+                    output_file= '{dir}/data/{xml_filename}'.format(
+                                                        dir=s.SYSTEM_DIRECTORY,
+                                                        xml_filename= xml_file))
+
+
+    logger.info('--- Script Finished ---')
 
 
 #===============================================================================
