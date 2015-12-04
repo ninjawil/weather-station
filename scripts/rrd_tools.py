@@ -37,6 +37,7 @@
 import os
 import logging
 import collections
+import subprocess
 
 # Third party modules
 import rrdtool
@@ -63,6 +64,9 @@ class RrdFile:
         ss = collections.namedtuple('ss', 'enable ref unit min max type')
         sensor = {k: ss(*sensor_set[k]) for k in sensor_set}
 
+        rd = collections.namedtuple('ss', 'cf res period')
+        rra = {k: rd(*rra_set[k]) for k in rra_set}
+
         #Prepare RRD set
         rrd_set = [self.file_name, 
                     '--step', '{step}'.format(step=update_rate), 
@@ -79,10 +83,10 @@ class RrdFile:
 
         #Prepare RRA files
         rrd_set += ['RRA:{cf}:0.5:{steps}:{rows}'.format(
-                                    cf=rra_set[i],
-                                    steps=str((rra_set[i+1]*60)/update_rate),
-                                    rows=str(((rra_set[i+2])*24*60)/rra_set[i+1]))
-                        for i in range(0,len(rra_set),3)]
+                                    cf=rra[i].cf,
+                                    steps=str((rra[i].res*60)/update_rate),
+                                    rows=str((rra[i].period*24*60)/rra_set[i+1]))
+                        for i in sorted(rra)]
 
         self.logger.debug(rrd_set)
 
@@ -163,3 +167,48 @@ class RrdFile:
                                         end_t= end))
         self.logger.debug(data)
         return data
+
+
+    #---------------------------------------------------------------------------
+    # EXPORT
+    #---------------------------------------------------------------------------
+    def export(self, start='-1d', end='now', step='300', ds_list=None, 
+                output_file=None, cf='LAST'):
+        '''Exports RRD to XML'''
+
+        try:
+            if ds_list:
+                exp_cmd = ['rrdtool','xport',
+                           '-s', '{start_t}'.format(start_t=start),
+                           '-e', '{end_t}'.format(end_t=end),
+                           '--step', '{res}'.format(res= step)]
+
+                exp_cmd += ['DEF:{vname}={rrd_file}:{ds_name}:{cons}'.format(
+                                                            vname= ds,
+                                                            rrd_file=self.file_name,
+                                                            ds_name= ds,
+                                                            cons= cf),
+                            'XPORT:{vname}:"{ds_name}"'.format(vname= ds, ds_name= ds)
+                            for ds in sorted(ds_list)]
+
+
+                # !!!!!!!!!!!!!!!!
+                # No binding for xport on python-rrdtool 1.4.7
+                # exp_cmd has 'rrdtool','xport' added to run it from subprocess
+                # rrdtool.xport(exp_cmd)
+                # !!!!!!!!!!!!!!!!
+
+                self.logger.debug(' '.join(exp_cmd))
+                subprocess.Popen(exp_cmd, stdout= fileout)
+
+                with open(output_file, 'w') as f:
+                    f.write(fileout)
+
+                return 'OK'
+
+        except ValueError, e:
+            self.logger.critical('RRDtool export FAIL ({error_v})'.format(error_v= e))
+            return e
+
+
+
