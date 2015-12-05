@@ -187,8 +187,10 @@ class RrdFile:
                                                             vname= ds,
                                                             rrd_file=self.file_name,
                                                             ds_name= ds,
-                                                            cons= cf),
-                            'XPORT:{vname}:"{ds_name}"'.format(vname= ds, ds_name= ds)
+                                                            cons= cf)
+                            for ds in sorted(ds_list)]
+
+                exp_cmd += ['XPORT:{vname}:"{ds_name}"'.format(vname= ds, ds_name= ds)
                             for ds in sorted(ds_list)]
 
 
@@ -199,10 +201,9 @@ class RrdFile:
                 # !!!!!!!!!!!!!!!!
 
                 self.logger.debug(' '.join(exp_cmd))
-                subprocess.Popen(exp_cmd, stdout= fileout)
-
-                with open(output_file, 'w') as f:
-                    f.write(fileout)
+                fileout = open(output_file,"w")
+                subprocess.Popen(exp_cmd, stdout=fileout)
+                fileout.close()
 
                 return 'OK'
 

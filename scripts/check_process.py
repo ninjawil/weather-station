@@ -48,10 +48,12 @@ import subprocess
 # Check script is running
 #===============================================================================
 def is_running(script_name):
+
     '''Checks list of processes for script name and filters out lines with the 
     PID and parent PID. Returns None if no other scripts with the same name are
     running otherwise returns the line of the ps -ef with those PIDs. Error
     value is returned instead.'''
+
     try:
         cmd1 = subprocess.Popen(['ps', '-ef'], stdout=subprocess.PIPE)
         cmd2 = subprocess.Popen(['grep', '-v', 'grep'], stdin=cmd1.stdout, 

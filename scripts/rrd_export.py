@@ -38,7 +38,10 @@ import os
 import time
 import sys
 import subprocess
+<<<<<<< HEAD
 import collections
+=======
+>>>>>>> dev
 
 # Third party modules
 
@@ -63,9 +66,7 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
-                                                    script= script_name[:-3]))
+    logger = log.setup('root', '/home/pi/weather/logs/rrd_export.log')
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))
@@ -83,7 +84,7 @@ def main():
             sys.exit()
 
     except Exception, e:
-        logger.critical('System check failed ({error_v}). Exiting...'.format(
+        logger.error('System check failed ({error_v}). Exiting...'.format(
             error_v=e))
         sys.exit()
 
@@ -92,12 +93,10 @@ def main():
     # Check Rrd File And Set Up Sensor Variables
     #---------------------------------------------------------------------------
     try:
-        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                        fd2= s.DATA_FOLDER,
-                                                        fl= sRRDTOOL_RRD_FILE)
+        rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
 
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.critical('Data sources in RRD file does not match set up.')
+            logger.error('Data sources in RRD file does not match set up.')
             logger.error(rrd.ds_list())
             logger.error(list(s.SENSOR_SET.keys()))
             logger.error('Exiting...')
@@ -106,29 +105,23 @@ def main():
             logger.info('RRD fetch successful')
 
     except Exception, e:
-        logger.critical('RRD fetch failed ({error_v}). Exiting...'.format(
-            error_v=e), exc_info=True)
+        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(error_v=e), 
+                        exc_info=True)
         sys.exit()
 
 
     #---------------------------------------------------------------------------
     # Export RRD to XML
     #---------------------------------------------------------------------------
-    rd = collections.namedtuple('ss', 'cf res period')
-    rra_set = {k: rd(*s.RRDTOOL_RRA[k]) for k in s.RRDTOOL_RRA}
-
-    for key in sorted(rra_set.keys()):
-        rrd.export( start= '-{days}d'.format(rra_set[key].period), 
-                    end= 'now', 
-                    step= rra_set[key].res * 60, 
-                    ds_list= list(s.SENSOR_SET.keys()), 
-                    output_file= '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                         fd2= s.DATA_FOLDER, 
-                                                         fl= key), 
-                    cf= rra_set[key].cf)
-
-
-
+    for xml_file in s.RRDTOOL_RRA:
+        rrd.export( start= 'now-{rec_period:.0f}h'.format(rec_period= s.RRDTOOL_RRA[xml_file][2] * 24),
+                    end= 'now',
+                    cf= s.RRDTOOL_RRA[xml_file][0],
+                    step= s.RRDTOOL_RRA[xml_file][1] * 60,
+                    ds_list= list(s.SENSOR_SET.keys()),
+                    output_file= '{dir}/data/{xml_filename}'.format(
+                                                        dir=s.SYSTEM_DIRECTORY,
+                                                        xml_filename= xml_file))
 
 
     logger.info('--- Script Finished ---')
