@@ -49,7 +49,6 @@ import threading
 import time
 import datetime
 import collections
-import subprocess
 
 # Third party modules
 import pigpio
@@ -59,6 +58,7 @@ import log
 import logging
 import settings as s
 import rrd_tools
+import check_process
 
 
 #===============================================================================
@@ -66,25 +66,6 @@ import rrd_tools
 #===============================================================================
 last_rising_edge = None
 
-
-#===============================================================================
-# Check script is running
-#===============================================================================
-def check_process_is_running(script_name):
-    try:
-        cmd1 = subprocess.Popen(['ps', '-ef'], stdout=subprocess.PIPE)
-        cmd2 = subprocess.Popen(['grep', '-v', 'grep'], stdin=cmd1.stdout, 
-                                stdout=subprocess.PIPE)
-        cmd3 = subprocess.Popen(['grep', '-v', str(os.getpid())], stdin=cmd2.stdout, 
-                                stdout=subprocess.PIPE)
-        cmd4 = subprocess.Popen(['grep', '-v', str(os.getppid())], stdin=cmd3.stdout, 
-                                stdout=subprocess.PIPE)
-        cmd5 = subprocess.Popen(['grep', script_name], stdin=cmd4.stdout, 
-                                stdout=subprocess.PIPE)
-        return cmd5.communicate()[0] 
-
-    except Exception, e:
-        return e
 
 
 #===============================================================================
@@ -142,7 +123,9 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '/home/pi/weather/logs/read_rain_gauge.log')
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= s.SYS_FOLDER,
+                                                    script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))
@@ -152,7 +135,7 @@ def main():
     # CHECK SCRIPT IS NOT ALREADY RUNNING
     #---------------------------------------------------------------------------    
     try:
-        other_script_found = check_process_is_running(script_name)
+        other_script_found = check_process.is_running(script_name)
 
         if other_script_found:
             logger.critical('Script already runnning. Exiting...')
@@ -181,7 +164,9 @@ def main():
     # CHECK RRD FILE
     #---------------------------------------------------------------------------
     try:
-        rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
+        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                        fd2= s.DATA_FOLDER,
+                                                        fl= s.RRDTOOL_RRD_FILE))
         
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
             logger.error('Data sources in RRD file does not match set up.')
