@@ -109,8 +109,8 @@ def main():
     #---------------------------------------------------------------------------
     # Export RRD to XML
     #---------------------------------------------------------------------------
-    for(xml_file in s.RRDTOOL_RRA):
-        rrd.export( start= 'now-{rec_period}h'.format(rec_period= s.RRDTOOL_RRA[xml_file][2] * 24),
+    for xml_file in s.RRDTOOL_RRA:
+        rrd.export( start= 'now-{rec_period:.0f}h'.format(rec_period= s.RRDTOOL_RRA[xml_file][2] * 24),
                     end= 'now',
                     cf= s.RRDTOOL_RRA[xml_file][0],
                     step= s.RRDTOOL_RRA[xml_file][1] * 60,
