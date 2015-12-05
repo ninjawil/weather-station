@@ -178,7 +178,7 @@ function displayLogData(directory, filenames) {
 // Prepares data and displays it
 function main() {
 
-	var systemError = 4,
+	var systemError = 0,
 		dir = 'weather',
 		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log'],
 		sensors = { 'outside_temp': {
@@ -247,6 +247,33 @@ function main() {
 
 	displayValue(sensors);
 	displayLogData(dir, logFiles);
+
+	var data = [];
+	for(var i = 0; i < sensors['outside_temp'].readings.entry_time.length; i++) {
+		data.push([Number(sensors['outside_temp'].readings.entry_time[i])*1000, Number(sensors['outside_temp'].readings.entry_value[i])]);
+	}
+
+	$('#container').highcharts('StockChart', {
+
+
+            chart: {
+            	renderTo: 'container'
+			},
+
+            title : {
+                text : 'Outside temp'
+            },
+
+            series : [{
+                name : 'Temp',
+			    type: 'line',
+                data : data,
+                lineWidth: 1,
+                tooltip: {
+                    valueDecimals: 2
+                }
+            }]
+        });
 
 	
 }
