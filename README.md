@@ -64,3 +64,12 @@ sudo apt-get install apache2
 cd /var/www
 sudo ln -s ~/weatherdata weather_data
 sudo ln -s ~/weatherlogs weather_logs
+```
+
+#### CRONTAB
+Add the following line to 'sudo crontab -e'
+```
+0-55/5 * * * * python /home/po/weather/scripts/read_sensors.py # weather station job
+2-32/30 * * * * python /home/po/weather/scripts/rrd_ts_sync.py # weather station thingspeak job
+17-47/30 * * * * python /home/po/weather/scripts/rrd_export.py # weather station xml export job
+```

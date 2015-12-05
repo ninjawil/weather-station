@@ -79,7 +79,9 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '/home/pi/weather/logs/rrd_ts_sync.log')
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= s.SYS_FOLDER,
+                                                    script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))  
@@ -215,8 +217,15 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
 # MAIN
 #===============================================================================
 def main():
-    sync(s.THINGSPEAK_HOST_ADDR, s.THINGSPEAK_API_KEY_FILENAME, s.THINGSPEAK_CHANNEL_ID,
-         list(s.SENSOR_SET.keys()), s.UPDATE_RATE, s.RRDTOOL_RRD_FILE)
+    sync(   s.THINGSPEAK_HOST_ADDR, 
+            '{fd1}{fl}'.format( fd1= s.SYS_FOLDER,
+                                fl= s.THINGSPEAK_API_KEY_FILENAME), 
+            s.THINGSPEAK_CHANNEL_ID,
+            list(s.SENSOR_SET.keys()), 
+            s.UPDATE_RATE, 
+            '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                    fd2= s.DATA_FOLDER,
+                                    fl= s.RRDTOOL_RRD_FILE))
 
     
 #===============================================================================

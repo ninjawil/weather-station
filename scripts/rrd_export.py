@@ -38,10 +38,8 @@ import os
 import time
 import sys
 import subprocess
-<<<<<<< HEAD
 import collections
-=======
->>>>>>> dev
+
 
 # Third party modules
 
@@ -66,7 +64,9 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '/home/pi/weather/logs/rrd_export.log')
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= s.SYS_FOLDER,
+                                                    script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))
@@ -93,7 +93,9 @@ def main():
     # Check Rrd File And Set Up Sensor Variables
     #---------------------------------------------------------------------------
     try:
-        rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
+        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                        fd2= s.DATA_FOLDER,
+                                                        fl= s.RRDTOOL_RRD_FILE))
 
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
             logger.error('Data sources in RRD file does not match set up.')
@@ -119,9 +121,9 @@ def main():
                     cf= s.RRDTOOL_RRA[xml_file][0],
                     step= s.RRDTOOL_RRA[xml_file][1] * 60,
                     ds_list= list(s.SENSOR_SET.keys()),
-                    output_file= '{dir}/data/{xml_filename}'.format(
-                                                        dir=s.SYSTEM_DIRECTORY,
-                                                        xml_filename= xml_file))
+                    output_file= '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                         fd2= s.DATA_FOLDER,
+                                                         fl= xml_file))
 
 
     logger.info('--- Script Finished ---')

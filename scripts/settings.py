@@ -58,10 +58,12 @@ else:
 UPDATE_RATE          = 300 # seconds
 W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
-SYSTEM_DIRECTORY     = '/home/pi/weather'
+SYS_FOLDER           = '/home/pi/weather'
+DATA_FOLDER          = '/data/'
+
 
 # --- RRDTool set up ---
-RRDTOOL_RRD_FILE     = SYSTEM_DIRECTORY + '/data/weather_data.rrd'
+RRDTOOL_RRD_FILE     = 'weather_data.rrd'
 RRDTOOL_HEARTBEAT    = 2 # multiplier
 
 # XML filename: Consolidation type, Resolution (minutes), Recording Period (days) 
@@ -78,7 +80,7 @@ RRDTOOL_RRA =  {'wd_last_3h.xml': ('LAST',       5,  0.125),
 
 # --- Set up thingspeak ----
 THINGSPEAK_HOST_ADDR         = 'https://api.thingspeak.com'
-THINGSPEAK_API_KEY_FILENAME  = SYSTEM_DIRECTORY + '/thingspeak.txt'
+THINGSPEAK_API_KEY_FILENAME  = '/thingspeak.txt'
 THINGSPEAK_CHANNEL_ID        = '39722'
 
 

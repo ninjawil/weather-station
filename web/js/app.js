@@ -243,7 +243,7 @@ function main() {
 		displayErrorMessage(systemError);
 	};
 
-	var sensors = xmlGetMetaData(dir+"_data/weather3h.xml", sensors);
+	var sensors = xmlGetMetaData(dir+"_data/wd_last_3h.xml", sensors);
 
 	displayValue(sensors);
 	displayLogData(dir, logFiles);

@@ -166,7 +166,7 @@ def main():
     try:
         rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
                                                         fd2= s.DATA_FOLDER,
-                                                        fl= sRRDTOOL_RRD_FILE)
+                                                        fl= s.RRDTOOL_RRD_FILE))
         
         if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
             logger.error('Data sources in RRD file does not match set up.')

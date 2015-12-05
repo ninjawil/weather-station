@@ -190,7 +190,7 @@ class RrdFile:
                                                             cons= cf)
                             for ds in sorted(ds_list)]
 
-                exp_cmd += ['XPORT:{vname}:"{ds_name}"'.format(vname= ds, ds_name= ds)
+                exp_cmd += ['XPORT:{vname}:{ds_name}'.format(vname= ds, ds_name= ds)
                             for ds in sorted(ds_list)]
 
 
