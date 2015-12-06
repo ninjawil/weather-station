@@ -173,6 +173,100 @@ function displayLogData(directory, filenames) {
 	}
 }
 
+//-------------------------------------------------------------------------------
+// Displays graph
+function displayGraph(sensors) {
+
+	//Consolidate data
+	var seriesSetup = [];
+
+	for (sensor in sensors) {
+		var data = [],
+			axis = 0;
+		for(var i = 0; i < sensors[sensor].readings.entry_time.length; i++) {
+			if(sensors[sensor].readings.entry_value[i] != 'NaN') {
+				data.push([Number(sensors[sensor].readings.entry_time[i])*1000, Number(sensors[sensor].readings.entry_value[i])]);
+			}
+		}
+
+		if(sensors[sensor].unit === '%') {
+			axis = 1;
+		} else if(sensors[sensor].unit === 'mm') {
+			axis = 2;
+		}
+
+		seriesSetup.push({
+			name: sensor,
+			type: sensors[sensor].graph,
+            data : data,
+            yAxis: axis,
+            tooltip: {
+	            valueDecimals: 2
+	        }
+		});
+	}
+
+	console.log(seriesSetup);
+
+	//Display graph
+
+	highchartOptions = {
+			chart: 	{
+		            	renderTo: 'container'
+					},
+            xAxis: 	{
+		            	type: 'datetime'
+		            },
+
+		    yAxis: [{ // Primary yAxis
+		            	labels: {
+		                			format: '{value}°C',
+		                			style: 	{
+		                    					color: Highcharts.getOptions().colors[1]
+		                					}
+		            			},
+		            	title: 	{
+		                			text: 'Temperature',
+					                style: 	{
+					                    		color: Highcharts.getOptions().colors[1]
+					                		}
+		            			}
+		        	}, { // Secondary yAxis
+		           		labels: {
+		                			format: '{value}%',
+		                			style: 	{
+		                    					color: Highcharts.getOptions().colors[1]
+		                					}
+		            			},
+		            	title: 	{
+		                			text: 'Humidity',
+					                style: 	{
+					                    		color: Highcharts.getOptions().colors[1]
+					                		}
+		            			},
+		            	opposite: true
+		        	}, { // Third yAxis
+		           		labels: {
+		                			format: '{value}mm',
+		                			style: 	{
+		                    					color: Highcharts.getOptions().colors[1]
+		                					}
+		            			},
+		            	title: 	{
+		                			text: 'Rainfall',
+					                style: 	{
+					                    		color: Highcharts.getOptions().colors[1]
+					                		}
+		            			},
+		            	opposite: true
+		        	}],
+
+            series: seriesSetup
+    };
+
+	$('#graph-container').highcharts(highchartOptions);
+}
+
 
 //-------------------------------------------------------------------------------
 // Prepares data and displays it
@@ -184,6 +278,7 @@ function main() {
 		sensors = { 'outside_temp': {
 						description: 'Outside Temperature',
 						unit: '°C',
+						graph: 'line',
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -192,6 +287,7 @@ function main() {
 					'inside_temp': {
 						description: 'Inside Temperature',
 						unit: '°C',
+						graph: 'line',
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -199,7 +295,8 @@ function main() {
 					},
 					'inside_hum': {
 						description: 'Inside Humidity',
-						unit: '°C',
+						unit: '%',
+						graph: 'line',
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -208,6 +305,7 @@ function main() {
 					'precip_rate': {
 						description: 'Precipitation Rate',
 						unit: 'mm',
+						graph: 'column',
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -216,6 +314,7 @@ function main() {
 					'precip_acc': {
 						description: 'Accumulated Precipitation',
 						unit: 'mm',
+						graph: 'line',
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -224,19 +323,20 @@ function main() {
 					'door_open': {
 						description: 'Door Status',
 						unit: '',
-						readings: {
-							entry_time: [],
-							entry_value: []
-						}
-					},
-					'heater_stat': {
-						description: 'Heater Status',
-						unit: '',
+						graph: 'line',
 						readings: {
 							entry_time: [],
 							entry_value: []
 						}
 					}
+					// 'heater_stat': {
+					// 	description: 'Heater Status',
+					// 	unit: '',
+					// 	readings: {
+					// 		entry_time: [],
+					// 		entry_value: []
+					// 	}
+					// }
 				};
 
 	if(systemError) {
@@ -247,35 +347,8 @@ function main() {
 
 	displayValue(sensors);
 	displayLogData(dir, logFiles);
+	displayGraph(sensors);
 
-	var data = [];
-	for(var i = 0; i < sensors['outside_temp'].readings.entry_time.length; i++) {
-		data.push([Number(sensors['outside_temp'].readings.entry_time[i])*1000, Number(sensors['outside_temp'].readings.entry_value[i])]);
-	}
-
-	$('#container').highcharts('StockChart', {
-
-
-            chart: {
-            	renderTo: 'container'
-			},
-
-            title : {
-                text : 'Outside temp'
-            },
-
-            series : [{
-                name : 'Temp',
-			    type: 'line',
-                data : data,
-                lineWidth: 1,
-                tooltip: {
-                    valueDecimals: 2
-                }
-            }]
-        });
-
-	
 }
 
 
