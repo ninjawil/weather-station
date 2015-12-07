@@ -33,6 +33,22 @@ function pad(num, size) {
     return s.substr(s.length-size);
 }
 
+
+//-------------------------------------------------------------------------------
+// return everything after the question mark
+function getUrlParameter() {
+         
+    idx = window.location.href.indexOf("?");
+    
+    if( idx < 0 ) {
+    	return "";
+    } else {
+    	return window.location.href.substring(idx+1);
+    }
+    
+}
+
+
 //-------------------------------------------------------------------------------
 // Manages error messages depending on passed error code
 function displayErrorMessage(errorValue) {
@@ -214,8 +230,12 @@ function displayGraph(sensors) {
 			chart: 	{
 		            	renderTo: 'container'
 					},
+			title: 	{
+                        text: null
+                    },
             xAxis: 	{
-		            	type: 'datetime'
+		            	type: 'datetime',
+		            	crosshair: true
 		            },
 
 		    yAxis: [{ // Primary yAxis
@@ -275,6 +295,17 @@ function main() {
 	var systemError = 0,
 		dir = 'weather',
 		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log'],
+		dataFiles = {'':   'wd_last_3h.xml',
+					 '3h': 'wd_last_3h.xml',
+					 '1d': 'wd_avg_1d.xml',
+					 '2d': 'wd_avg_2d.xml',
+					 '1w': 'wd_avg_1w.xml',
+					 '1m': 'wd_avg_1m.xml',
+					 '3m': 'wd_avg_3m.xml',
+					 '1y': 'wd_avg_1y.xml',
+					 '1y': 'wd_min_1y.xml',
+					 '1y': 'wd_max_1y.xml'
+				    },
 		sensors = { 'outside_temp': {
 						description: 'Outside Temperature',
 						unit: '°C',
@@ -343,11 +374,18 @@ function main() {
 		displayErrorMessage(systemError);
 	};
 
-	var sensors = xmlGetMetaData(dir+"_data/wd_last_3h.xml", sensors);
+	var sensors = xmlGetMetaData(dir + "_data/" + dataFiles[getUrlParameter()] , sensors);
 
 	displayValue(sensors);
 	displayLogData(dir, logFiles);
 	displayGraph(sensors);
+
+
+	// Highlights correct navbar location
+	var url = window.location;
+	$('ul.nav a').filter(function() {
+		return this.href == url;
+	}).parent().addClass('active');
 
 }
 
