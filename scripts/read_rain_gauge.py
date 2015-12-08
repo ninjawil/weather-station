@@ -113,6 +113,8 @@ def main():
 
     global precip_tick_count
     global precip_accu
+
+    time.sleep(120)
  
     precip_tick_count = 0
     precip_accu       = 0
@@ -184,28 +186,32 @@ def main():
 
 
     #---------------------------------------------------------------------------
-    # SET UP SENSOR VARIABLES
-    #---------------------------------------------------------------------------
-    sensor_value = {x: 'U' for x in s.SENSOR_SET}
-
-    ss = collections.namedtuple('ss', 'enable ref unit min max type')
-    sensor = {k: ss(*s.SENSOR_SET[k]) for k in s.SENSOR_SET}
-    
-    logger.debug(sensor_value)
-
-
-    #---------------------------------------------------------------------------
-    # SET UP RAIN SENSOR HARDWARE
-    #---------------------------------------------------------------------------
-    pi.set_mode(sensor['precip_acc'].ref, pigpio.INPUT)
-    rain_gauge = pi.callback(sensor['precip_acc'].ref, pigpio.FALLING_EDGE, 
-                                count_rain_ticks)
-
-
-    #---------------------------------------------------------------------------
-    # TIMED LOOP
+    # INITIATE CHECKS
     #---------------------------------------------------------------------------
     try:
+
+        #-----------------------------------------------------------------------
+        # SET UP SENSOR VARIABLES
+        #-----------------------------------------------------------------------
+        sensor_value = {x: 'U' for x in s.SENSOR_SET}
+
+        ss = collections.namedtuple('ss', 'enable ref unit min max type')
+        sensor = {k: ss(*s.SENSOR_SET[k]) for k in s.SENSOR_SET}
+        
+        logger.debug(sensor_value)
+
+
+        #-----------------------------------------------------------------------
+        # SET UP RAIN SENSOR HARDWARE
+        #-----------------------------------------------------------------------
+        pi.set_mode(sensor['precip_acc'].ref, pigpio.INPUT)
+        rain_gauge = pi.callback(sensor['precip_acc'].ref, pigpio.FALLING_EDGE, 
+                                    count_rain_ticks)
+
+
+        #-----------------------------------------------------------------------
+        # TIMED LOOP
+        #-----------------------------------------------------------------------
         while True:
             
             #-------------------------------------------------------------------
