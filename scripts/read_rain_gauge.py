@@ -114,6 +114,7 @@ def main():
     global precip_tick_count
     global precip_accu
 
+    # Allow time for boot up to finish
     time.sleep(120)
  
     precip_tick_count = 0
