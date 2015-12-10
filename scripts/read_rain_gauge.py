@@ -101,7 +101,9 @@ def count_rain_ticks(gpio, level, tick):
         last_rising_edge = tick  
         precip_tick_count += 1
         logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
-        with open(s.TICK_DATA, 'w') as f:
+        with open('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                          fd2= s.DATA_FOLDER,
+                                          fl= s.TICK_DATA), 'w') as f:
             f.write('{tick_time}:{tick_count}'.format(
                                         tick_time= datetime.datetime.utcnow(),
                                         tick_count=precip_tick_count))
@@ -206,7 +208,9 @@ def main():
         #-----------------------------------------------------------------------
         # CHECK FOR PREVIOUS TICK COUNTS
         #-----------------------------------------------------------------------
-        with open(s.TICK_DATA, 'r') as f:
+        with open('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                          fd2= s.DATA_FOLDER,
+                                          fl= s.TICK_DATA), 'r') as f:
             data = f.read()
             tick_time, tick_count = data.split(':')
 
