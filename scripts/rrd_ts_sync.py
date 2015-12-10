@@ -45,6 +45,7 @@ import thingspeak
 import rrd_tools
 import settings as s
 import log
+import check_process
 
 
 #===============================================================================
@@ -85,6 +86,24 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))  
+
+
+    #---------------------------------------------------------------------------
+    # CHECK SCRIPT IS NOT ALREADY RUNNING
+    #---------------------------------------------------------------------------    
+    try:
+        other_script_found = check_process.is_running(script_name)
+
+        if other_script_found:
+            logger.critical('Script already runnning. Exiting...')
+            logger.error(other_script_found)
+            sys.exit()
+
+    except Exception, e:
+        logger.error('System check failed ({error_v}). Exiting...'.format(
+            error_v=e))
+        sys.exit()
+
     
     try:
         #-----------------------------------------------------------------------
