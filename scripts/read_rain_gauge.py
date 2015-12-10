@@ -101,6 +101,10 @@ def count_rain_ticks(gpio, level, tick):
         last_rising_edge = tick  
         precip_tick_count += 1
         logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
+        with open(s.TICK_DATA, 'w') as f:
+            f.write('{tick_time}:{tick_count}'.format(
+                                        tick_time= datetime.datetime.utcnow(),
+                                        tick_count=precip_tick_count))
         
  
 
@@ -200,6 +204,18 @@ def main():
 
 
         #-----------------------------------------------------------------------
+        # CHECK FOR PREVIOUS TICK COUNTS
+        #-----------------------------------------------------------------------
+        with open(s.TICK_DATA, 'r') as f:
+            data = f.read()
+            tick_time, tick_count = data.split(':')
+
+        if (rrd.next_update() - int(tick_time)) <= s.UPDATE_RATE:
+            precip_tick_count = int(tick_count)
+            logger.info('Recent tick data found. Current count = {tick}'.format(tick= precip_tick_count))
+
+
+        #-----------------------------------------------------------------------
         # SET UP RAIN SENSOR HARDWARE
         #-----------------------------------------------------------------------
         pi.set_mode(sensor['precip_acc'].ref, pigpio.INPUT)
@@ -218,7 +234,7 @@ def main():
             next_reading  = rrd.next_update()
             logger.debug('Next sensor reading at {time}'.format(
                 time=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(next_reading))))
-            
+
             sleep_length = next_reading - time.time()
             if sleep_length > 0:
                 time.sleep(sleep_length)
