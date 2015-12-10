@@ -134,11 +134,16 @@ def main():
             time.sleep(0.2)  #Do not over poll DHT22
             DHT22_sensor.cancel()
 
-            if sensor['inside_temp'].enable:
-                sensor_value['inside_temp'] = DHT22_sensor.temperature()
+            temp = DHT22_sensor.temperature()
+            hum = DHT22_sensor.humidity() 
 
-            if sensor['inside_hum'].enable: 
-                sensor_value['inside_hum']  = DHT22_sensor.humidity() 
+            if temp == -999 or hum == -999:
+                raise ValueError
+            else:
+                if sensor['inside_temp'].enable:
+                    sensor_value['inside_temp'] = temp
+                if sensor['inside_hum'].enable: 
+                    sensor_value['inside_hum']  = hum 
 
             logger.info('Reading value from DHT22 sensor... OK')
 
