@@ -60,6 +60,7 @@ W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS      = 0.250 #seconds
 SYS_FOLDER           = '/home/pi/weather'
 DATA_FOLDER          = '/data/'
+TICK_DATA            = 'tick_count'
 
 
 # --- RRDTool set up ---
