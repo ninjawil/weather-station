@@ -296,7 +296,7 @@ function displayGraph(sensors) {
             point,
             i;
 
-        for (i = 0; i < Highcharts.charts.length; i = i + 1) {
+        for (i = 0; i < Highcharts.charts.length; i++) {
             chart = Highcharts.charts[i];
             e = chart.pointer.normalize(e); // Find coordinates within the chart
             point = chart.series[0].searchPoint(e, true); // Get the hovered point
@@ -332,91 +332,89 @@ function displayGraph(sensors) {
         }
     }
 
-    // Get the data. The contents of the data file can be viewed at
-    // https://github.com/highcharts/highcharts/blob/master/samples/data/activity.json
-    // $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=activity.json&callback=?', function (activity) {
-    //     $.each(activity.datasets, function (i, dataset) {
+	highchartOptions = {
+        chart: {
+            marginLeft: 40, // Keep all charts left aligned
+            spacingTop: 10,
+            spacingBottom: 10,
+            zoomType: 'x'
+        },
+        title: {
+            text: null, //sensors[sensor].description,
+            align: 'left',
+            margin: 0,
+            x: 30
+        },
+        credits: {
+            enabled: false
+        },
+        legend: {
+            enabled: false
+        },
+        xAxis: {
+            crosshair: true,
+            events: {
+                setExtremes: syncExtremes
+            },
+            type: 'datetime'
+        },
+        yAxis: {
+            title: {
+                text: null
+            }
+        },
+        tooltip: {
+            positioner: function () {
+                return {
+                    x: this.chart.chartWidth - this.label.width, // right aligned
+                    y: -1 // align to title
+                };
+            },
+            borderWidth: 0,
+            backgroundColor: 'none',
+            pointFormat: '{point.y}',
+            headerFormat: '',
+            shadow: false,
+            style: {
+                fontSize: '18px'
+            },
+            valueDecimals: 1
+        },
+    }
 
-    //         // Add X values
-    //         dataset.data = Highcharts.map(dataset.data, function (val, j) {
-    //             return [activity.xData[j], val];
-    //         });
+    var units = ['°C', '%', 'mm', ''];
 
-	for (var sensor in sensors) {
+    for (i = 0; i < units.length; i++) { 
 
-		var data = [];
-
-		for(var i = 0; i < sensors[sensor].readings.entry_time.length; i++) {
-			if(sensors[sensor].readings.entry_value[i] != 'NaN') {
-				data.push([Number(sensors[sensor].readings.entry_time[i])*1000, Number(sensors[sensor].readings.entry_value[i])]);
+    	var	valueSeries = [];
+		
+		for (var sensor in sensors) {			
+			var data = [];
+			for(var j = 0; j < sensors[sensor].readings.entry_time.length; j++) {
+				if(sensors[sensor].readings.entry_value[j] != 'NaN') {
+					data.push([Number(sensors[sensor].readings.entry_time[j])*1000, Number(sensors[sensor].readings.entry_value[j])]);
+				}
 			}
+
+			if(sensors[sensor].unit === units[i]) {
+				valueSeries.push({
+	                data: data,
+	                name: sensors[sensor].description,
+	                type: sensors[sensor].graph,
+	                color: Highcharts.getOptions().colors[sensors[sensor].color],
+	                fillOpacity: 0.3,
+	                tooltip: {
+	                    valueSuffix: ' ' + sensors[sensor].unit,
+	                    valueDecimals: 2
+	            	}
+	            });
+	        }
 		}
 
-        $('<div class="chart">')
-            .appendTo('#graph-container')
-            .highcharts({
-                chart: {
-                    marginLeft: 40, // Keep all charts left aligned
-                    spacingTop: 20,
-                    spacingBottom: 20,
-                    zoomType: 'x'
-                },
-                title: {
-                    text: sensors[sensor].description,
-                    align: 'left',
-                    margin: 0,
-                    x: 30
-                },
-                credits: {
-                    enabled: false
-                },
-                legend: {
-                    enabled: false
-                },
-                xAxis: {
-                    crosshair: true,
-                    events: {
-                        setExtremes: syncExtremes
-                    },
-                    labels: {
-                        format: '{value} km'
-                    }
-                },
-                yAxis: {
-                    title: {
-                        text: null
-                    }
-                },
-                tooltip: {
-                    positioner: function () {
-                        return {
-                            x: this.chart.chartWidth - this.label.width, // right aligned
-                            y: -1 // align to title
-                        };
-                    },
-                    borderWidth: 0,
-                    backgroundColor: 'none',
-                    pointFormat: '{point.y}',
-                    headerFormat: '',
-                    shadow: false,
-                    style: {
-                        fontSize: '18px'
-                    },
-                    valueDecimals: 1
-                },
-                series: [{
-                    data: data,
-                    name: sensors[sensor].description,
-                    type: sensors[sensor].graph,
-                    color: Highcharts.getOptions().colors[i],
-                    fillOpacity: 0.3,
-                    tooltip: {
-                        valueSuffix: ' ' + sensors[sensor].unit
-                    }
-                }]
-            });
-        //});
-    }//});
+		highchartOptions.series = valueSeries;
+    	$('<div class="chart" style="height:180px">').appendTo('#graph-container').highcharts(highchartOptions);
+	}
+
 }
 
 
@@ -442,6 +440,7 @@ function main() {
 						description: 'Outside Temperature',
 						unit: '°C',
 						graph: 'line',
+						color: 4,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -451,6 +450,7 @@ function main() {
 						description: 'Inside Temperature',
 						unit: '°C',
 						graph: 'line',
+						color: 1,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -460,6 +460,7 @@ function main() {
 						description: 'Inside Humidity',
 						unit: '%',
 						graph: 'line',
+						color: 2,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -469,6 +470,7 @@ function main() {
 						description: 'Precipitation Rate',
 						unit: 'mm',
 						graph: 'column',
+						color: 3,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -478,6 +480,7 @@ function main() {
 						description: 'Accumulated Precipitation',
 						unit: 'mm',
 						graph: 'line',
+						color: 0,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -487,6 +490,7 @@ function main() {
 						description: 'Door Status',
 						unit: '',
 						graph: 'line',
+						color: 5,
 						readings: {
 							entry_time: [],
 							entry_value: []
