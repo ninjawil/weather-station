@@ -334,79 +334,89 @@ function displayGraph(sensors) {
 
     // Get the data. The contents of the data file can be viewed at
     // https://github.com/highcharts/highcharts/blob/master/samples/data/activity.json
-    $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=activity.json&callback=?', function (activity) {
-        $.each(activity.datasets, function (i, dataset) {
+    // $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=activity.json&callback=?', function (activity) {
+    //     $.each(activity.datasets, function (i, dataset) {
 
-            // Add X values
-            dataset.data = Highcharts.map(dataset.data, function (val, j) {
-                return [activity.xData[j], val];
-            });
+    //         // Add X values
+    //         dataset.data = Highcharts.map(dataset.data, function (val, j) {
+    //             return [activity.xData[j], val];
+    //         });
 
-            $('<div class="chart">')
-                .appendTo('#graph-container')
-                .highcharts({
-                    chart: {
-                        marginLeft: 40, // Keep all charts left aligned
-                        spacingTop: 20,
-                        spacingBottom: 20,
-                        zoomType: 'x'
+	for (var sensor in sensors) {
+
+		var data = [];
+
+		for(var i = 0; i < sensors[sensor].readings.entry_time.length; i++) {
+			if(sensors[sensor].readings.entry_value[i] != 'NaN') {
+				data.push([Number(sensors[sensor].readings.entry_time[i])*1000, Number(sensors[sensor].readings.entry_value[i])]);
+			}
+		}
+
+        $('<div class="chart">')
+            .appendTo('#graph-container')
+            .highcharts({
+                chart: {
+                    marginLeft: 40, // Keep all charts left aligned
+                    spacingTop: 20,
+                    spacingBottom: 20,
+                    zoomType: 'x'
+                },
+                title: {
+                    text: sensors[sensor].description,
+                    align: 'left',
+                    margin: 0,
+                    x: 30
+                },
+                credits: {
+                    enabled: false
+                },
+                legend: {
+                    enabled: false
+                },
+                xAxis: {
+                    crosshair: true,
+                    events: {
+                        setExtremes: syncExtremes
                     },
+                    labels: {
+                        format: '{value} km'
+                    }
+                },
+                yAxis: {
                     title: {
-                        text: dataset.name,
-                        align: 'left',
-                        margin: 0,
-                        x: 30
+                        text: null
+                    }
+                },
+                tooltip: {
+                    positioner: function () {
+                        return {
+                            x: this.chart.chartWidth - this.label.width, // right aligned
+                            y: -1 // align to title
+                        };
                     },
-                    credits: {
-                        enabled: false
+                    borderWidth: 0,
+                    backgroundColor: 'none',
+                    pointFormat: '{point.y}',
+                    headerFormat: '',
+                    shadow: false,
+                    style: {
+                        fontSize: '18px'
                     },
-                    legend: {
-                        enabled: false
-                    },
-                    xAxis: {
-                        crosshair: true,
-                        events: {
-                            setExtremes: syncExtremes
-                        },
-                        labels: {
-                            format: '{value} km'
-                        }
-                    },
-                    yAxis: {
-                        title: {
-                            text: null
-                        }
-                    },
+                    valueDecimals: 1
+                },
+                series: [{
+                    data: data,
+                    name: sensors[sensor].description,
+                    type: sensors[sensor].graph,
+                    color: Highcharts.getOptions().colors[i],
+                    fillOpacity: 0.3,
                     tooltip: {
-                        positioner: function () {
-                            return {
-                                x: this.chart.chartWidth - this.label.width, // right aligned
-                                y: -1 // align to title
-                            };
-                        },
-                        borderWidth: 0,
-                        backgroundColor: 'none',
-                        pointFormat: '{point.y}',
-                        headerFormat: '',
-                        shadow: false,
-                        style: {
-                            fontSize: '18px'
-                        },
-                        valueDecimals: dataset.valueDecimals
-                    },
-                    series: [{
-                        data: dataset.data,
-                        name: dataset.name,
-                        type: dataset.type,
-                        color: Highcharts.getOptions().colors[i],
-                        fillOpacity: 0.3,
-                        tooltip: {
-                            valueSuffix: ' ' + dataset.unit
-                        }
-                    }]
-                });
-        });
-    });
+                        valueSuffix: ' ' + sensors[sensor].unit
+                    }
+                }]
+            });
+        //});
+    }//});
 }
 
 
@@ -500,7 +510,7 @@ function main() {
 
 	displayValue(sensors);
 	displayLogData(dir, logFiles);
-	//displayGraph(sensors);
+	displayGraph(sensors);
 
 
 	// Highlights correct navbar location
