@@ -51,11 +51,6 @@ Added to /boot/config.txt:
 dtoverlay=w1-gpio,gpiopin=19
 ```
 
-#### python-crontab
-To install:
-```
-pip install python-crontab
-```
 
 #### Webpage
 To install:
