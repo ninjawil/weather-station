@@ -105,8 +105,8 @@ def count_rain_ticks(gpio, level, tick):
                                           fd2= s.DATA_FOLDER,
                                           fl= s.TICK_DATA), 'w') as f:
             f.write('{tick_time}:{tick_count}'.format(
-                                        tick_time= datetime.datetime.utcnow(),
-                                        tick_count=precip_tick_count))
+                                        tick_time=int(datetime.datetime.now().strftime("%s")),
+                                        tick_count=int(precip_tick_count)))
         
  
 
@@ -208,15 +208,17 @@ def main():
         #-----------------------------------------------------------------------
         # CHECK FOR PREVIOUS TICK COUNTS
         #-----------------------------------------------------------------------
-        with open('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+        filename = '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
                                           fd2= s.DATA_FOLDER,
-                                          fl= s.TICK_DATA), 'r') as f:
-            data = f.read()
-            tick_time, tick_count = data.split(':')
+                                          fl= s.TICK_DATA)
+        if os.path.isfile(filename):
+            with open(filename, 'r') as f:
+                data = f.read()
+                tick_time, tick_count = data.split(':')
 
-        if (rrd.next_update() - int(tick_time)) <= s.UPDATE_RATE:
-            precip_tick_count = int(tick_count)
-            logger.info('Recent tick data found. Current count = {tick}'.format(tick= precip_tick_count))
+            if (rrd.next_update() - int(tick_time)) <= s.UPDATE_RATE:
+                precip_tick_count = int(tick_count)
+                logger.info('Recent tick data found. Current count = {tick}'.format(tick= precip_tick_count))
 
 
         #-----------------------------------------------------------------------
