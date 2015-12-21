@@ -41,7 +41,7 @@ import collections
 # Third party modules
 
 # Application modules
-import thingspeak
+import thingspeak.thingspeak as thingspeak
 import rrd_tools
 import settings as s
 import log

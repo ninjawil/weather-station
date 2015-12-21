@@ -51,7 +51,7 @@ import DHT22
 
 # Application modules
 import log
-import DS18B20
+import DS18B20.DS18B20 as DS18B20
 import settings as s
 import rrd_tools
 
