@@ -193,121 +193,6 @@ function displayLogData(directory, filenames) {
 // Displays graph
 function displayGraph(sensors) {
 
-	// //Consolidate data
-	// var seriesSetup = [];
-
-	// for (sensor in sensors) {
-	// 	var data = [],
-	// 		axis = 0;
-	// 	for(var i = 0; i < sensors[sensor].readings.entry_time.length; i++) {
-	// 		if(sensors[sensor].readings.entry_value[i] != 'NaN') {
-	// 			data.push([Number(sensors[sensor].readings.entry_time[i])*1000, Number(sensors[sensor].readings.entry_value[i])]);
-	// 		}
-	// 	}
-
-	// 	if(sensors[sensor].unit === '%') {
-	// 		axis = 1;
-	// 	} else if(sensors[sensor].unit === 'mm') {
-	// 		axis = 2;
-	// 	}
-
-	// 	seriesSetup.push({
-	// 		name: sensor,
-	// 		type: sensors[sensor].graph,
- //            data : data,
- //            yAxis: axis,
- //            tooltip: {
-	//             valueDecimals: 2
-	//         }
-	// 	});
-	// }
-
-	// console.log(seriesSetup);
-
-	// //Display graph
-
-	// highchartOptions = {
-	// 		chart: 	{
-	// 	            	renderTo: 'container'
-	// 				},
-	// 		title: 	{
- //                        text: null
- //                    },
- //            xAxis: 	{
-	// 	            	type: 'datetime',
-	// 	            	crosshair: true
-	// 	            },
-
-	// 	    yAxis: [{ // Primary yAxis
-	// 	            	labels: {
-	// 	                			format: '{value}°C',
-	// 	                			style: 	{
-	// 	                    					color: Highcharts.getOptions().colors[1]
-	// 	                					}
-	// 	            			},
-	// 	            	title: 	{
-	// 	                			text: 'Temperature',
-	// 				                style: 	{
-	// 				                    		color: Highcharts.getOptions().colors[1]
-	// 				                		}
-	// 	            			}
-	// 	        	}, { // Secondary yAxis
-	// 	           		labels: {
-	// 	                			format: '{value}%',
-	// 	                			style: 	{
-	// 	                    					color: Highcharts.getOptions().colors[1]
-	// 	                					}
-	// 	            			},
-	// 	            	title: 	{
-	// 	                			text: 'Humidity',
-	// 				                style: 	{
-	// 				                    		color: Highcharts.getOptions().colors[1]
-	// 				                		}
-	// 	            			},
-	// 	            	opposite: true
-	// 	        	}, { // Third yAxis
-	// 	           		labels: {
-	// 	                			format: '{value}mm',
-	// 	                			style: 	{
-	// 	                    					color: Highcharts.getOptions().colors[1]
-	// 	                					}
-	// 	            			},
-	// 	            	title: 	{
-	// 	                			text: 'Rainfall',
-	// 				                style: 	{
-	// 				                    		color: Highcharts.getOptions().colors[1]
-	// 				                		}
-	// 	            			},
-	// 	            	opposite: true
-	// 	        	}],
-
- //            series: seriesSetup
- //    };
-
-	// $('#graph-container').highcharts(highchartOptions);
-
-
-    /**
-     * In order to synchronize tooltips and crosshairs, override the
-     * built-in events with handlers defined on the parent element.
-     */
-    $('#graph-container').bind('mousemove touchmove', function (e) {
-        var chart,
-            point,
-            i;
-
-        for (i = 0; i < Highcharts.charts.length; i++) {
-            chart = Highcharts.charts[i];
-            e = chart.pointer.normalize(e); // Find coordinates within the chart
-            point = chart.series[0].searchPoint(e, true); // Get the hovered point
-
-            if (point) {
-                point.onMouseOver(); // Show the hover marker
-                chart.tooltip.refresh(point); // Show the tooltip
-                chart.xAxis[0].drawCrosshair(e, point); // Show the crosshair
-            }
-        }
-    });
     /**
      * Override the reset function, we don't need to hide the tooltips and crosshairs.
      */
@@ -334,7 +219,7 @@ function displayGraph(sensors) {
 
 	highchartOptions = {
         chart: {
-            marginLeft: 40, // Keep all charts left aligned
+            marginLeft: 60, // Keep all charts left aligned
             spacingTop: 10,
             spacingBottom: 10,
             zoomType: 'x'
@@ -352,50 +237,47 @@ function displayGraph(sensors) {
             enabled: false
         },
         xAxis: {
-            crosshair: true,
             events: {
                 setExtremes: syncExtremes
             },
-            type: 'datetime'
-        },
-        yAxis: {
-            title: {
-                text: null
-            }
+        	type: 'datetime'
         },
         tooltip: {
-            positioner: function () {
-                return {
-                    x: this.chart.chartWidth - this.label.width, // right aligned
-                    y: -1 // align to title
-                };
-            },
-            borderWidth: 0,
-            backgroundColor: 'none',
-            pointFormat: '{point.y}',
-            headerFormat: '',
-            shadow: false,
-            style: {
-                fontSize: '18px'
-            },
-            valueDecimals: 1
+            shared: true,
+            useHTML: true,
+            headerFormat: '<small>{point.key}</small><table>',
+            pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
+                '<td style="text-align: right"><b>{point.y}</b></td></tr>',
+            footerFormat: '</table>',
+            valueDecimals: 2
         },
     }
 
-    var units = ['°C', '%', 'mm', ''];
+    var units = ['°C', '%', 'mm', ''],
+    	unit_name = ['Temperature', 'Humidity', 'Rainfall', 'Door Open'];
 
+    //Create a chart per unit type
     for (i = 0; i < units.length; i++) { 
 
-    	var	valueSeries = [];
-		
+    	//Populate each graph
+    	var	valueSeries = [];		
 		for (var sensor in sensors) {			
+
+			//Prepare sensor data
 			var data = [];
 			for(var j = 0; j < sensors[sensor].readings.entry_time.length; j++) {
-				if(sensors[sensor].readings.entry_value[j] != 'NaN') {
-					data.push([Number(sensors[sensor].readings.entry_time[j])*1000, Number(sensors[sensor].readings.entry_value[j])]);
+				if(sensor === 'door_open') {
+					if(sensors[sensor].readings.entry_value[j] != 'NaN') {
+						data.push([Number(sensors[sensor].readings.entry_time[j])*1000, parseInt(sensors[sensor].readings.entry_value[j])]);
+					}
+				} else {
+					if(sensors[sensor].readings.entry_value[j] != 'NaN') {
+						data.push([Number(sensors[sensor].readings.entry_time[j])*1000, Number(sensors[sensor].readings.entry_value[j])]);
+					}					
 				}
 			}
 
+			//Add data with same units to same graph	
 			if(sensors[sensor].unit === units[i]) {
 				valueSeries.push({
 	                data: data,
@@ -405,12 +287,16 @@ function displayGraph(sensors) {
 	                fillOpacity: 0.3,
 	                tooltip: {
 	                    valueSuffix: ' ' + sensors[sensor].unit,
-	                    valueDecimals: 2
+	                    valueDecimals: sensors[sensor].decimals
 	            	}
 	            });
 	        }
 		}
 
+		highchartOptions.yAxis = {title: {
+										text: unit_name[i]
+									}
+								 };
 		highchartOptions.series = valueSeries;
     	$('<div class="chart" style="height:180px">').appendTo('#graph-container').highcharts(highchartOptions);
 	}
@@ -441,6 +327,7 @@ function main() {
 						unit: '°C',
 						graph: 'line',
 						color: 4,
+						decimals: 2,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -451,6 +338,7 @@ function main() {
 						unit: '°C',
 						graph: 'line',
 						color: 1,
+						decimals: 2,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -461,6 +349,7 @@ function main() {
 						unit: '%',
 						graph: 'line',
 						color: 2,
+						decimals: 2,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -471,6 +360,7 @@ function main() {
 						unit: 'mm',
 						graph: 'column',
 						color: 3,
+						decimals: 3,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -481,6 +371,7 @@ function main() {
 						unit: 'mm',
 						graph: 'line',
 						color: 0,
+						decimals: 3,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -491,6 +382,7 @@ function main() {
 						unit: '',
 						graph: 'line',
 						color: 5,
+						decimals: 0,
 						readings: {
 							entry_time: [],
 							entry_value: []
