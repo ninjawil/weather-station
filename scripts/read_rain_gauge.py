@@ -317,7 +317,7 @@ def main():
                         #Add previous precip. acc'ed value to current precip. rate
                     #   sensor_value['precip_acc'] += sensor_value['precip_rate']
 
-                    sensor_value['precip_acc'] = sum(todays_p_rate)
+                    sensor_value['precip_acc'] = sum(todays_p_rate) + sensor_value['precip_rate']
 
 
 
