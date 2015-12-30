@@ -248,8 +248,7 @@ function displayGraph(sensors) {
             headerFormat: '<small>{point.key}</small><table>',
             pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
                 '<td style="text-align: right"><b>{point.y}</b></td></tr>',
-            footerFormat: '</table>',
-            valueDecimals: 2
+            footerFormat: '</table>'
         },
     }
 
@@ -267,6 +266,7 @@ function displayGraph(sensors) {
 			var data = [];
 			for(var j = 0; j < sensors[sensor].readings.entry_time.length; j++) {
 				if(sensor === 'door_open') {
+					// If door open sensor then round up value to the nearest integer
 					if(sensors[sensor].readings.entry_value[j] != 'NaN') {
 						data.push([Number(sensors[sensor].readings.entry_time[j])*1000, parseInt(sensors[sensor].readings.entry_value[j])]);
 					}
@@ -293,11 +293,16 @@ function displayGraph(sensors) {
 	        }
 		}
 
+		// Add chart titles
 		highchartOptions.yAxis = {title: {
 										text: unit_name[i]
 									}
 								 };
+
+		// Add data values
 		highchartOptions.series = valueSeries;
+
+		// Create chart
     	$('<div class="chart" style="height:180px">').appendTo('#graph-container').highcharts(highchartOptions);
 	}
 

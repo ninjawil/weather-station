@@ -293,6 +293,7 @@ def main():
 
                     logger.debug('Todays p rate')
                     logger.debug(todays_p_rate)
+                    logger.debug('Sum of todays Precip_rate: {p_rate}'.format(p_rate= sum(todays_p_rate)))
 
                     #Get second to last entry as last entry is next update
                     sensor_value['precip_acc'] = float(
@@ -314,18 +315,22 @@ def main():
                     
                     #else:
                         #Add previous precip. acc'ed value to current precip. rate
-                    sensor_value['precip_acc'] += sensor_value['precip_rate']
+                    #   sensor_value['precip_acc'] += sensor_value['precip_rate']
+
+                    sensor_value['precip_acc'] = sum(todays_p_rate)
+
+
 
                 except Exception, e:
                     logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
                         error_v=e))
 
 
-            #Round values to 2 decimal places
+            #Round values
             if sensor_value['precip_rate'] is not 'U':
-                sensor_value['precip_rate'] = float('{0:.2f}'.format(sensor_value['precip_rate']))           
+                sensor_value['precip_rate'] = float('{0:.3f}'.format(sensor_value['precip_rate']))           
             if sensor_value['precip_acc'] is not 'U':
-                sensor_value['precip_acc'] = float('{0:.2f}'.format(sensor_value['precip_acc']))
+                sensor_value['precip_acc'] = float('{0:.3f}'.format(sensor_value['precip_acc']))
             
             #Log values
             logger.info('Precip_acc:  {precip_acc}'.format(
