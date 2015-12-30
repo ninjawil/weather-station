@@ -281,6 +281,7 @@ function displayGraph(sensors) {
 			if(sensors[sensor].unit === units[i]) {
 				valueSeries.push({
 	                data: data,
+	                step: sensors[sensor].step,
 	                name: sensors[sensor].description,
 	                type: sensors[sensor].graph,
 	                color: Highcharts.getOptions().colors[sensors[sensor].color],
@@ -293,11 +294,43 @@ function displayGraph(sensors) {
 	        }
 		}
 
-		// Add chart titles
-		highchartOptions.yAxis = {title: {
-										text: unit_name[i]
-									}
-								 };
+		if(unit_name[i] === 'Temperature') {
+			highchartOptions.yAxis = {
+				plotBands: [
+					{ // Cold
+			            from: -20,
+			            to: 0,
+			            color: 'rgba(68, 170, 213, 0.1)',
+			            label: {
+			                text: 'Cold',
+			                style: {
+			                    color: '#606060'
+			                }
+			            }
+			        }, { // Hot
+			            from: 35,
+			            to: 100,
+			            color: 'rgba(255, 50, 50, 0.1)',
+			            label: {
+			                text: 'Hot',
+			                style: {
+			                    color: '#606060'
+			                }
+			            }
+			        }
+			    ],
+            	title: {
+						text: unit_name[i] + ' (' + units[i] + ')' 
+				}
+			}
+		} else {
+			// Add chart titles
+			highchartOptions.yAxis = {
+				title: {
+					text: unit_name[i] + ' (' + units[i] + ')' 
+				}
+			}
+		}
 
 		// Add data values
 		highchartOptions.series = valueSeries;
@@ -331,6 +364,7 @@ function main() {
 						description: 'Outside Temperature',
 						unit: '°C',
 						graph: 'line',
+						step: null,
 						color: 4,
 						decimals: 2,
 						readings: {
@@ -342,6 +376,7 @@ function main() {
 						description: 'Inside Temperature',
 						unit: '°C',
 						graph: 'line',
+						step: null,
 						color: 1,
 						decimals: 2,
 						readings: {
@@ -353,6 +388,7 @@ function main() {
 						description: 'Inside Humidity',
 						unit: '%',
 						graph: 'line',
+						step: null,
 						color: 2,
 						decimals: 2,
 						readings: {
@@ -364,6 +400,7 @@ function main() {
 						description: 'Precipitation Rate',
 						unit: 'mm',
 						graph: 'column',
+						step: null,
 						color: 3,
 						decimals: 3,
 						readings: {
@@ -375,6 +412,7 @@ function main() {
 						description: 'Accumulated Precipitation',
 						unit: 'mm',
 						graph: 'line',
+						step: 'center',
 						color: 0,
 						decimals: 3,
 						readings: {
@@ -386,6 +424,7 @@ function main() {
 						description: 'Door Status',
 						unit: '',
 						graph: 'line',
+						step: 'center',
 						color: 5,
 						decimals: 0,
 						readings: {
