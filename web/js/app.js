@@ -142,8 +142,11 @@ function xmlGetMetaData(filename, sensors) {
 		for(var j = 0; j < xmlValue.length; j++) {
 			var xmlEntryValue = Number(xmlValue[j].childNodes[i+1].childNodes[0].nodeValue).toPrecision(4),
 				xmlEntryTime = Number(xmlValue[j].childNodes[0].childNodes[0].nodeValue);
-			sensors[xml_sensors[i].childNodes[0].nodeValue].readings.entry_time.push(xmlEntryTime); 
-			sensors[xml_sensors[i].childNodes[0].nodeValue].readings.entry_value.push(xmlEntryValue);
+
+			if(xmlEntryValue !== 'NaN') {
+				sensors[xml_sensors[i].childNodes[0].nodeValue].readings.entry_time.push(xmlEntryTime); 
+				sensors[xml_sensors[i].childNodes[0].nodeValue].readings.entry_value.push(xmlEntryValue);
+			}
 		}
 	}
 
@@ -191,7 +194,7 @@ function displayLogData(directory, filenames) {
 
 //-------------------------------------------------------------------------------
 // Displays graph
-function displayGraph(sensors) {
+function displayGraph(sensors, chart_names) {
 
     /**
      * Override the reset function, we don't need to hide the tooltips and crosshairs.
@@ -252,11 +255,8 @@ function displayGraph(sensors) {
         },
     }
 
-    var units = ['°C', '%', 'mm', ''],
-    	unit_name = ['Temperature', 'Humidity', 'Rainfall', 'Door Open'];
-
     //Create a chart per unit type
-    for (i = 0; i < units.length; i++) { 
+    for (chart_no = 0; chart_no < chart_names.length; chart_no++) { 
 
     	//Populate each graph
     	var	valueSeries = [];		
@@ -278,7 +278,7 @@ function displayGraph(sensors) {
 			}
 
 			//Add data with same units to same graph	
-			if(sensors[sensor].unit === units[i]) {
+			if(sensors[sensor].chart_no === chart_no) {
 				valueSeries.push({
 	                data: data,
 	                step: sensors[sensor].step,
@@ -294,7 +294,7 @@ function displayGraph(sensors) {
 	        }
 		}
 
-		if(unit_name[i] === 'Temperature') {
+		if(chart_names[chart_no].search('°C') !== -1) {
 			highchartOptions.yAxis = {
 				plotBands: [
 					{ // Cold
@@ -320,14 +320,14 @@ function displayGraph(sensors) {
 			        }
 			    ],
             	title: {
-						text: unit_name[i] + ' (' + units[i] + ')' 
+						text: chart_names[chart_no] //+ ' (' + units[i] + ')' 
 				}
 			}
 		} else {
 			// Add chart titles
 			highchartOptions.yAxis = {
 				title: {
-					text: unit_name[i] + ' (' + units[i] + ')' 
+					text: chart_names[chart_no] //+ ' (' + units[i] + ')' 
 				}
 			}
 		}
@@ -357,11 +357,12 @@ function main() {
 					 '1m': 'wd_avg_1m.xml',
 					 '3m': 'wd_avg_3m.xml',
 					 '1y': 'wd_avg_1y.xml',
-					 '1y': 'wd_min_1y.xml',
-					 '1y': 'wd_max_1y.xml'
+					 'min': 'wd_min_1y.xml',
+					 'max': 'wd_max_1y.xml'
 				    },
 		sensors = { 'outside_temp': {
 						description: 'Outside Temperature',
+						chart_no: 0,
 						unit: '°C',
 						graph: 'line',
 						step: null,
@@ -374,6 +375,7 @@ function main() {
 					},
 					'inside_temp': {
 						description: 'Inside Temperature',
+						chart_no: 0,
 						unit: '°C',
 						graph: 'line',
 						step: null,
@@ -386,6 +388,7 @@ function main() {
 					},
 					'inside_hum': {
 						description: 'Inside Humidity',
+						chart_no: 1,
 						unit: '%',
 						graph: 'line',
 						step: null,
@@ -398,6 +401,7 @@ function main() {
 					},
 					'precip_rate': {
 						description: 'Precipitation Rate',
+						chart_no: 2,
 						unit: 'mm',
 						graph: 'column',
 						step: null,
@@ -410,6 +414,7 @@ function main() {
 					},
 					'precip_acc': {
 						description: 'Accumulated Precipitation',
+						chart_no: 2,
 						unit: 'mm',
 						graph: 'line',
 						step: 'center',
@@ -422,6 +427,7 @@ function main() {
 					},
 					'door_open': {
 						description: 'Door Status',
+						chart_no: 3,
 						unit: '',
 						graph: 'line',
 						step: 'center',
@@ -446,12 +452,27 @@ function main() {
 		displayErrorMessage(systemError);
 	};
 
-	var sensors = xmlGetMetaData(dir + "_data/" + dataFiles[getUrlParameter()] , sensors);
+	var sensors_avg = xmlGetMetaData(dir + "_data/" + dataFiles[getUrlParameter()] , sensors);
 
-	displayValue(sensors);
+	displayValue(sensors_avg);
 	displayLogData(dir, logFiles);
-	displayGraph(sensors);
 
+	if(getUrlParameter() === '1y') { 
+		 var sensors_max = xmlGetMetaData(dir + "_data/" + dataFiles['1y'] , sensors);
+		// for(var sensor in sensors) {
+		// 	sensors_max[sensor]
+		// }
+		sensors_max['inside_temp'].chart_no = 1;
+		sensors_max['inside_hum'].chart_no = 2;
+		sensors_max['precip_rate'].chart_no = 3;
+		sensors_max['precip_acc'].chart_no = 3;
+		sensors_max['door_open'].chart_no = null;
+		displayGraph(sensors_max, ['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)']);
+		console.log(sensors_max);
+		console.log(sensors_avg);
+	} else {
+		displayGraph(sensors_avg, ['Temperature (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Door Open']);
+	}
 
 	// Highlights correct navbar location
 	var url = window.location;
