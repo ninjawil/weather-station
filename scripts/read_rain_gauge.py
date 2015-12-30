@@ -250,7 +250,7 @@ def main():
             # Get loop start time
             #-------------------------------------------------------------------
             loop_start = datetime.datetime.utcnow()
-            logger.info('Loop start time: {start_time}'.format(
+            logger.info('*** Loop start time: {start_time} ***'.format(
                 start_time=loop_start.strftime('%Y-%m-%d %H:%M:%S')))
 
 
@@ -263,7 +263,7 @@ def main():
             logger.debug('Precip tick counter RESET')
             
 
-            #If last entry was before midnight this moninng do not use accumulated
+            #If last entry was before midnight this morning do not use accumulated
             # precipitation value taken from round robin database
             last_entry_time = rrd.last_update()
 
@@ -337,10 +337,10 @@ def main():
             #-------------------------------------------------------------------
             # Add data to RRD
             #-------------------------------------------------------------------
-            logger.debug('Update time = {update_time}'.format(update_time= 'N'))
+            logger.debug('Update time = {update_time}'.format(update_time= next_reading))
             logger.debug([v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
             
-            result = rrd.update_file(timestamp= 'N',
+            result = rrd.update_file(timestamp= next_reading,
                 ds_name= [k for (k, v) in sorted(sensor_value.items()) if v!='U'],
                 values= [v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
 
