@@ -118,16 +118,19 @@ def monitor():
     switch_state       = 0             # OFF
     radio.receiver()
     decoded            = None
+    message_not_received = True
 
-    while True:
+    while message_not_received:
         # See if there is a payload, and if there is, process it
         if radio.isReceiveWaiting():
             trace("receiving payload")
             payload = radio.receive()
+            message_not_received = False
             try:
                 decoded = OpenHEMS.decode(payload)
             except OpenHEMS.OpenHEMSException as e:
                 print("Can't decode payload:" + str(e))
+                message_not_received = True
                 continue
                       
             OpenHEMS.showMessage(decoded)
