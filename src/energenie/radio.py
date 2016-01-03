@@ -9,13 +9,15 @@
 # and then pushed back into C once it is proved working.
 
 import spi
+import logging
 from tools.tools import toHexListString
 
 def warning(msg):
-    print("warning:" + str(msg))
+    trace("warning:" + str(msg))
 
 def trace(msg):
-    print(str(msg))
+    logger = logging.getLogger('root')
+    logger.debug(str(msg))
 
 
 #----- REGISTER ACCESS --------------------------------------------------------
@@ -34,7 +36,7 @@ def HRF_readreg(addr):
     spi.select()
     res = spi.frame(buf)
     spi.deselect()
-    #print(hex(res[1]))
+    #trace(hex(res[1]))
     return res[1] # all registers are 8 bit
 
 
@@ -76,7 +78,7 @@ def HRF_readfifo_burst():
 def HRF_checkreg(addr, mask, value):
     """Check to see if a register matches a specific value or not"""
     regval = HRF_readreg(addr)
-    #print("addr %d mask %d wanted %d actual %d" % (addr,mask,value,regval))
+    #trace("addr %d mask %d wanted %d actual %d" % (addr,mask,value,regval))
     return (regval & mask) == value
 
 
@@ -260,12 +262,12 @@ def HRF_send_payload(payload):
 
 def dumpPayloadAsHex(payload):
     length = payload[0]
-    print(hex(length))
+    trace(hex(length))
     if length+1 != len(payload):
-        print("warning length byte mismatch actual:%d inbuf:%d" % (len(payload), length))
+        trace("warning length byte mismatch actual:%d inbuf:%d" % (len(payload), length))
 
     for i in range(1,length+1):
-        print("[%d] = %s" % (i, hex(payload[i])))
+        trace("[%d] = %s" % (i, hex(payload[i])))
 
 
 
@@ -280,9 +282,9 @@ mode = None
 
 def init():
     spi.init_defaults()
-    print("######## RESET")
+    trace('######## RESET')
     spi.reset() # send a hardware reset to ensure radio in clean state
-    print("######## END RESET")
+    trace('######## END RESET')
 
     trace("config FSK")
     HRF_config_FSK()
