@@ -1,32 +1,58 @@
-# monitor.py  27/09/2015  D.J.Whale
-#
-# Monitor settings of Energine MiHome plugs
+# ener314rt.py  27/09/2015  D.J.Whale
 
+
+#!/usr/bin/env python
+
+'''Monitor settings of Energine MiHome plugs'''
+
+
+#===============================================================================
+# Import modules
+#===============================================================================
+
+# Standard Library
+import os
+import sys
 import time
 
+# Third party modules
+import rrdtool
 from energenie import OpenHEMS, Devices
 from energenie import radio
+
+# Application modules
+import log
 from Timer import Timer
-import os
 from messages import MESSAGE_JOIN_ACK, MESSAGE_SWITCH
 
-LOG_FILENAME = "energenie.csv"
 
+#===============================================================================
+# Trace
+#===============================================================================
 def trace(msg):
-    print(str(msg))
+
+    global logger
+
+    logger.info(str(msg))
 
 log_file = None
 
-def logMessage (msg):
+
+#===============================================================================
+# Write data to CSV file
+#===============================================================================
+def updateCSV (msg, log_filename='energenie.csv'):
     HEADINGS = 'timestamp,mfrid,prodid,sensorid,flags,switch,voltage,freq,reactive,real'
 
     global log_file
+    global logger
+
     if log_file == None:
-        if not os.path.isfile(LOG_FILENAME):
-            log_file = open(LOG_FILENAME, 'w')
+        if not os.path.isfile(log_filename):
+            log_file = open(log_filename, 'w')
             log_file.write(HEADINGS + '\n')
         else:
-            log_file = open(LOG_FILENAME, 'a') # append
+            log_file = open(log_filename, 'a') # append
 
     # get the header
     header    = msg['header']
@@ -73,13 +99,15 @@ def logMessage (msg):
     csv = "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (timestamp, mfrid, productid, sensorid, flags, switch, voltage, freq, reactive, real)
     log_file.write(csv + '\n')
     log_file.flush()
-    print(csv) # testing
+    logger.info(csv) # testing
 
 
-#----- TEST APPLICATION -------------------------------------------------------
 
 directory = {}
 
+#===============================================================================
+# 
+#===============================================================================
 def allkeys(d):
     result = ""
     for k in d:
@@ -88,9 +116,16 @@ def allkeys(d):
         result += str(k)
     return result
 
-        
+
+#===============================================================================
+# Update Directory
+#===============================================================================    
 def updateDirectory(message):
-    """Update the local directory with information about this device"""
+
+    '''Update the local directory with information about this device'''
+
+    global logger
+
     now      = time.time()
     header   = message["header"]
     sensorId = header["sensorid"]
@@ -98,9 +133,9 @@ def updateDirectory(message):
     if not directory.has_key(sensorId):
         # new device discovered
         desc = Devices.getDescription(header["mfrid"], header["productid"])
-        print("ADD device:%s %s" % (hex(sensorId), desc))
+        logger.info("ADD device:%s %s" % (hex(sensorId), desc))
         directory[sensorId] = {"header": message["header"]}
-        print(allkeys(directory))
+        logger.info(allkeys(directory))
 
     directory[sensorId]["time"] = now
     #TODO would be good to keep recs, but need to iterate through all and key by paramid,
@@ -109,9 +144,15 @@ def updateDirectory(message):
 
 
 
-
+#===============================================================================
+# Grab data
+#===============================================================================
 def monitor():
-    """Send discovery and monitor messages, and capture any responses"""
+
+    '''Send discovery and monitor messages, and capture any responses'''
+
+    # logger = logging.getLogger('root')
+    global logger
 
     # Define the schedule of message polling
     sendSwitchTimer    = Timer(60, 1)   # every n seconds offset by initial 1
@@ -129,13 +170,13 @@ def monitor():
             try:
                 decoded = OpenHEMS.decode(payload)
             except OpenHEMS.OpenHEMSException as e:
-                print("Can't decode payload:" + str(e))
+                logger.error("Can't decode payload:" + str(e))
                 message_not_received = True
                 continue
                       
-            OpenHEMS.showMessage(decoded)
+            #OpenHEMS.showMessage(decoded)
             updateDirectory(decoded)
-            logMessage(decoded)
+            updateCSV(decoded)
             
             #TODO: Should remember report time of each device,
             #and reschedule command messages to avoid their transmit slot
@@ -165,8 +206,32 @@ def monitor():
             switch_state = (switch_state+1) % 2 # toggle
         
 
-if __name__ == "__main__":
 
+#===============================================================================
+# MAIN
+#===============================================================================
+def main():
+   
+    '''Entry point for script'''
+
+    script_name = os.path.basename(sys.argv[0])
+
+    #---------------------------------------------------------------------------
+    # Set up logger
+    #---------------------------------------------------------------------------
+    global logger
+
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                        folder= '/home/pi/python/pyenergenie-master',
+                                        script= script_name[:-3]))
+
+    logger.info('')
+    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
+    
+
+    #---------------------------------------------------------------------------
+    # Set up radio
+    #---------------------------------------------------------------------------
     radio.init()
     OpenHEMS.init(Devices.CRYPT_PID)
 
@@ -176,4 +241,10 @@ if __name__ == "__main__":
     finally:
         radio.finished()
 
-# END
+
+
+#===============================================================================
+# Boiler plate
+#===============================================================================
+if __name__=='__main__':
+    main()
