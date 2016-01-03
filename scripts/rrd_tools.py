@@ -46,7 +46,7 @@ import rrdtool
 #===============================================================================
 class RrdFile:
  
-    '''Sets up the RRD file 'a thingspeak account'''
+    '''Sets up the RRD file '''
  
     def __init__(self, filename):
         self.file_name = filename
