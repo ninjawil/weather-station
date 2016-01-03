@@ -176,9 +176,12 @@ class MiPlug:
     #---------------------------------------------------------------------------
     # Grab data
     #---------------------------------------------------------------------------
-    def get_data(self):
+    def get_data(self, monitor_mode= False):
 
-        '''Send discovery and monitor messages, and capture any responses'''
+        '''Send discovery and monitor messages, and capture any responses.
+            monitor_mode    True:   will loop continously
+                            False:  will stop script once first succesful data 
+                                    packet is received (default)'''
 
         # Define the schedule of message polling
         sendSwitchTimer    = Timer(60, 1)   # every n seconds offset by initial 1
@@ -192,7 +195,10 @@ class MiPlug:
             if radio.isReceiveWaiting():
                 self.logger.info("receiving payload")
                 payload = radio.receive()
-                message_not_received = False
+
+                if monitor_mode = False:
+                    message_not_received = False
+
                 try:
                     decoded = OpenHEMS.decode(payload)
                 except OpenHEMS.OpenHEMSException as e:
