@@ -32,11 +32,21 @@ class MiPlug:
  
     '''Sets up the comms'''
  
-    def __init__(self):
+    def __init__(self, mfrid= Devices.MFRID_ENERGENIE, 
+                    productid= Devices.PRODUCTID_R1_MONITOR_AND_CONTROL, 
+                    sensorid= 0):
         
         self.logger = logging.getLogger('root')
 
         self.directory = {}
+
+        self.msg_join_ack = MESSAGE_JOIN_ACK
+        self.msg_join_ack['header']['mfrid'] = mfrid
+        self.msg_join_ack['header']['productid'] = productid
+        self.msg_join_ack['header']['sensorid'] = sensorid
+
+        self.msg_switch = MESSAGE_SWITCH
+        self.msg_switch['header']['sensorid'] = sensorid
         
         radio.init()
         OpenHEMS.init(Devices.CRYPT_PID)
@@ -182,7 +192,7 @@ class MiPlug:
             monitor_mode    True:   will loop continously
                             False:  will stop script once first succesful data 
                                     packet is received (default)
-            short_msg    	True:   returns long detailed message
+            short_msg       True:   returns long detailed message
                             False:  returns short message (default)'''
 
         # Define the schedule of message polling
@@ -218,7 +228,7 @@ class MiPlug:
                 # assume only 1 rec in a join, for now
                 if len(decoded["recs"])>0 and decoded["recs"][0]["paramid"] == OpenHEMS.PARAM_JOIN:
                     #TODO: write OpenHEMS.getFromMessage("header_mfrid")
-                    response = OpenHEMS.alterMessage(MESSAGE_JOIN_ACK,
+                    response = OpenHEMS.alterMessage(self.msg_join_ack,
                         header_mfrid=decoded["header"]["mfrid"],
                         header_productid=decoded["header"]["productid"],
                         header_sensorid=decoded["header"]["sensorid"])
@@ -227,22 +237,27 @@ class MiPlug:
                     radio.transmit(p)
                     radio.receiver()
 
-            if sendSwitchTimer.check() and decoded != None and decoded["header"]["productid"] in [Devices.PRODUCTID_C1_MONITOR, Devices.PRODUCTID_R1_MONITOR_AND_CONTROL]:
-                request = OpenHEMS.alterMessage(MESSAGE_SWITCH,
-                    header_sensorid=decoded["header"]["sensorid"],
-                    recs_0_value=switch_state)
-                p = OpenHEMS.encode(request)
-                radio.transmitter()
-                radio.transmit(p)
-                radio.receiver()
-                switch_state = (switch_state+1) % 2 # toggle
 
-	if short_msg:
-		decoded = self.clean(decoded)
-			
+    if short_msg:
+        decoded = self.clean(decoded)
+            
         return decoded
- 
 
+
+    #---------------------------------------------------------------------------
+    # Send data to switch
+    #---------------------------------------------------------------------------
+    def send_data(self, switch_state):
+
+        '''Send data to switch'''
+
+        request = OpenHEMS.alterMessage(self.msg_switch, recs_0_value=switch_state)
+        p = OpenHEMS.encode(request)
+        radio.transmitter()
+        radio.transmit(p)
+        radio.receiver()
+ 
+        
     #---------------------------------------------------------------------------
     # Finish comms
     #---------------------------------------------------------------------------
