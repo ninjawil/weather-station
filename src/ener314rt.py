@@ -195,8 +195,6 @@ class MiPlug:
                             False:  returns short message (default)'''
 
         # Define the schedule of message polling
-        sendSwitchTimer    = Timer(60, 1)   # every n seconds offset by initial 1
-        switch_state       = 0             # OFF
         radio.receiver()
         decoded            = None
         message_not_received = True
