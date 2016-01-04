@@ -23,7 +23,6 @@ from energenie import radio
 # Application modules
 import logging
 import logging.handlers
-from Timer import Timer
 from messages import MESSAGE_JOIN_ACK, MESSAGE_SWITCH
 
 
