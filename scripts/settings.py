@@ -94,4 +94,6 @@ SENSOR_SET= {   'inside_temp':  (True, PIN_37, '*C', -50, 100, 'GAUGE'),
                 'precip_rate':  (True, PIN_38, 'mm', -5,  50,  'GAUGE'),
                 'precip_acc':   (True, PIN_38, 'mm', -5,  500, 'GAUGE'),
                 'outside_temp': (True, '28-0414705bceff',
-                                               '*C', -50, 50,  'GAUGE')}
+                                               '*C', -50, 50,  'GAUGE'),
+                'sw_status':    (True, '',     '',   -1,  2,   'GAUGE'),
+                'sw_power':     (True, '', 'W',  -9999,  9999, 'GAUGE')}
