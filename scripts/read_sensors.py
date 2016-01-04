@@ -132,7 +132,6 @@ def main():
             DHT22_sensor = DHT22.sensor(pi, sensor['inside_temp'].ref)
             DHT22_sensor.trigger()
             time.sleep(0.2)  #Do not over poll DHT22
-            DHT22_sensor.cancel()
 
             temp = DHT22_sensor.temperature()
             hum = DHT22_sensor.humidity() 
@@ -150,6 +149,9 @@ def main():
         except ValueError:
             logger.warning('Failed to read DHT22 ({value_error})'.format(
                 value_error=ValueError))
+                
+        finally:
+            DHT22_sensor.cancel()
 
 
     #-------------------------------------------------------------------
@@ -167,23 +169,42 @@ def main():
 
 
     #-------------------------------------------------------------------
-    # Get outside temperature
+    # Get switch data
     #-------------------------------------------------------------------
-    if sensor['outside_temp'].enable:
+    if sensor['sw_status'].enable or sensor['sw_power'].enable:
         try:
-            out_sensor = DS18B20.DS18B20(sensor['outside_temp'].ref, s.W1_DEVICE_PATH)
-            sensor_value['outside_temp'] = out_sensor.get_temp()
-
-            if sensor_value['outside_temp'] > 900:
-                logger.warning('Failed to read DS18B20 sensor (temp > 900)')
-                sensor_value['outside_temp'] = 'U'
+            switch = MiPlug()
+            switch_data = switch.get_data()
+            
+            if (switch_data['switch'] == 'U') or (switch_data['real'] == 'U'):
+                raise ValueError
             else:
-                logger.info('Reading value from DS18B20 sensor... OK')
+                logger.info('Reading value from switch data... OK')
+                if sensor['sw_status'].enable:
+                    sensor_value['sw_status'] = switch_data['switch']
+                if sensor['sw_power'].enable:
+                    sensor_value['sw_power']  = switch_data['real']
 
         except Exception, e:
-            logger.warning('Failed to read DS18B20 ({value_error})'.format(
+            logger.warning('Failed to read switch data ({value_error})'.format(
                 value_error=e), exc_info=True)
-        
+                
+        finally:
+            plug.close()
+
+
+    #-------------------------------------------------------------------
+    # Get door switch values
+    #-------------------------------------------------------------------
+    if sensor['door_open'].enable:
+        try:
+            pi.set_mode(sensor['door_open'].ref, pigpio.INPUT)
+            sensor_value['door_open'] = pi.read(sensor['door_open'].ref)
+            logger.info('Reading value from door sensor... OK')
+
+        except ValueError:
+            logger.warning('Failed to read door sensor ({value_error})'.format(
+                value_error=ValueError))
 
 
     #-------------------------------------------------------------------
