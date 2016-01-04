@@ -16,7 +16,6 @@ import sys
 import time
 
 # Third party modules
-import rrdtool
 from energenie import OpenHEMS, Devices
 from energenie import radio
 
