@@ -176,12 +176,14 @@ class MiPlug:
     #---------------------------------------------------------------------------
     # Grab data
     #---------------------------------------------------------------------------
-    def get_data(self, monitor_mode= False):
+    def get_data(self, monitor_mode= False, short_msg= True):
 
         '''Send discovery and monitor messages, and capture any responses.
             monitor_mode    True:   will loop continously
                             False:  will stop script once first succesful data 
-                                    packet is received (default)'''
+                                    packet is received (default)
+            short_msg    	True:   returns long detailed message
+                            False:  returns short message (default)'''
 
         # Define the schedule of message polling
         sendSwitchTimer    = Timer(60, 1)   # every n seconds offset by initial 1
@@ -235,6 +237,9 @@ class MiPlug:
                 radio.receiver()
                 switch_state = (switch_state+1) % 2 # toggle
 
+		if short_msg:
+			decoded = self.clean(decoded)
+			
         return decoded
  
 
