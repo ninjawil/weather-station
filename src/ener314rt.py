@@ -237,9 +237,8 @@ class MiPlug:
                     radio.transmit(p)
                     radio.receiver()
 
-
-    if short_msg:
-        decoded = self.clean(decoded)
+        if short_msg:
+            decoded = self.clean(decoded)
             
         return decoded
 
