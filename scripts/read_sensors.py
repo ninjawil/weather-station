@@ -52,7 +52,7 @@ import DHT22
 # Application modules
 import log
 import DS18B20.DS18B20 as DS18B20
-import energenie.src.ener314rt as ener314rt
+import pyenergenie.src.ener314rt as ener314rt
 import settings as s
 import rrd_tools
 
