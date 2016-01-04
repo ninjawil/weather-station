@@ -52,6 +52,7 @@ import DHT22
 # Application modules
 import log
 import DS18B20.DS18B20 as DS18B20
+import energenie.src.ener314rt as ener314rt
 import settings as s
 import rrd_tools
 
@@ -173,10 +174,10 @@ def main():
     #-------------------------------------------------------------------
     if sensor['sw_status'].enable or sensor['sw_power'].enable:
         try:
-            switch = MiPlug()
+            switch = ener314rt.MiPlug()
             switch_data = switch.get_data()
             
-            if (switch_data['switch'] == 'U') or (switch_data['real'] == 'U'):
+            if switch_data['switch'] == 'U' or switch_data['real'] == 'U':
                 raise ValueError
             else:
                 logger.info('Reading value from switch data... OK')
