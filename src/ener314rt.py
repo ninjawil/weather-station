@@ -51,12 +51,12 @@ class MiPlug:
         
  
     #---------------------------------------------------------------------------
-    # Write data to CSV file
+    # Create short message
     #---------------------------------------------------------------------------
     def clean(self, msg):
 
         '''Takes message returned from radio and returns a dictionary with
-        basic values'''
+        only essential values'''
 
         data = {'timestamp': 'U',
                 'mfrid': 'U',
@@ -101,6 +101,8 @@ class MiPlug:
     # Write data to CSV file
     #---------------------------------------------------------------------------
     def updateCSV (self, msg, log_filename='energenie.csv'):
+        
+        '''Writes message data to CSV file'''
         
         HEADINGS = 'timestamp,mfrid,prodid,sensorid,flags,switch,voltage,freq,reactive,real'
 
