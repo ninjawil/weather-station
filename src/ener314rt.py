@@ -237,8 +237,8 @@ class MiPlug:
                 radio.receiver()
                 switch_state = (switch_state+1) % 2 # toggle
 
-		if short_msg:
-			decoded = self.clean(decoded)
+	if short_msg:
+		decoded = self.clean(decoded)
 			
         return decoded
  
