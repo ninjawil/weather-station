@@ -218,6 +218,10 @@ class MiPlug:
                     continue
                           
                 self.updateDirectory(decoded)
+
+                if self.msg_join_ack['header']['sensorid'] == 0 or self.msg_switch['header']['sensorid'] == 0:
+                    self.msg_join_ack['header']['sensorid'] = decoded["header"]["sensorid"] 
+                    self.msg_switch['header']['sensorid']   = decoded["header"]["sensorid"]
                 
                 #TODO: Should remember report time of each device,
                 #and reschedule command messages to avoid their transmit slot
@@ -312,6 +316,7 @@ def main():
     try:
         data = plug.get_data()
         plug.updateCSV(data)
+        plug.send_data(True)
 
     finally:
         plug.close()
