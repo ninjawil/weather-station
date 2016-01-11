@@ -108,7 +108,8 @@ class MiPlug:
 
         log_file = None
 
-        data_received = self.clean(msg)
+        if 'header' in msg:
+            msg = self.clean(msg)
 
         if log_file == None:
             if not os.path.isfile(log_filename):
@@ -119,28 +120,28 @@ class MiPlug:
 
         flags= [1,1,1,1,1]
 
-        if data_received['switch'] == 'U':
+        if msg['switch'] == 'U':
             flags[0] = 0
-        if data_received['voltage'] == 'U':
+        if msg['voltage'] == 'U':
             flags[1] = 0
-        if data_received['freq'] == 'U':
+        if msg['freq'] == 'U':
             flags[2] = 0
-        if data_received['reactive'] == 'U':
+        if msg['reactive'] == 'U':
             flags[3] = 0
-        if data_received['real'] == 'U':
+        if msg['real'] == 'U':
             flags[4] = 0
 
         csv = '{timestamp}, {mfrid}, {productid}, {sensorid}, {flags}, {switch}, {voltage}, {freq}, {reactive}, {real}'.format(
-                timestamp= data_received['timestamp'],
-                mfrid= data_received['mfrid'],
-                productid= data_received['productid'],
-                sensorid= data_received['sensorid'],
+                timestamp= msg['timestamp'],
+                mfrid= msg['mfrid'],
+                productid= msg['productid'],
+                sensorid= msg['sensorid'],
                 flags= "".join([str(a) for a in flags]),
-                switch= data_received['switch'],
-                voltage= data_received['voltage'],
-                freq= data_received['freq'],
-                reactive= data_received['reactive'],
-                real= data_received['real'])
+                switch= msg['switch'],
+                voltage= msg['voltage'],
+                freq= msg['freq'],
+                reactive= msg['reactive'],
+                real= msg['real'])
 
         log_file.write(csv + '\n')
         log_file.flush()
@@ -206,7 +207,7 @@ class MiPlug:
                 self.logger.info("receiving payload")
                 payload = radio.receive()
 
-                if monitor_mode = False:
+                if monitor_mode == False:
                     message_not_received = False
 
                 try:
