@@ -55,13 +55,14 @@ else:
 
 
 # --- System set up ---
-UPDATE_RATE          = 300 # seconds
-W1_DEVICE_PATH       = '/sys/bus/w1/devices/'
-DEBOUNCE_MICROS      = 0.250 #seconds
-SYS_FOLDER           = '/home/pi/weather'
-DATA_FOLDER          = '/data/'
-TICK_DATA            = 'tick_count'
-
+UPDATE_RATE         = 300 # seconds
+W1_DEVICE_PATH      = '/sys/bus/w1/devices/'
+DEBOUNCE_MICROS     = 0.250 #seconds
+SYS_FOLDER          = '/home/pi/weather'
+DATA_FOLDER         = '/data/'
+TICK_DATA           = 'tick_count'
+TEMP_HEATER_ON      = 10.0  # *C      
+TEMP_HYSTERISIS     =  5.0  # *C
 
 # --- RRDTool set up ---
 RRDTOOL_RRD_FILE     = 'weather_data.rrd'
