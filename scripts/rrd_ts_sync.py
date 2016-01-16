@@ -173,26 +173,28 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
                 if value is not None:
                     tx_data[sensor_to_field[sensor]] = str(value)
 
-            logger.info(tx_data)
-            response = ts_acc.update_channel(tx_data)
-            logger.info('Thingspeak update: {reason}'.format(reason= response.reason))
-            
-            #Thingspeak update rate is limited to 15s per entry
-            time.sleep(20)
-            
-            n = 0
-            while response.status_code is not 200 and n < 3:
-                time.sleep(20)
+            # Ignore entries without field entries
+            if len(tx_data) == 2:
+                logger.info(tx_data)
                 response = ts_acc.update_channel(tx_data)
-                logger.error('Retry: {reason}'.format(reason= response.reason))
-                n += 1 
-
-            if n >= 3:
-                logger.error('Failed to update Thingspeak. Exiting...')
-                sys.exit()          
-            else:
+                logger.info('Thingspeak update: {reason}'.format(reason= response.reason))
+                
                 #Thingspeak update rate is limited to 15s per entry
                 time.sleep(20)
+                
+                n = 0
+                while response.status_code is not 200 and n < 3:
+                    time.sleep(20)
+                    response = ts_acc.update_channel(tx_data)
+                    logger.error('Retry: {reason}'.format(reason= response.reason))
+                    n += 1 
+
+                if n >= 3:
+                    logger.error('Failed to update Thingspeak. Exiting...')
+                    sys.exit()          
+                else:
+                    #Thingspeak update rate is limited to 15s per entry
+                    time.sleep(20)
 
         
         logger.info('--- Script Finished ---')
