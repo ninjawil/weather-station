@@ -27,7 +27,7 @@ import rrd_tools
 #===============================================================================
 # MAIN
 #===============================================================================
-def operate_switch(temp_on, temp_hys, sensors, rrd_res, rrd_file):
+def operate_switch(temp_on, temp_hys, sensors, rrd_res, rrd_file, log_folder):
     
     '''
     Operates a MiPlug switch depending on the last temperature value entered
@@ -48,8 +48,8 @@ def operate_switch(temp_on, temp_hys, sensors, rrd_res, rrd_file):
     #---------------------------------------------------------------------------
     # Set up logger
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
+    logger = log.setup('root', '{folder}/{script}.log'.format(
+                                                    folder= log_folder,
                                                     script= script_name[:-3]))
 
     logger.info('')
@@ -156,7 +156,8 @@ def main():
                     s.UPDATE_RATE, 
                     '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
                                             fd2= s.DATA_FOLDER,
-                                            fl= s.RRDTOOL_RRD_FILE))
+                                            fl= s.RRDTOOL_RRD_FILE),
+                    '{fd1}/logs'.format(fd1= s.SYS_FOLDER))
 
 
 #===============================================================================
