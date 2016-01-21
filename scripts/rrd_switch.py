@@ -64,6 +64,16 @@ def operate_switch(temp_on, temp_hys, sensors, rrd_res, rrd_file):
     sensor = {k: sensor_settings(*sensors[k]) for k in sensors}
 
 
+
+    #-----------------------------------------------------------------------
+    # CHECK SWITCH CONTROL IS ENABLED
+    #-----------------------------------------------------------------------
+    if not sensor['sw_status'].enable or not sensor['sw_power'].enable:
+        logger.info('Switch control disabled. Exiting...'.format(
+        error_v=e), exc_info=True)
+        sys.exit()
+
+
     try:
         #-----------------------------------------------------------------------
         # CHECK RRD FILE
@@ -97,8 +107,8 @@ def operate_switch(temp_on, temp_hys, sensors, rrd_res, rrd_file):
         rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
                         rrd_entry[1], rrd_entry[2]) 
 
-        logger.info('Number of entries to update: {feeds}'.format(
-                            feeds= len(rrd_entry.value)-2))
+        # Grab the last inside temperature value
+        inside_temp = rrd_entry.value[-1]['inside_temp']
 
     except Exception, e:
         logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
@@ -106,32 +116,28 @@ def operate_switch(temp_on, temp_hys, sensors, rrd_res, rrd_file):
         sys.exit()
 
 
-
-
     #-------------------------------------------------------------------
-    # Get switch data
+    # Operate switch
     #-------------------------------------------------------------------
-    if sensor['sw_status'].enable or sensor['sw_power'].enable:
-        try:
-            switch = ener314rt.MiPlug()
-            switch_data = switch.get_data()
+    try:
+        switch = ener314rt.MiPlug()
+
+        # Turn ON/OFF heater depending on inside temp value from RRD
+        if inside_temp > (temp_on + temp_hys):
+            switch.send_data(True)
+            logger.info('Inside temperature is {temp}, switch turned ON'.format(
+                temp= inside_temp))
+        elif inside_temp < (temp_on - temp_hys):
+            switch.send_data(False)
+            logger.info('Inside temperature is {temp}, switch turned OFF'.format(
+                temp= inside_temp))
+       
+    except Exception, e:
+        logger.warning('Failed to set switch ({value_error})'.format(
+            value_error=e), exc_info=True)
             
-            if switch_data['switch'] == 'U' or switch_data['real'] == 'U':
-                raise ValueError
-            else:
-                logger.info('Reading value from switch data... OK')
-                if sensor['sw_status'].enable:
-                    sensor_value['sw_status'] = switch_data['switch']
-                if sensor['sw_power'].enable:
-                    sensor_value['sw_power']  = switch_data['real']
-
-        except Exception, e:
-            logger.warning('Failed to read switch data ({value_error})'.format(
-                value_error=e), exc_info=True)
-                
-        finally:
-            plug.close()
-
+    finally:
+        plug.close()
 
 
     #-------------------------------------------------------------------
