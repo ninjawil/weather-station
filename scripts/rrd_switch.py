@@ -44,7 +44,6 @@ def operate_switch(temp_on, temp_hys, sensors, rrd_res, rrd_file, log_folder):
 
     script_name = os.path.basename(sys.argv[0])
 
-
     #---------------------------------------------------------------------------
     # Set up logger
     #---------------------------------------------------------------------------
@@ -55,24 +54,6 @@ def operate_switch(temp_on, temp_hys, sensors, rrd_res, rrd_file, log_folder):
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name)) 
     
-
-    #---------------------------------------------------------------------------
-    # SET UP SENSOR VARIABLES
-    #---------------------------------------------------------------------------  
-    sensor_settings = collections.namedtuple('sensor_settings',
-                                             'enable ref unit min max type')     
-    sensor = {k: sensor_settings(*sensors[k]) for k in sensors}
-
-
-
-    #-----------------------------------------------------------------------
-    # CHECK SWITCH CONTROL IS ENABLED
-    #-----------------------------------------------------------------------
-    if not sensor['sw_status'].enable or not sensor['sw_power'].enable:
-        logger.info('Switch control disabled. Exiting...'.format(
-        error_v=e), exc_info=True)
-        sys.exit()
-
 
     try:
         #-----------------------------------------------------------------------
@@ -151,13 +132,27 @@ def operate_switch(temp_on, temp_hys, sensors, rrd_res, rrd_file, log_folder):
 # MAIN
 #===============================================================================
 def main():
-    operate_switch( s.TEMP_HEATER_ON, s.TEMP_HYSTERISIS,
-                    list(s.SENSOR_SET.keys()), 
-                    s.UPDATE_RATE, 
-                    '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                            fd2= s.DATA_FOLDER,
-                                            fl= s.RRDTOOL_RRD_FILE),
-                    '{fd1}/logs'.format(fd1= s.SYS_FOLDER))
+
+    #---------------------------------------------------------------------------
+    # SET UP SENSOR VARIABLES
+    #---------------------------------------------------------------------------  
+    sensor_settings = collections.namedtuple('sensor_settings',
+                                             'enable ref unit min max type')     
+    sensor = {k: sensor_settings(*sensors[k]) for k in sensors}
+
+
+    #-----------------------------------------------------------------------
+    # OPERATE SWITCH IF ENABLED
+    #-----------------------------------------------------------------------
+    if sensor['sw_status'].enable or sensor['sw_power'].enable:
+        operate_switch( s.TEMP_HEATER_ON, 
+                        s.TEMP_HYSTERISIS,
+                        list(s.SENSOR_SET.keys()), 
+                        s.UPDATE_RATE, 
+                        '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                fd2= s.DATA_FOLDER,
+                                                fl= s.RRDTOOL_RRD_FILE),
+                        '{fd1}/logs'.format(fd1= s.SYS_FOLDER))
 
 
 #===============================================================================
