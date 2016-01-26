@@ -66,6 +66,7 @@ Add the following line to 'sudo crontab -e'
 ```
 @reboot sleep 60 && python /home/pi/weather/scripts/read_rain_gauge.py & # weather station job
 0-55/5 * * * * python /home/pi/weather/scripts/read_sensors.py # weather station job
+1-56/5 * * * * python /home/pi/weather/scripts/rrd_switch.py # weather station miplug job
 2-32/30 * * * * python /home/pi/weather/scripts/rrd_ts_sync.py # weather station thingspeak job
 17-47/30 * * * * python /home/pi/weather/scripts/rrd_export.py # weather station xml export job
 ```

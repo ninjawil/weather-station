@@ -63,6 +63,7 @@ DATA_FOLDER         = '/data/'
 TICK_DATA           = 'tick_count'
 TEMP_HEATER_ON      = 10.0  # *C      
 TEMP_HYSTERISIS     =  5.0  # *C
+MIPLUG_SENSOR_ID    = 1379
 
 # --- RRDTool set up ---
 RRDTOOL_RRD_FILE     = 'weather_data.rrd'
