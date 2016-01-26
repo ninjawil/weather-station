@@ -71,7 +71,7 @@ class RrdFile:
         rrd_set = [self.file_name, 
                     '--step', '{step}'.format(step=update_rate), 
                     '--start', '{start_t:.0f}'.format(start_t=start_time)]
-                    
+
         #Prepare data sources
         rrd_set += ['DS:{ds_name}:{ds_type}:{ds_hb}:{ds_min}:{ds_max}'.format(
                                     ds_name=i,
@@ -83,10 +83,10 @@ class RrdFile:
 
         #Prepare RRA files
         rrd_set += ['RRA:{cf}:0.5:{steps}:{rows}'.format(
-                                    cf=rra[i].cf,
-                                    steps=str((rra[i].res*60)/update_rate),
-                                    rows=str((rra[i].period*24*60)/rra_set[i+1]))
-                        for i in sorted(rra)]
+                                    cf=rra[key].cf,
+                                    steps=str((rra[key].res*60)/update_rate),
+                                    rows=str((rra[key].period*24*60)/rra[key].res))
+                        for key in sorted(rra)]
 
         self.logger.debug(rrd_set)
 

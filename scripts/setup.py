@@ -39,6 +39,7 @@
 # Standard Library
 import os
 import sys
+import time
 
 
 # Third party modules
@@ -72,8 +73,10 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP RRD DATA AND TOOL
     #---------------------------------------------------------------------------
-    rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
-
+    rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                        fd2= s.DATA_FOLDER,
+                                                        fl= s.RRDTOOL_RRD_FILE))
+    
     if not os.path.exists(s.RRDTOOL_RRD_FILE):
         rrd.create_file(s.SENSOR_SET, 
                         s.RRDTOOL_RRA, 
