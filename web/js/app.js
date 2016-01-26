@@ -104,7 +104,7 @@ function displayValue(sensors) {
 				value = (sensors[sensor].readings.entry_value[arrayLength-2] >= 0.5) ? 'Open' : 'Closed';
 				break;
 
-			case 'heater_stat':
+			case 'sw_status':
 				value = (sensors[sensor].readings.entry_value[arrayLength-2] >= 0.5) ? 'On' : 'Off';
 				break;
 
@@ -326,11 +326,14 @@ function displayGraph(sensors, chart_names) {
 		} else {
 			// Add chart titles
 			highchartOptions.yAxis = {
+				opposite: sensors[sensor].opposite,
 				title: {
 					text: chart_names[chart_no] //+ ' (' + units[i] + ')' 
 				}
 			}
 		}
+
+		
 
 		// Add data values
 		highchartOptions.series = valueSeries;
@@ -348,7 +351,7 @@ function main() {
 
 	var systemError = 0,
 		dir = 'weather',
-		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log'],
+		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log', 'rrd_switch.log'],
 		dataFiles = {'':   'wd_last_3h.xml',
 					 '3h': 'wd_last_3h.xml',
 					 '1d': 'wd_avg_1d.xml',
@@ -364,10 +367,11 @@ function main() {
 						description: 'Outside Temperature',
 						chart_no: 0,
 						unit: '°C',
-						graph: 'line',
+						graph: 'spline',
 						step: null,
 						color: 4,
 						decimals: 2,
+						opposite: false,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -377,10 +381,11 @@ function main() {
 						description: 'Inside Temperature',
 						chart_no: 0,
 						unit: '°C',
-						graph: 'line',
+						graph: 'spline',
 						step: null,
 						color: 1,
 						decimals: 2,
+						opposite: false,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -390,10 +395,11 @@ function main() {
 						description: 'Inside Humidity',
 						chart_no: 1,
 						unit: '%',
-						graph: 'line',
+						graph: 'spline',
 						step: null,
 						color: 2,
 						decimals: 2,
+						opposite: false,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -403,10 +409,11 @@ function main() {
 						description: 'Precipitation Rate',
 						chart_no: 2,
 						unit: 'mm',
-						graph: 'column',
-						step: null,
+						graph: 'line',
+						step: 'center',
 						color: 3,
 						decimals: 3,
+						opposite: false,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -416,10 +423,11 @@ function main() {
 						description: 'Accumulated Precipitation',
 						chart_no: 2,
 						unit: 'mm',
-						graph: 'line',
+						graph: 'spline',
 						step: 'center',
 						color: 0,
 						decimals: 3,
+						opposite: false,
 						readings: {
 							entry_time: [],
 							entry_value: []
@@ -427,25 +435,46 @@ function main() {
 					},
 					'door_open': {
 						description: 'Door Status',
-						chart_no: 3,
+						chart_no: 4,
 						unit: '',
 						graph: 'line',
 						step: 'center',
 						color: 5,
 						decimals: 0,
+						opposite: false,
+						readings: {
+							entry_time: [],
+							entry_value: []
+						}
+					},
+					'sw_status': {
+						description: 'Switch Status',
+						chart_no: 3,
+						unit: '',
+						graph: 'line',
+						step: 'center',
+						color: 7,
+						decimals: 0,
+						opposite: true,
+						readings: {
+							entry_time: [],
+							entry_value: []
+						}
+					},
+					'sw_power': {
+						description: 'Switch Power',
+						chart_no: 3,
+						unit: 'W',
+						graph: 'spline',
+						step: null,
+						color: 6,
+						decimals: 3,
+						opposite: false,
 						readings: {
 							entry_time: [],
 							entry_value: []
 						}
 					}
-					// 'heater_stat': {
-					// 	description: 'Heater Status',
-					// 	unit: '',
-					// 	readings: {
-					// 		entry_time: [],
-					// 		entry_value: []
-					// 	}
-					// }
 				};
 
 	if(systemError) {
@@ -471,7 +500,7 @@ function main() {
 		console.log(sensors_max);
 		console.log(sensors_avg);
 	} else {
-		displayGraph(sensors_avg, ['Temperature (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Door Open']);
+		displayGraph(sensors_avg, ['Temperature (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Heater Status', 'Door Open']);
 	}
 
 	// Highlights correct navbar location
