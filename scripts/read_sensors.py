@@ -183,6 +183,25 @@ def main():
 
 
     #-------------------------------------------------------------------
+    # Get outside temperature
+    #-------------------------------------------------------------------
+    if sensor['outside_temp'].enable:
+        try:
+            out_sensor = DS18B20.DS18B20(sensor['outside_temp'].ref, s.W1_DEVICE_PATH)
+            sensor_value['outside_temp'] = out_sensor.get_temp()
+
+            if sensor_value['outside_temp'] > 900:
+                logger.warning('Failed to read DS18B20 sensor (temp > 900)')
+                sensor_value['outside_temp'] = 'U'
+            else:
+                logger.info('Reading value from DS18B20 sensor... OK')
+
+        except Exception, e:
+            logger.warning('Failed to read DS18B20 ({value_error})'.format(
+                value_error=e), exc_info=True)
+        
+
+    #-------------------------------------------------------------------
     # Add data to RRD
     #-------------------------------------------------------------------
     logger.debug('Update time = {update_time}'.format(update_time= 'N'))#rrd.next_update()))
