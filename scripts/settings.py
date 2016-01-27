@@ -33,9 +33,6 @@ DEBOUNCE_MICROS     = 0.250 #seconds
 SYS_FOLDER          = '/home/pi/weather'
 DATA_FOLDER         = '/data/'
 TICK_DATA           = 'tick_count'
-TEMP_HEATER_ON      = 10.0  # *C      
-TEMP_HYSTERISIS     =  5.0  # *C
-MIPLUG_SENSOR_ID    = 1379
 
 # --- RRDTool set up ---
 RRDTOOL_RRD_FILE     = 'weather_data.rrd'
@@ -52,15 +49,6 @@ RRDTOOL_RRA =  {'wd_last_3h.xml': ('LAST',       5,  0.125),
                 'wd_min_1y.xml':  ('MIN',     1440,    365), 
                 'wd_max_1y.xml':  ('MAX',     1440,    365)}
  
-
-# --- Set up thingspeak ----
-THINGSPEAK_HOST_ADDR         = 'https://api.thingspeak.com'
-THINGSPEAK_API_KEY_FILENAME  = '/thingspeak.txt'
-THINGSPEAK_CHANNEL_ID        = '39722'
-
-
-# --- Set up rain fall reed switch ----
-PRECIP_TICK_MEASURE   = 0.300 #millimeters per tick
 
 SENSOR_SET= {   'inside_temp':  (True, PIN_37, '*C', -50, 100, 'GAUGE'),
                 'inside_hum':   (True, PIN_37, '%',  -1,  101, 'GAUGE'),

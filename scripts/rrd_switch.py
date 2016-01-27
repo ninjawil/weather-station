@@ -13,6 +13,7 @@ import os
 import sys
 import time
 import collections
+from ConfigParser import SafeConfigParser
 
 # Third party modules
 
@@ -27,7 +28,7 @@ import rrd_tools
 #===============================================================================
 # MAIN
 #===============================================================================
-def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file, log_folder):
+def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file):
     
     '''
     Operates a MiPlug switch depending on the last temperature value entered
@@ -47,9 +48,7 @@ def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file, log
     #---------------------------------------------------------------------------
     # Set up logger
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/{script}.log'.format(
-                                                    folder= log_folder,
-                                                    script= script_name[:-3]))
+    logger = log.setup('root', '../logs/{script}.log'.format(script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name)) 
@@ -92,7 +91,7 @@ def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file, log
         inside_temp = float(
             rrd_entry.value[len(rrd_entry.value)-2][rrd_entry.ds.index('inside_temp') or 0])
 
-        logger.info('Inside temperature is {temp}*C'.format(temp= inside_temp))
+        logger.info(u'Inside temperature is {temp}\u00B0C'.format(temp= inside_temp))
 
     except Exception, e:
         logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
@@ -142,19 +141,34 @@ def main():
                                              'enable ref unit min max type')     
     sensor = {k: sensor_settings(*s.SENSOR_SET[k]) for k in s.SENSOR_SET}
 
+
+    #-------------------------------------------------------------------
+    # Get data from config file
+    #-------------------------------------------------------------------
+    try:
+        config = SafeConfigParser()
+        config.read('../config.ini')
+        on_temp  = config.getfloat('heater', 'TEMP_HEATER_ON')
+        hys_temp = config.getfloat('heater', 'TEMP_HYSTERISIS')
+        switch_id = config.getint('heater', 'MIPLUG_SENSOR_ID')
+
+    except Exception, e:
+        print(e)
+        sys.exit()
+
+
     #-----------------------------------------------------------------------
     # OPERATE SWITCH IF ENABLED
     #-----------------------------------------------------------------------
     if sensor['sw_status'].enable or sensor['sw_power'].enable:
-        operate_switch( s.TEMP_HEATER_ON, 
-                        s.TEMP_HYSTERISIS,
+        operate_switch( on_temp, 
+                        hys_temp,
                         list(s.SENSOR_SET.keys()),
-                        s.MIPLUG_SENSOR_ID, 
+                        switch_id, 
                         s.UPDATE_RATE, 
                         '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
                                                 fd2= s.DATA_FOLDER,
-                                                fl= s.RRDTOOL_RRD_FILE),
-                        '{fd1}/logs'.format(fd1= s.SYS_FOLDER))
+                                                fl= s.RRDTOOL_RRD_FILE))
 
 
 #===============================================================================

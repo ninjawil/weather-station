@@ -23,6 +23,8 @@ import threading
 import time
 import datetime
 import collections
+from ConfigParser import SafeConfigParser
+
 
 # Third party modules
 import pigpio
@@ -103,9 +105,7 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
-                                                    script= script_name[:-3]))
+    logger = log.setup('root', '../logs/{script}.log'.format(script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))
@@ -229,10 +229,25 @@ def main():
 
 
             #-------------------------------------------------------------------
+            # Get data from config file
+            #-------------------------------------------------------------------
+            try:
+                config = SafeConfigParser()
+                config.read('../config.ini')
+                tick_measure  = config.getfloat('rain_gauge', 'PRECIP_TICK_MEASURE')
+                logger.info(u'Rain gauge tick {meas}mm'.format(meas= tick_measure))
+
+            except Exception, e:
+                logger.critical('Failed to get config data ({value_error})'.format(
+                    value_error=e), exc_info=True)
+                sys.exit()
+
+
+            #-------------------------------------------------------------------
             # Get rain fall measurement
             #-------------------------------------------------------------------
             sensor_value['precip_acc'] = 0.00
-            sensor_value['precip_rate'] = precip_tick_count * s.PRECIP_TICK_MEASURE
+            sensor_value['precip_rate'] = precip_tick_count * tick_measure
             precip_tick_count = 0.00
             logger.debug('Precip tick counter RESET')
             

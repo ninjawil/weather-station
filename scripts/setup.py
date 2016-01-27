@@ -62,9 +62,7 @@ def main():
     #---------------------------------------------------------------------------
     # Set up logger
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
-                                                    script= script_name[:-3]))
+    logger = log.setup('root', '../logs/{script}.log'.format(script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name)) 

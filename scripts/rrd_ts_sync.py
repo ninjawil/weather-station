@@ -9,6 +9,7 @@ import sys
 import datetime
 import time
 import collections
+from ConfigParser import SafeConfigParser
 
 # Third party modules
 
@@ -52,9 +53,7 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
-                                                    script= script_name[:-3]))
+    logger = log.setup('root', '../logs/{script}.log'.format(script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))  
@@ -210,10 +209,29 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
 # MAIN
 #===============================================================================
 def main():
-    sync(   s.THINGSPEAK_HOST_ADDR, 
+
+    #-------------------------------------------------------------------
+    # Get data from config file
+    #-------------------------------------------------------------------
+    try:
+        config = SafeConfigParser()
+        config.read('../config.ini')
+        ts_host_addr  = config.get('thingspeak', 'THINGSPEAK_HOST_ADDR')
+        ts_channel_id = config.get('thingspeak', 'THINGSPEAK_CHANNEL_ID')
+        ts_api_key    = config.get('thingspeak', 'THINGSPEAK_API_KEY_FILENAME')
+        
+    except Exception, e:
+        print(e)
+        sys.exit()
+
+
+    #-------------------------------------------------------------------
+    # Sync data
+    #-------------------------------------------------------------------   
+    sync(   ts_host_addr, 
             '{fd1}{fl}'.format( fd1= s.SYS_FOLDER,
-                                fl= s.THINGSPEAK_API_KEY_FILENAME), 
-            s.THINGSPEAK_CHANNEL_ID,
+                                fl= ts_api_key), 
+            ts_channel_id,
             list(s.SENSOR_SET.keys()), 
             s.UPDATE_RATE, 
             '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
