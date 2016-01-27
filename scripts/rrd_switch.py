@@ -48,7 +48,9 @@ def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file):
     #---------------------------------------------------------------------------
     # Set up logger
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '../logs/{script}.log'.format(script= script_name[:-3]))
+    logger = log.setup('root', '{folder}/{script}.log'.format(
+                                                    folder= log_folder,
+                                                    script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name)) 
