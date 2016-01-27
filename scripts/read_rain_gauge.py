@@ -265,38 +265,24 @@ def main():
                     loc = data.ds.index('precip_rate')
                     todays_p_rate = [data.value[i][loc] for i in range(0, len(data.value)-1)]
 
-                    logger.debug('Todays p rate')
-                    logger.debug(todays_p_rate)
-                    logger.debug('Sum of todays Precip_rate: {p_rate}'.format(p_rate= sum(todays_p_rate)))
-
                     #Get second to last entry as last entry is next update
                     sensor_value['precip_acc'] = float(
                         data.value[len(data.value)-2][data.ds.index('precip_acc')] or 0)
                     logger.debug('Last value: {v}'.format(v= sensor_value['precip_acc']))
-                                       
-                    #If any values missing from today, prevent accumulation
-                    # if None in todays_p_rate:
-                    #     sensor_value['precip_acc'] = 'U'
-                    #     logger.error('Values missing in todays precip rate')
-
-                    # elif not approx_equal(sum(todays_p_rate), sensor_value['precip_acc']):
-                    #     logger.error('Lastest precip acc value does not match summation of precip rates')
-                    #     logger.debug('Fetched p acc value:  {p_acc}'.format(
-                    #                     p_acc= sensor_value['precip_acc']))
-                    #     logger.debug('Sum of todays Precip_rate: {p_rate}'.format(
-                    #                     p_rate= sum(todays_p_rate)))
-                    #     sensor_value['precip_acc'] = 'U'
                     
-                    #else:
-                        #Add previous precip. acc'ed value to current precip. rate
-                    #   sensor_value['precip_acc'] += sensor_value['precip_rate']
-
-                    sensor_value['precip_acc'] = sum(todays_p_rate) + sensor_value['precip_rate']
-
-
+                    logger.debug('Todays p rate')
+                    logger.debug(todays_p_rate)
+                    
+                    #If any values missing from today, prevent accumulation
+                    if None not in todays_p_rate:
+                        logger.debug('Sum of todays Precip_rate: {p_rate}'.format(p_rate= sum(todays_p_rate)))
+                        sensor_value['precip_acc'] = sum(todays_p_rate) + sensor_value['precip_rate']
+                    else:
+                        logger.error('Values missing in todays precip rate')
+                        sensor_value['precip_acc'] = 'U'
 
                 except Exception, e:
-                    logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
+                    logger.error('Accumulate precipitation failed ({error_v}). Exiting...'.format(
                         error_v=e))
 
 
