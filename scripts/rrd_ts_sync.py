@@ -53,8 +53,8 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/{script}.log'.format(
-                                                    folder= log_folder,
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= s.SYS_FOLDER,
                                                     script= script_name[:-3]))
 
     logger.info('')
@@ -217,7 +217,7 @@ def main():
     #-------------------------------------------------------------------
     try:
         config = SafeConfigParser()
-        config.read('../config.ini')
+        config.read('{fl}/config.ini'.format(fl= s.SYS_FOLDER))
         ts_host_addr  = config.get('thingspeak', 'THINGSPEAK_HOST_ADDR')
         ts_channel_id = config.get('thingspeak', 'THINGSPEAK_CHANNEL_ID')
         ts_api_key    = config.get('thingspeak', 'THINGSPEAK_API_KEY_FILENAME')

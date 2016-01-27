@@ -28,7 +28,7 @@ import rrd_tools
 #===============================================================================
 # MAIN
 #===============================================================================
-def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file):
+def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file, log_folder):
     
     '''
     Operates a MiPlug switch depending on the last temperature value entered
@@ -96,7 +96,7 @@ def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file):
         logger.info(u'Inside temperature is {temp}\u00B0C'.format(temp= inside_temp))
 
     except Exception, e:
-        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
+        logger.critical('RRD fetch failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
         sys.exit()
 
@@ -149,7 +149,7 @@ def main():
     #-------------------------------------------------------------------
     try:
         config = SafeConfigParser()
-        config.read('../config.ini')
+        config.read('{fl}/config.ini'.format(fl= s.SYS_FOLDER))
         on_temp  = config.getfloat('heater', 'TEMP_HEATER_ON')
         hys_temp = config.getfloat('heater', 'TEMP_HYSTERISIS')
         switch_id = config.getint('heater', 'MIPLUG_SENSOR_ID')
@@ -170,7 +170,8 @@ def main():
                         s.UPDATE_RATE, 
                         '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
                                                 fd2= s.DATA_FOLDER,
-                                                fl= s.RRDTOOL_RRD_FILE))
+                                                fl= s.RRDTOOL_RRD_FILE),
+                        '{fd1}/logs'.format(fd1= s.SYS_FOLDER))
 
 
 #===============================================================================

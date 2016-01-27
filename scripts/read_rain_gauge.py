@@ -105,8 +105,8 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/{script}.log'.format(
-                                                    folder= log_folder,
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= s.SYS_FOLDER,
                                                     script= script_name[:-3]))
 
     logger.info('')
@@ -235,7 +235,7 @@ def main():
             #-------------------------------------------------------------------
             try:
                 config = SafeConfigParser()
-                config.read('../config.ini')
+                config.read('{fl}/config.ini'.format(fl= s.SYS_FOLDER))
                 tick_measure  = config.getfloat('rain_gauge', 'PRECIP_TICK_MEASURE')
                 logger.info(u'Rain gauge tick {meas}mm'.format(meas= tick_measure))
 
