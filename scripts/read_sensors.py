@@ -112,14 +112,15 @@ def main():
             hum = DHT22_sensor.humidity() 
 
             if temp == -999 or hum == -999:
-                raise ValueError
+                logger.warning('Reading value from DHT22 sensor... FAILED')
+
             else:
                 if sensor['inside_temp'].enable:
                     sensor_value['inside_temp'] = temp
                 if sensor['inside_hum'].enable: 
                     sensor_value['inside_hum']  = hum 
 
-            logger.info('Reading value from DHT22 sensor... OK')
+                logger.info('Reading value from DHT22 sensor... OK')
 
         except ValueError:
             logger.warning('Failed to read DHT22 ({value_error})'.format(
@@ -151,8 +152,8 @@ def main():
             switch = ener314rt.MiPlug()
             switch_data = switch.get_data()
             
-            if switch_data['switch'] == 'U' or switch_data['real'] == 'U':
-                raise ValueError
+            if not switch_data or switch_data['switch'] == 'U' or switch_data['real'] == 'U':
+                logger.warning('Reading value from switch data... FAILED')
             else:
                 logger.info('Reading value from switch data... OK')
                 if sensor['sw_status'].enable:
@@ -205,7 +206,7 @@ def main():
     # Add data to RRD
     #-------------------------------------------------------------------
     logger.debug('Update time = {update_time}'.format(update_time= 'N'))#rrd.next_update()))
-    logger.debug([v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
+    logger.info([v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
     
     result = rrd.update_file(timestamp= 'N',
             ds_name= [k for (k, v) in sorted(sensor_value.items()) if v!='U'],
