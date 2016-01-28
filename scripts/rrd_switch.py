@@ -13,7 +13,8 @@ import os
 import sys
 import time
 import collections
-from ConfigParser import SafeConfigParser
+#from ConfigParser import SafeConfigParser
+import json
 
 # Third party modules
 
@@ -35,7 +36,7 @@ def operate_switch(temp_threshold, temp_hys, sensors, switch_id, rrd_res, rrd_fi
     in a rrd file.
     
     Inputs
-        temp_threshold        - temperature to switch ON plug
+        temp_threshold - temperature to switch ON plug
         temp_hys       - temperature hysterisis
         sensors        - list of names of each sensor
         rrd_res        - rrd resolution in seconds
@@ -151,11 +152,12 @@ def main():
     # Get data from config file
     #-------------------------------------------------------------------
     try:
-        config = SafeConfigParser()
-        config.read('{fl}/config.ini'.format(fl= s.SYS_FOLDER))
-        on_temp  = config.getfloat('heater', 'TEMP_HEATER_ON')
-        hys_temp = config.getfloat('heater', 'TEMP_HYSTERISIS')
-        switch_id = config.getint('heater', 'MIPLUG_SENSOR_ID')
+        with open('{fl}/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
+            config = json.load(f)
+
+        on_temp   = config['heater']['TEMP_HEATER_ON']
+        hys_temp  = config['heater']['TEMP_HYSTERISIS']
+        switch_id = config['heater']['MIPLUG_SENSOR_ID']
 
     except Exception, e:
         print(e)
