@@ -9,7 +9,7 @@ import sys
 import datetime
 import time
 import collections
-from ConfigParser import SafeConfigParser
+import json
 
 # Third party modules
 
@@ -24,7 +24,7 @@ import check_process
 #===============================================================================
 # SYNC
 #===============================================================================
-def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
+def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
 
     '''
     Synchronizes thingspeak account with the data in the local Round Robin
@@ -82,7 +82,7 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
         #-----------------------------------------------------------------------
         # SET UP THINGSPEAK ACCOUNT
         #-----------------------------------------------------------------------
-        ts_acc = thingspeak.TSChannel(ts_host, file= ts_filename, ch_id= ts_channel_id)
+        ts_acc = thingspeak.TSChannel(ts_host, api_key= ts_key, ch_id= ts_channel_id)
         
         ch_feed = ts_acc.get_a_channel_field_feed(field_id= 1, 
                                                 parameters= {'results': 1})
@@ -216,11 +216,12 @@ def main():
     # Get data from config file
     #-------------------------------------------------------------------
     try:
-        config = SafeConfigParser()
-        config.read('{fl}/config.ini'.format(fl= s.SYS_FOLDER))
-        ts_host_addr  = config.get('thingspeak', 'THINGSPEAK_HOST_ADDR')
-        ts_channel_id = config.get('thingspeak', 'THINGSPEAK_CHANNEL_ID')
-        ts_api_key    = config.get('thingspeak', 'THINGSPEAK_API_KEY_FILENAME')
+        with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
+            config = json.load(f)
+
+        ts_host_addr  = config['thingspeak']['THINGSPEAK_HOST_ADDR']
+        ts_channel_id = config['thingspeak']['THINGSPEAK_CHANNEL_ID']
+        ts_api_key    = config['thingspeak']['THINGSPEAK_API_KEY']
         
     except Exception, e:
         print(e)
@@ -231,8 +232,7 @@ def main():
     # Sync data
     #-------------------------------------------------------------------   
     sync(   ts_host_addr, 
-            '{fd1}{fl}'.format( fd1= s.SYS_FOLDER,
-                                fl= ts_api_key), 
+            ts_api_key, 
             ts_channel_id,
             list(s.SENSOR_SET.keys()), 
             s.UPDATE_RATE, 

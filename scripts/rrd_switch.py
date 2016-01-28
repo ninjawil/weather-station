@@ -13,7 +13,6 @@ import os
 import sys
 import time
 import collections
-#from ConfigParser import SafeConfigParser
 import json
 
 # Third party modules
@@ -45,11 +44,12 @@ def operate_switch(temp_threshold, temp_hys, sensors, switch_id, rrd_res, rrd_fi
 
 
     script_name = os.path.basename(sys.argv[0])
+    path_name = os.path.dirname(sys.argv[0])
 
     #---------------------------------------------------------------------------
     # Set up logger
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/{script}.log'.format(
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
                                                     folder= log_folder,
                                                     script= script_name[:-3]))
 
@@ -152,7 +152,7 @@ def main():
     # Get data from config file
     #-------------------------------------------------------------------
     try:
-        with open('{fl}/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
+        with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
             config = json.load(f)
 
         on_temp   = config['heater']['TEMP_HEATER_ON']
@@ -176,7 +176,7 @@ def main():
                         '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
                                                 fd2= s.DATA_FOLDER,
                                                 fl= s.RRDTOOL_RRD_FILE),
-                        '{fd1}/logs'.format(fd1= s.SYS_FOLDER))
+                        '{fd1}'.format(fd1= s.SYS_FOLDER))
 
 
 #===============================================================================

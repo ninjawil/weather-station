@@ -23,8 +23,7 @@ import threading
 import time
 import datetime
 import collections
-from ConfigParser import SafeConfigParser
-
+import json
 
 # Third party modules
 import pigpio
@@ -77,9 +76,7 @@ def count_rain_ticks(gpio, level, tick):
         last_rising_edge = tick  
         precip_tick_count += 1
         logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
-        with open('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                          fd2= s.DATA_FOLDER,
-                                          fl= s.TICK_DATA), 'w') as f:
+        with open('{fd1}/data/tick_count'.format(fd1= s.SYS_FOLDER), 'w') as f:
             f.write('{tick_time}:{tick_count}'.format(
                                         tick_time=int(datetime.datetime.now().strftime("%s")),
                                         tick_count=int(precip_tick_count)))
@@ -234,9 +231,10 @@ def main():
             # Get data from config file
             #-------------------------------------------------------------------
             try:
-                config = SafeConfigParser()
-                config.read('{fl}/config.ini'.format(fl= s.SYS_FOLDER))
-                tick_measure  = config.getfloat('rain_gauge', 'PRECIP_TICK_MEASURE')
+                with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
+                            config = json.load(f)
+
+                tick_measure   = config['rain_gauge']['PRECIP_TICK_MEASURE']
                 logger.info(u'Rain gauge tick {meas}mm'.format(meas= tick_measure))
 
             except Exception, e:
