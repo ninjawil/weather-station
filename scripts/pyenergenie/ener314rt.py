@@ -200,11 +200,13 @@ class MiPlug:
         radio.receiver()
         decoded            = None
         message_not_received = True
+        failed_payloads = 0
 
-        while message_not_received:
+        while message_not_received and failed_payloads < 3:
             # See if there is a payload, and if there is, process it
             if radio.isReceiveWaiting():
-                self.logger.info("receiving payload")
+                self.logger.debug('Receiving payload attempt {attempt}'.format(
+                                                        attempt= failed_payloads + 1))
                 payload = radio.receive()
 
                 if monitor_mode == False:
@@ -215,6 +217,9 @@ class MiPlug:
                 except OpenHEMS.OpenHEMSException as e:
                     self.logger.error("Can't decode payload:" + str(e))
                     message_not_received = True
+                    failed_payloads += 1
+                    if failed_payloads >= 3:
+                        return None
                     continue
                           
                 self.updateDirectory(decoded)
