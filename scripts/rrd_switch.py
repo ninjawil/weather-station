@@ -108,11 +108,11 @@ def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file, log
         switch = ener314rt.MiPlug(sensorid= switch_id)
 
         # Turn ON/OFF heater depending on inside temp value from RRD
-        if inside_temp < (temp_on + temp_hys):
+        if inside_temp <= (temp_on - temp_hys):
             switch.send_data(True)
             logger.info('Switch turned ON')
 
-        elif inside_temp > (temp_on - temp_hys):
+        elif inside_temp >= (temp_on + temp_hys):
             switch.send_data(False)
             logger.info('Switch turned OFF')         
        
