@@ -174,9 +174,9 @@ class MiPlug:
         if not self.directory.has_key(sensorId):
             # new device discovered
             desc = Devices.getDescription(header["mfrid"], header["productid"])
-            self.logger.info("ADD device:%s %s" % (hex(sensorId), desc))
+            self.logger.debug("ADD device:%s %s" % (hex(sensorId), desc))
             self.directory[sensorId] = {"header": message["header"]}
-            self.logger.info(self.allkeys(self.directory))
+            self.logger.debug(self.allkeys(self.directory))
 
         self.directory[sensorId]["time"] = now
         #TODO would be good to keep recs, but need to iterate through all and key by paramid,
