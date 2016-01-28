@@ -28,14 +28,14 @@ import rrd_tools
 #===============================================================================
 # MAIN
 #===============================================================================
-def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file, log_folder):
+def operate_switch(temp_threshold, temp_hys, sensors, switch_id, rrd_res, rrd_file, log_folder):
     
     '''
     Operates a MiPlug switch depending on the last temperature value entered
     in a rrd file.
     
     Inputs
-        temp_on        - temperature to switch ON plug
+        temp_threshold        - temperature to switch ON plug
         temp_hys       - temperature hysterisis
         sensors        - list of names of each sensor
         rrd_res        - rrd resolution in seconds
@@ -93,6 +93,9 @@ def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file, log
         inside_temp = float(
             rrd_entry.value[len(rrd_entry.value)-2][rrd_entry.ds.index('inside_temp') or 0])
 
+        logger.info(u'Threshold {temp_thresh}\u00B0C \u00B1 {temp_hyst}\u00B0C'.format(
+            temp_thresh= temp_threshold,
+            temp_hyst= temp_hys))
         logger.info(u'Inside temperature is {temp}\u00B0C'.format(temp= inside_temp))
 
     except Exception, e:
@@ -108,11 +111,11 @@ def operate_switch(temp_on, temp_hys, sensors, switch_id, rrd_res, rrd_file, log
         switch = ener314rt.MiPlug(sensorid= switch_id)
 
         # Turn ON/OFF heater depending on inside temp value from RRD
-        if inside_temp <= (temp_on - temp_hys):
+        if inside_temp <= (temp_threshold - temp_hys):
             switch.send_data(True)
             logger.info('Switch turned ON')
 
-        elif inside_temp >= (temp_on + temp_hys):
+        elif inside_temp >= (temp_threshold + temp_hys):
             switch.send_data(False)
             logger.info('Switch turned OFF')         
        
