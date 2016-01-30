@@ -1,0 +1,21 @@
+{
+	"1": {
+		"error": "There is an error!",
+		"type":"Error", 
+		"active": 1,
+		"displayed":0 
+	},
+	"2": {
+		"error": "There is an error!",
+		"type":"Error", 
+		"active": 0,
+		"displayed":0
+	},
+	"3": {
+		"error": "There is an error!",
+		"type":"Error", 
+		"active": 0,
+		"displayed":0
+	}
+
+}
