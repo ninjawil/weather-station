@@ -38,8 +38,7 @@ RRDTOOL_RRD_FILE     = 'weather_data.rrd'
 RRDTOOL_HEARTBEAT    = 2 # multiplier
 
 # XML filename: Consolidation type, Resolution (minutes), Recording Period (days) 
-RRDTOOL_RRA =  {'wd_last_3h.xml': ('LAST',       5,  0.125),
-                'wd_avg_1d.xml':  ('AVERAGE',   15,      1), 
+RRDTOOL_RRA =  {'wd_avg_1d.xml':  ('LAST',       5,      1.17), 
                 'wd_avg_2d.xml':  ('AVERAGE',   30,      2), 
                 'wd_avg_1w.xml':  ('AVERAGE',  120,      7), 
                 'wd_avg_1m.xml':  ('AVERAGE',  240,     31), 
