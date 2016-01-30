@@ -1,15 +1,14 @@
-
-//===============================================================================
-// Functions
-//===============================================================================
-function pad(num, size) {
-    var s = "000" + num;
-    return s.substr(s.length-size);
-}
-
+//
+// charts_update.js
+// Will De Freitas
+//
+// Draws charts based on xml files
+//
+// 
 
 //-------------------------------------------------------------------------------
 // return everything after the question mark
+//-------------------------------------------------------------------------------
 function getUrlParameter() {
          
     idx = window.location.href.indexOf("?");
@@ -24,28 +23,8 @@ function getUrlParameter() {
 
 
 //-------------------------------------------------------------------------------
-// Manages error messages depending on passed error code
-function displayErrorMessage(errorValue) {
-
-	var errors = {};
-	errors = {
-		1: ["Error", "There is an error!"],
-		2: ["Error", "There is an error!"],
-		3: ["Warning", "There is a warning!"],
-		4: ["Error", "There is an error!"]
-	};
-
-	var errorMessage = errors[errorValue][0] + " E"+ pad(errorValue, 3) + ": ";
-
-	var formattedErrorMsg = HTMLerrorMSG.replace("%error_type%", errorMessage);
-	formattedErrorMsg = formattedErrorMsg.replace("%error_msg%", errors[errorValue][1]);
-
-	$('#error_display').append(formattedErrorMsg);
-}
-
-
-//-------------------------------------------------------------------------------
 // Converts time since last epoch and displays it on the webpage
+//-------------------------------------------------------------------------------
 function displayTime(timeSinceEpoch) {
 
 	//Convert time since epoch to human dates (time needs to be in milliseconds)
@@ -60,6 +39,7 @@ function displayTime(timeSinceEpoch) {
 
 //-------------------------------------------------------------------------------
 // Displays last updated values on web page
+//-------------------------------------------------------------------------------
 function displayValue(sensors) {
 
 	var formattedValueBox,
@@ -75,15 +55,15 @@ function displayValue(sensors) {
 
 		switch(sensor) {
 			case 'door_open':
-				value = (sensors[sensor].readings.entry_value[arrayLength-2] >= 0.5) ? 'Open' : 'Closed';
+				value = (sensors[sensor].readings.entry_value[arrayLength-1] >= 0.5) ? 'Open' : 'Closed';
 				break;
 
 			case 'sw_status':
-				value = (sensors[sensor].readings.entry_value[arrayLength-2] >= 0.5) ? 'On' : 'Off';
+				value = (sensors[sensor].readings.entry_value[arrayLength-1] >= 0.5) ? 'On' : 'Off';
 				break;
 
 			default:
-				value = sensors[sensor].readings.entry_value[arrayLength-2];
+				value = sensors[sensor].readings.entry_value[arrayLength-1];
 		}
 
 		formattedValue = HTMLvalue.replace("%value%", value);
@@ -95,12 +75,13 @@ function displayValue(sensors) {
 	}
 
 	// Display last update time
-	displayTime(sensors['door_open'].readings.entry_time[sensors['door_open'].readings.entry_value.length-2]);
+	displayTime(sensors['door_open'].readings.entry_time[sensors['door_open'].readings.entry_value.length-1]);
 }
 
 
 //-------------------------------------------------------------------------------
 // Gets data from XML file and parses it to sensors array
+//-------------------------------------------------------------------------------
 function xmlGetMetaData(filename, sensors) {
 
 	var request = new XMLHttpRequest();
@@ -129,45 +110,8 @@ function xmlGetMetaData(filename, sensors) {
 
 
 //-------------------------------------------------------------------------------
-// Gets data from log file
-function logGetData(directory, filename) {
-
-	$.ajax({
-        async:false,
-        url: directory + '_logs/' + filename,
-        dataType: 'text',
-        success: function(data) 
-        	{
-	        	$('#' + filename.slice(0, -4)).append(data);
-            }
-        });
-}
-
-
-//-------------------------------------------------------------------------------
-// Organizes log boxes in modal
-function displayLogData(directory, filenames) {
-
-	var columnNumber = 1,
-		formattedHTMLlogBox = '';
-
-	for(var logFile in filenames) {
-
-		//Prepare HTML with log file details
-		formattedHTMLlogBox = HTMLlogBox.replace('%logFileName%', filenames[logFile]);
-		formattedHTMLlogBox = formattedHTMLlogBox.replace('%logName%', filenames[logFile].slice(0, -4));
-		$('#log_modal_col_' + columnNumber).append(formattedHTMLlogBox);
-
-		//Write log data
-		logGetData(directory, filenames[logFile]);
-
-		//Alternate columns
-		columnNumber = (columnNumber === 1) ? 2 : 1;
-	}
-}
-
-//-------------------------------------------------------------------------------
 // Displays graph
+//-------------------------------------------------------------------------------
 function displayGraph(sensors, chart_names) {
 
     /**
@@ -307,7 +251,6 @@ function displayGraph(sensors, chart_names) {
 			}
 		}
 
-		
 
 		// Add data values
 		highchartOptions.series = valueSeries;
@@ -321,11 +264,10 @@ function displayGraph(sensors, chart_names) {
 
 //-------------------------------------------------------------------------------
 // Prepares data and displays it
+//-------------------------------------------------------------------------------
 function main() {
 
-	var systemError = 0,
-		dir = 'weather',
-		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log', 'rrd_switch.log'],
+	var dir = 'weather',
 		dataFiles = {'':   'wd_last_1d.xml',
 					 '1d': 'wd_avg_1d.xml',
 					 '2d': 'wd_avg_2d.xml',
@@ -450,14 +392,9 @@ function main() {
 					}
 				};
 
-	if(systemError) {
-		displayErrorMessage(systemError);
-	};
-
 	var sensors_avg = xmlGetMetaData(dir + "_data/" + dataFiles[getUrlParameter()] , sensors);
 
 	displayValue(sensors_avg);
-	displayLogData(dir, logFiles);
 
 	if(getUrlParameter() === '1y') { 
 		 var sensors_max = xmlGetMetaData(dir + "_data/" + dataFiles['1y'] , sensors);
@@ -489,6 +426,5 @@ function main() {
 //===============================================================================
 // Main
 //===============================================================================
-
 main();
 
