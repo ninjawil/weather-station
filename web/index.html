@@ -63,7 +63,7 @@
 						          	<ul class="dropdown-menu">
 							            <li><a href="#" data-toggle="modal" data-target="#modal_logs">View Logs</a></li>
 							            <li role="separator" class="divider"></li>
-							            <li><a href="#">Settings</a></li>
+							            <li><a href="#" data-toggle="modal" data-target="#modal_settings">Settings</a></li>
 						          	</ul>
 						        </li>
 						     </ul>
@@ -75,18 +75,45 @@
         </div>
 
 
-	    <!-- Modal -->
+	   	<!--
+	    ============================================================================================= 
+	    	Log file Modal 
+	    ============================================================================================= 
+		-->
 	    <div id="modal_logs" class="modal fade" role="dialog">
 	        <div class="modal-dialog-lg">
 	            <div class="modal-content">
 	                <div class="modal-header">
-	                    <h4 class="modal-title" id="myModalLabel">Log Files</h4>
+	                    <h4 class="modal-title" id="log_file_modal">Log Files</h4>
 	                </div>
 	                <div class="modal-body">
 	                	<div class="row">
 							<div id="log_modal_col_1" class="col-md-6"></div>
 							<div id="log_modal_col_2" class="col-md-6"></div>
 						</div>
+	                </div>
+	                <div class="modal-footer">
+	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+
+	    <!--
+	    ============================================================================================= 
+	    	Settings file Modal 
+	    ============================================================================================= 
+		-->
+	    <div id="modal_settings" class="modal fade" role="dialog">
+	        <div class="modal-dialog-sm">
+	            <div class="modal-content">
+	                <div class="modal-header">
+	                    <h4 class="modal-title" id="settings_file_modal">Settings Files</h4>
+	                </div>
+	                <div class="modal-body">
+	                	<div class="row">HEATER<div>
+	                	<div class="row">ON temperature 10.0*C +- 5*C<div>
+	                	<div class="row">Miplug Sensor Id 1379<div>
 	                </div>
 	                <div class="modal-footer">
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
