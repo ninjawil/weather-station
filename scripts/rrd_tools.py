@@ -58,8 +58,8 @@ class RrdFile:
         #Prepare RRA files
         rrd_set += ['RRA:{cf}:0.5:{steps}:{rows}'.format(
                                     cf=rra[key].cf,
-                                    steps=str((rra[key].res*60)/update_rate),
-                                    rows=str((rra[key].period*24*60)/rra[key].res))
+                                    steps=str(int((rra[key].res*60)/update_rate)),
+                                    rows=str(int((rra[key].period*24*60)/rra[key].res)))
                         for key in sorted(rra)]
 
         self.logger.debug(rrd_set)
