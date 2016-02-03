@@ -7,18 +7,10 @@
 // 
 
 //-------------------------------------------------------------------------------
-// return everything after the question mark
+// Return passed object
 //-------------------------------------------------------------------------------
-function getUrlParameter() {
-         
-    idx = window.location.href.indexOf("?");
-    
-    if( idx < 0 ) {
-    	return "";
-    } else {
-    	return window.location.href.substring(idx + 1);
-    }
-    
+function cloneObject(obj) {
+    return jQuery.extend(true, {}, obj);
 }
 
 
@@ -28,7 +20,7 @@ function getUrlParameter() {
 function displayTime(timeSinceEpoch) {
 
 	//Convert time since epoch to human dates (time needs to be in milliseconds)
-	var datetime = new Date(timeSinceEpoch * 1000);
+	var datetime = new Date(timeSinceEpoch);
 	datetime = datetime.toUTCString();
 
 	//Display time and date
@@ -50,62 +42,92 @@ function displayValue(sensors) {
 		formattedValueBox = HTMLvalueBox.replace("%id%", sensor);
 		formattedValueBox = formattedValueBox.replace("%description%", sensors[sensor].description);
 
-		var arrayLength = sensors[sensor].readings.entry_value.length,
-			value = 0;	
+		var arrayLength = sensors[sensor].readings.length,
+			value = 0;
 
-		switch(sensor) {
-			case 'door_open':
-				value = (sensors[sensor].readings.entry_value[arrayLength-1] >= 0.5) ? 'Open' : 'Closed';
-				break;
+		// Do not display if sesnsor has no values
+		if(arrayLength > 0){	
 
-			case 'sw_status':
-				value = (sensors[sensor].readings.entry_value[arrayLength-1] >= 0.5) ? 'On' : 'Off';
-				break;
+			switch(sensor) {
+				case 'door_open':
+					value = (sensors[sensor].readings[arrayLength-1][1] >= 0.5) ? 'Open' : 'Closed';
+					break;
 
-			default:
-				value = sensors[sensor].readings.entry_value[arrayLength-1];
+				case 'sw_status':
+					value = (sensors[sensor].readings[arrayLength-1][1] >= 0.5) ? 'On' : 'Off';
+					break;
+
+				default:
+					value = sensors[sensor].readings[arrayLength-1][1].toPrecision(4);
+			}
+
+			formattedValue = HTMLvalue.replace("%value%", value);
+			formattedValue = formattedValue.replace("%unit%", sensors[sensor].unit);
+
+			//Display data
+			$("#sidebar").append(formattedValueBox);		
+			$('#' + sensor).prepend(formattedValue);
 		}
-
-		formattedValue = HTMLvalue.replace("%value%", value);
-		formattedValue = formattedValue.replace("%unit%", sensors[sensor].unit);
-
-		//Display data
-		$("#sidebar").append(formattedValueBox);		
-		$('#' + sensor).prepend(formattedValue);
 	}
 
 	// Display last update time
-	displayTime(sensors['door_open'].readings.entry_time[sensors['door_open'].readings.entry_value.length-1]);
+	displayTime(sensors['door_open'].readings[sensors['door_open'].readings.length-1][0]);
+}
+
+
+//-------------------------------------------------------------------------------
+// Gets data from XML file
+//-------------------------------------------------------------------------------
+function xmlGetData(filename) {
+
+	var xhttp = new XMLHttpRequest();
+
+	xhttp.onreadystatechange = function() {
+	    if (xhttp.readyState == 4 && xhttp.status == 200) {
+	    	myFunction(xhttp);
+
+	    }
+	 };
+
+	xhttp.open("GET", filename, false);
+	xhttp.send();
+
+	var xml = xhttp.responseXML,
+		xml_sensors  = xml.getElementsByTagName("entry"),
+		xmlValue = xml.getElementsByTagName("row"),
+		output_data = {};
+
+	for(var i = 0; i < xml_sensors.length; i++) {
+
+		output_data[xml_sensors[i].childNodes[0].nodeValue] = [];
+
+		for(var j = 0; j < xmlValue.length; j++) {
+			var xmlEntryValue = xmlValue[j].childNodes[i+1].childNodes[0].nodeValue,
+				xmlEntryTime = xmlValue[j].childNodes[0].childNodes[0].nodeValue;
+
+			if(xmlEntryValue != 'NaN'){
+				output_data[xml_sensors[i].childNodes[0].nodeValue].push([Number(xmlEntryTime*1000), Number(xmlEntryValue)]); 
+			}
+		}
+	}
+
+	return output_data;
+
 }
 
 
 //-------------------------------------------------------------------------------
 // Gets data from XML file and parses it to sensors array
 //-------------------------------------------------------------------------------
-function xmlGetMetaData(filename, sensors) {
+function xmlGetDataInArray(filename, sensors_array) {
 
-	var request = new XMLHttpRequest();
+	data = xmlGetData(filename);
 
-	request.open("GET", filename, false);
-	request.send();
-
-	var xml = request.responseXML;
-	var xml_sensors  = xml.getElementsByTagName("entry");
-	var xmlValue = xml.getElementsByTagName("row");
-
-	for(var i = 0; i < xml_sensors.length; i++) {
-		for(var j = 0; j < xmlValue.length; j++) {
-			var xmlEntryValue = Number(xmlValue[j].childNodes[i+1].childNodes[0].nodeValue).toPrecision(4),
-				xmlEntryTime = Number(xmlValue[j].childNodes[0].childNodes[0].nodeValue);
-
-			if(xmlEntryValue !== 'NaN') {
-				sensors[xml_sensors[i].childNodes[0].nodeValue].readings.entry_time.push(xmlEntryTime); 
-				sensors[xml_sensors[i].childNodes[0].nodeValue].readings.entry_value.push(xmlEntryValue);
-			}
-		}
+	for(var sensor in data) {
+		sensors_array[sensor].readings = data[sensor];
 	}
 
-	return sensors;
+	return sensors_array;
 }
 
 
@@ -114,16 +136,17 @@ function xmlGetMetaData(filename, sensors) {
 //-------------------------------------------------------------------------------
 function displayGraph(sensors, chart_names) {
 
-    /**
-     * Override the reset function, we don't need to hide the tooltips and crosshairs.
-     */
+	// Clear chart area
+	$('#graph-container').empty();
+
+
+    // Override the reset function, we don't need to hide the tooltips and crosshairs.
     Highcharts.Pointer.prototype.reset = function () {
         return undefined;
     };
 
-    /**
-     * Synchronize zooming through the setExtremes event handler.
-     */
+
+    // Synchronize zooming through the setExtremes event handler.
     function syncExtremes(e) {
         var thisChart = this.chart;
 
@@ -166,10 +189,7 @@ function displayGraph(sensors, chart_names) {
         tooltip: {
             shared: true,
             useHTML: true,
-            headerFormat: '<small>{point.key}</small><table>',
-            pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
-                '<td style="text-align: right"><b>{point.y}</b></td></tr>',
-            footerFormat: '</table>'
+            crosshairs: true
         },
     }
 
@@ -180,30 +200,17 @@ function displayGraph(sensors, chart_names) {
     	var	valueSeries = [];		
 		for (var sensor in sensors) {			
 
-			//Prepare sensor data
-			var data = [];
-			for(var j = 0; j < sensors[sensor].readings.entry_time.length; j++) {
-				if(sensor === 'door_open') {
-					// If door open sensor then round up value to the nearest integer
-					if(sensors[sensor].readings.entry_value[j] != 'NaN') {
-						data.push([Number(sensors[sensor].readings.entry_time[j])*1000, parseInt(sensors[sensor].readings.entry_value[j])]);
-					}
-				} else {
-					if(sensors[sensor].readings.entry_value[j] != 'NaN') {
-						data.push([Number(sensors[sensor].readings.entry_time[j])*1000, Number(sensors[sensor].readings.entry_value[j])]);
-					}					
-				}
-			}
-
 			//Add data with same units to same graph	
 			if(sensors[sensor].chart_no === chart_no) {
 				valueSeries.push({
-	                data: data,
+	                data: sensors[sensor].readings,
 	                step: sensors[sensor].step,
 	                name: sensors[sensor].description,
 	                type: sensors[sensor].graph,
-	                color: Highcharts.getOptions().colors[sensors[sensor].color],
+	                color: sensors[sensor].color, ///Highcharts.getOptions().colors[sensors[sensor].color],
 	                fillOpacity: 0.3,
+	                marker: sensors[sensor].marker,
+	                lineWidth: sensors[sensor].lineWidth,
 	                tooltip: {
 	                    valueSuffix: ' ' + sensors[sensor].unit,
 	                    valueDecimals: sensors[sensor].decimals
@@ -261,170 +268,269 @@ function displayGraph(sensors, chart_names) {
 
 }
 
+//-------------------------------------------------------------------------------
+// Prepares yearly data and charts
+//-------------------------------------------------------------------------------
+function displayYearCharts() {
+
+	var sensors = cloneObject(sensor_setup);
+
+	// 1 year has a different chart layout
+	sensors['inside_temp'].chart_no = 1;
+	sensors['inside_hum'].chart_no = 2;
+	sensors['precip_rate'].chart_no = 3;
+	sensors['precip_acc'].chart_no = 3;
+	sensors['door_open'].chart_no = null;
+
+	// Grab max min data
+	values = xmlGetData(dir + "_data/" + dataFiles['max']);
+	values_min = xmlGetData(dir + "_data/" + dataFiles['min']);
+
+	sensors = xmlGetDataInArray(dir + "_data/" + dataFiles['1y'] , sensors);
+
+	// Append max min data to average data 
+	for(var sensor in values) {
+
+		if((sensor !== 'precip_acc') && (sensor !== 'precip_rate')){
+		
+			sensors[sensor + '_min_max'] = cloneObject(sensors[sensor]);
+
+			sensors[sensor + '_min_max'].readings = []; 
+			sensors[sensor + '_min_max'].description = 'Range';
+			sensors[sensor + '_min_max'].graph = 'areasplinerange';
+			sensors[sensor + '_min_max'].lineWidth = 0;
+			sensors[sensor + '_min_max'].fillOpacity = 0.1;
+
+			for(var j = 0; j < values[sensor].length; j++) {
+				values[sensor][j].push(values_min[sensor][j][1]);
+			}				
+
+			sensors[sensor + '_min_max'].readings = values[sensor]; 
+
+		}
+
+	}
+
+	sensors['precip_rate'].description = 'Max precipitation rate';
+	sensors['precip_acc'].description = 'Max accumulated precipitation';
+	sensors['precip_rate'].readings = values['precip_rate'];
+	sensors['precip_acc'].readings = values['precip_acc'];
+
+	console.log(sensors);
+		
+	return sensors;
+}
+
 
 //-------------------------------------------------------------------------------
-// Prepares data and displays it
+// Prepares data and displays it in a chart
+//-------------------------------------------------------------------------------
+function displayCharts(file_ref) {
+
+	// Highlights correct navbar location
+	$('li').removeClass('active');
+	$('#' + file_ref).parent().addClass('active');
+
+	// Display charts
+	if(file_ref === '1y') {
+		displayGraph(displayYearCharts(), 
+			['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)']);
+
+	} else {
+		displayGraph(xmlGetDataInArray(dir + '_data/' + dataFiles[file_ref] , sensor_setup), 
+			['Temperature (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Heater Status', 'Door Open']);
+	}
+}
+
+
+//-------------------------------------------------------------------------------
+// Prepares data and displays it on web load
 //-------------------------------------------------------------------------------
 function main() {
 
-	var dir = 'weather',
-		dataFiles = {'':   'wd_last_1d.xml',
-					 '1d': 'wd_avg_1d.xml',
-					 '2d': 'wd_avg_2d.xml',
-					 '1w': 'wd_avg_1w.xml',
-					 '1m': 'wd_avg_1m.xml',
-					 '3m': 'wd_avg_3m.xml',
-					 '1y': 'wd_avg_1y.xml',
-					 'min': 'wd_min_1y.xml',
-					 'max': 'wd_max_1y.xml'
-				    },
-		sensors = { 'outside_temp': {
-						description: 'Outside Temperature',
-						chart_no: 0,
-						unit: '°C',
-						graph: 'spline',
-						step: null,
-						color: 4,
-						decimals: 2,
-						opposite: false,
-						readings: {
-							entry_time: [],
-							entry_value: []
-						}
-					},
-					'inside_temp': {
-						description: 'Inside Temperature',
-						chart_no: 0,
-						unit: '°C',
-						graph: 'spline',
-						step: null,
-						color: 1,
-						decimals: 2,
-						opposite: false,
-						readings: {
-							entry_time: [],
-							entry_value: []
-						}
-					},
-					'inside_hum': {
-						description: 'Inside Humidity',
-						chart_no: 1,
-						unit: '%',
-						graph: 'spline',
-						step: null,
-						color: 2,
-						decimals: 2,
-						opposite: false,
-						readings: {
-							entry_time: [],
-							entry_value: []
-						}
-					},
-					'precip_rate': {
-						description: 'Precipitation Rate',
-						chart_no: 2,
-						unit: 'mm',
-						graph: 'line',
-						step: 'center',
-						color: 3,
-						decimals: 3,
-						opposite: false,
-						readings: {
-							entry_time: [],
-							entry_value: []
-						}
-					},
-					'precip_acc': {
-						description: 'Accumulated Precipitation',
-						chart_no: 2,
-						unit: 'mm',
-						graph: 'spline',
-						step: 'center',
-						color: 0,
-						decimals: 3,
-						opposite: false,
-						readings: {
-							entry_time: [],
-							entry_value: []
-						}
-					},
-					'door_open': {
-						description: 'Door Status',
-						chart_no: 4,
-						unit: '',
-						graph: 'line',
-						step: 'center',
-						color: 5,
-						decimals: 0,
-						opposite: false,
-						readings: {
-							entry_time: [],
-							entry_value: []
-						}
-					},
-					'sw_status': {
-						description: 'Switch Status',
-						chart_no: 3,
-						unit: '',
-						graph: 'line',
-						step: 'center',
-						color: 7,
-						decimals: 0,
-						opposite: true,
-						readings: {
-							entry_time: [],
-							entry_value: []
-						}
-					},
-					'sw_power': {
-						description: 'Switch Power',
-						chart_no: 3,
-						unit: 'W',
-						graph: 'spline',
-						step: null,
-						color: 6,
-						decimals: 3,
-						opposite: false,
-						readings: {
-							entry_time: [],
-							entry_value: []
-						}
-					}
-				};
+	var data = xmlGetDataInArray(dir + '_data/' + dataFiles['1d'] , sensor_setup);
 
-	var sensors_avg = xmlGetMetaData(dir + "_data/" + dataFiles[getUrlParameter()] , sensors);
+	displayValue(data);
 
-	displayValue(sensors_avg);
-
-	if(getUrlParameter() === '1y') { 
-		 var sensors_max = xmlGetMetaData(dir + "_data/" + dataFiles['1y'] , sensors);
-		// for(var sensor in sensors) {
-		// 	sensors_max[sensor]
-		// }
-		sensors_max['inside_temp'].chart_no = 1;
-		sensors_max['inside_hum'].chart_no = 2;
-		sensors_max['precip_rate'].chart_no = 3;
-		sensors_max['precip_acc'].chart_no = 3;
-		sensors_max['door_open'].chart_no = null;
-		displayGraph(sensors_max, ['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)']);
-		console.log(sensors_max);
-		console.log(sensors_avg);
-	} else {
-		displayGraph(sensors_avg, ['Temperature (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Heater Status', 'Door Open']);
-	}
-
-	// Highlights correct navbar location
-	var url = window.location;
-	$('ul.nav a').filter(function() {
-		return this.href == url;
-	}).parent().addClass('active');
-
+	displayCharts('1d');
 
 }
 
 
+
 //===============================================================================
-// Main
+// Constants
+//===============================================================================
+var 	COLOR_BLUE		= '#058DC7',
+ 		COLOR_L_BLUE	= '#24CBE5',
+		COLOR_GREEN 	= '#50B432',
+		COLOR_L_GREEN 	= '#64E572',
+		COLOR_D_GREEN	= '#006600',
+		COLOR_ORANGE	= '#FF9655',
+		COLOR_PURPLE	= '#9900cc',
+		COLOR_PINK		= '#ff6699',
+		COLOR_YELLOW	= '#DDDF00',
+		COLOR_RED		= '#ED561B',
+		COLOR_ACQUA		= '#6AF9C4'
+		COLOR_BLACK		= '#000000',
+		COLOR_L_GREY	= '#b3b3b3',
+		COLOR_D_GREY	= '#4d4d4d';
+
+
+
+//===============================================================================
+// Set up
+//===============================================================================
+var dir = 'weather',
+	dataFiles = {'1d': 'wd_last_1d.xml',
+				 '2d': 'wd_avg_2d.xml',
+				 '1w': 'wd_avg_1w.xml',
+				 '1m': 'wd_avg_1m.xml',
+				 '3m': 'wd_avg_3m.xml',
+				 '1y': 'wd_avg_1y.xml',
+				 'min': 'wd_min_1y.xml',
+				 'max': 'wd_max_1y.xml'
+			    },
+	sensor_setup = { 'outside_temp': {
+					description: 'Outside Temperature',
+					chart_no: 0,
+					unit: '°C',
+					graph: 'spline',
+					step: null,
+					color: COLOR_BLUE,
+					decimals: 2,
+					opposite: false,
+					marker: {
+						enable: true,
+						symbol: 'circle'
+					},
+					lineWidth: 2,
+					fillOpacity: 0.75,
+					readings: []
+				},
+				'inside_temp': {
+					description: 'Inside Temperature',
+					chart_no: 0,
+					unit: '°C',
+					graph: 'spline',
+					step: null,
+					color: COLOR_RED,
+					decimals: 2,
+					opposite: false,
+					marker: {
+						enable: true,
+						symbol: 'circle'
+					},
+					lineWidth: 2,
+					fillOpacity: 0.75,
+					readings: []
+				},
+				'inside_hum': {
+					description: 'Inside Humidity',
+					chart_no: 1,
+					unit: '%',
+					graph: 'spline',
+					step: null,
+					color: COLOR_GREEN,
+					decimals: 2,
+					opposite: false,
+					marker: {
+						enable: true,
+						symbol: 'circle'
+					},
+					lineWidth: 2,
+					fillOpacity: 0.75,
+					readings: []
+				},
+				'precip_rate': {
+					description: 'Precipitation Rate',
+					chart_no: 2,
+					unit: 'mm',
+					graph: 'line',
+					step: 'center',
+					color: COLOR_L_BLUE,
+					decimals: 3,
+					opposite: false,
+					marker: {
+						enable: true,
+						symbol: 'circle'
+					},
+					lineWidth: 2,
+					fillOpacity: 0.75,
+					readings: []
+				},
+				'precip_acc': {
+					description: 'Accumulated Precipitation',
+					chart_no: 2,
+					unit: 'mm',
+					graph: 'spline',
+					step: 'center',
+					color: COLOR_ORANGE,
+					decimals: 3,
+					opposite: false,
+					marker: {
+						enable: true,
+						symbol: 'circle'
+					},
+					lineWidth: 2,
+					fillOpacity: 0.75,
+					readings: []
+				},
+				'door_open': {
+					description: 'Door Status',
+					chart_no: 4,
+					unit: '',
+					graph: 'line',
+					step: 'center',
+					color: COLOR_PINK,
+					decimals: 0,
+					opposite: false,
+					marker: {
+						enable: true,
+						symbol: 'circle'
+					},
+					lineWidth: 2,
+					fillOpacity: 0.75,
+					readings: []
+				},
+				'sw_status': {
+					description: 'Switch Status',
+					chart_no: 3,
+					unit: '',
+					graph: 'line',
+					step: 'center',
+					color: COLOR_YELLOW,
+					decimals: 0,
+					opposite: true,
+					marker: {
+						enable: true,
+						symbol: 'circle'
+					},
+					lineWidth: 2,
+					fillOpacity: 0.75,
+					readings: []
+				},
+				'sw_power': {
+					description: 'Switch Power',
+					chart_no: 3,
+					unit: 'W',
+					graph: 'spline',
+					step: null,
+					color: COLOR_D_GREEN,
+					decimals: 3,
+					opposite: false,
+					marker: {
+						enable: true,
+						symbol: 'circle'
+					},
+					lineWidth: 2,
+					readings: []
+				}
+			};
+
+
+//===============================================================================
+// Run on load
 //===============================================================================
 main();
 
