@@ -3,14 +3,16 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Weather Station</title>
+	<!-- <title>Weather Station</title> -->
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="js/helper.js"></script>
-    <script src="js/highstock.js"></script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <!-- <script src="my_jquery_functions.js"></script> -->
 </head>
 
 <body>
@@ -32,19 +34,19 @@
 				    	</div>
 				    	<div>
 					      	<ul class="nav navbar-nav hidden-xs hidden-sm">
-						        <li><a href="?1d">24 hours</a></li>
-						        <li><a href="?2d">48 hours</a></li>
-						        <li><a href="?1w">1 week</a></li>
-						        <li><a href="?1m">1 month</a></li> 
-						        <li><a href="?3m">3 months</a></li>
-						        <li><a href="?1y">1 year</a></li> 
+						        <li><a href="#" id="1d" onclick="displayCharts('1d')">24 hours</a></li>
+						        <li><a href="#" id="2d" onclick="displayCharts('2d')">48 hours</a></li>
+						        <li><a href="#" id="1w" onclick="displayCharts('1w')">1 week</a></li>
+						        <li><a href="#" id="1m" onclick="displayCharts('1m')">1 month</a></li>
+						        <li><a href="#" id="3m" onclick="displayCharts('3m')">3 months</a></li>
+						        <li><a href="#" id="1y" onclick="displayCharts('1y')">1 year</a></li>
 					      	</ul>
 					      	<ul class="nav navbar-nav hidden-xs hidden-md hidden-lg">
 						      	<li class="dropdown">
 							        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Plots <span class="caret"></span></a>
 							        <ul class="dropdown-menu">
 							        	<li class="active"><a href="#">3 hours</a></li>
-								        <li><a href="#">24 hours</a></li>
+								        <li><a href="#" onclick="bob()">24 hours</a></li>
 								        <li><a href="#">48 hours</a></li>
 								        <li><a href="#">1 week</a></li>
 								        <li><a href="#">1 month</a></li> 
@@ -125,7 +127,7 @@
 
     <script src="js/charts_update.js"></script>
     <script src="js/errors.js"></script>
-    <script src="js/log.js"></script>
+    <!-- <script src="js/log.js"></script> -->
 
 </body>
 </html>  
