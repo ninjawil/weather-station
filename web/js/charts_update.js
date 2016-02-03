@@ -32,10 +32,10 @@ function displayTime(timeSinceEpoch) {
 //-------------------------------------------------------------------------------
 // Displays last updated values on web page
 //-------------------------------------------------------------------------------
-function displayValue(sensors) {
+function sidebarData(sensors) {
 
 	var formattedValueBox,
-		formattedValue
+		formattedValue;
 
 	for(var sensor in sensors) {
 
@@ -78,67 +78,62 @@ function displayValue(sensors) {
 //-------------------------------------------------------------------------------
 // Gets data from XML file
 //-------------------------------------------------------------------------------
-function xmlGetData(filename) {
+function xmlGetData(filename, sensors_array, functionCall, args) {
 
 	var xhttp = new XMLHttpRequest();
 
+	var output_data = {};
+
 	xhttp.onreadystatechange = function() {
 	    if (xhttp.readyState == 4 && xhttp.status == 200) {
-	    	myFunction(xhttp);
+
+			var xml = xhttp.responseXML,
+				xml_sensors  = xml.getElementsByTagName("entry"),
+				xmlValue = xml.getElementsByTagName("row");
+
+			for(var i = 0; i < xml_sensors.length; i++) {
+
+				output_data[xml_sensors[i].childNodes[0].nodeValue] = [];
+
+				for(var j = 0; j < xmlValue.length; j++) {
+					var xmlEntryValue = xmlValue[j].childNodes[i+1].childNodes[0].nodeValue,
+						xmlEntryTime = xmlValue[j].childNodes[0].childNodes[0].nodeValue;
+
+					if(xmlEntryValue != 'NaN'){
+						output_data[xml_sensors[i].childNodes[0].nodeValue].push([Number(xmlEntryTime*1000), Number(xmlEntryValue)]); 
+					}
+				}
+			}
+
+			// If sensor object passed then return it otherwise return raw data
+			if (sensors_array !== ""){
+				for(var sensor in output_data) {
+					sensors_array[sensor].readings = output_data[sensor];
+				}
+				args.push(sensors_array);
+			} else {
+				args.push(output_data);
+			}
+
+			functionCall.apply(this, args);
 
 	    }
 	 };
 
-	xhttp.open("GET", filename, false);
+	xhttp.open("GET", filename, true);
 	xhttp.send();
 
-	var xml = xhttp.responseXML,
-		xml_sensors  = xml.getElementsByTagName("entry"),
-		xmlValue = xml.getElementsByTagName("row"),
-		output_data = {};
-
-	for(var i = 0; i < xml_sensors.length; i++) {
-
-		output_data[xml_sensors[i].childNodes[0].nodeValue] = [];
-
-		for(var j = 0; j < xmlValue.length; j++) {
-			var xmlEntryValue = xmlValue[j].childNodes[i+1].childNodes[0].nodeValue,
-				xmlEntryTime = xmlValue[j].childNodes[0].childNodes[0].nodeValue;
-
-			if(xmlEntryValue != 'NaN'){
-				output_data[xml_sensors[i].childNodes[0].nodeValue].push([Number(xmlEntryTime*1000), Number(xmlEntryValue)]); 
-			}
-		}
-	}
-
-	return output_data;
-
 }
 
 
-//-------------------------------------------------------------------------------
-// Gets data from XML file and parses it to sensors array
-//-------------------------------------------------------------------------------
-function xmlGetDataInArray(filename, sensors_array) {
-
-	data = xmlGetData(filename);
-
-	for(var sensor in data) {
-		sensors_array[sensor].readings = data[sensor];
-	}
-
-	return sensors_array;
-}
-
 
 //-------------------------------------------------------------------------------
-// Displays graph
+// Draws charts
 //-------------------------------------------------------------------------------
-function displayGraph(sensors, chart_names) {
+function drawCharts(chart_names, sensors) {
 
 	// Clear chart area
 	$('#graph-container').empty();
-
 
     // Override the reset function, we don't need to hide the tooltips and crosshairs.
     Highcharts.Pointer.prototype.reset = function () {
@@ -271,7 +266,7 @@ function displayGraph(sensors, chart_names) {
 //-------------------------------------------------------------------------------
 // Prepares yearly data and charts
 //-------------------------------------------------------------------------------
-function displayYearCharts() {
+function displayYearCharts(chart_names, values, values_min) {
 
 	var sensors = cloneObject(sensor_setup);
 
@@ -283,10 +278,13 @@ function displayYearCharts() {
 	sensors['door_open'].chart_no = null;
 
 	// Grab max min data
-	values = xmlGetData(dir + "_data/" + dataFiles['max']);
-	values_min = xmlGetData(dir + "_data/" + dataFiles['min']);
+	// values = xmlGetData(dir + "_data/" + dataFiles['max']);
+	// values_min = xmlGetData(dir + "_data/" + dataFiles['min']);
 
-	sensors = xmlGetDataInArray(dir + "_data/" + dataFiles['1y'] , sensors);
+	// sensors = xmlGetDataInArray(dir + "_data/" + dataFiles['1y'] , sensors);
+
+	console.log(values);
+	console.log(values_min);
 
 	// Append max min data to average data 
 	for(var sensor in values) {
@@ -317,15 +315,27 @@ function displayYearCharts() {
 	sensors['precip_acc'].readings = values['precip_acc'];
 
 	console.log(sensors);
-		
-	return sensors;
+	
+	displayCharts(chart_names, sensors);
+
+	//return sensors;
 }
 
+//-------------------------------------------------------------------------------
+// Gets min data from xml files
+//-------------------------------------------------------------------------------
+function getMinData(chart_names, max_data) {
+
+	xmlGetData(dir + '_data/' + dataFiles['min'], "", displayYearCharts, [chart_names, max_data]);
+
+}
 
 //-------------------------------------------------------------------------------
 // Prepares data and displays it in a chart
 //-------------------------------------------------------------------------------
 function displayCharts(file_ref) {
+
+	var chart_names;
 
 	// Highlights correct navbar location
 	$('li').removeClass('active');
@@ -333,12 +343,13 @@ function displayCharts(file_ref) {
 
 	// Display charts
 	if(file_ref === '1y') {
-		displayGraph(displayYearCharts(), 
-			['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)']);
+		chart_names = ['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)'];
 
+		//Gets max data, then min data, then displayYearCharts
+		xmlGetData(dir + '_data/' + dataFiles['max'], "", getMinData, [chart_names]);
 	} else {
-		displayGraph(xmlGetDataInArray(dir + '_data/' + dataFiles[file_ref] , sensor_setup), 
-			['Temperature (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Heater Status', 'Door Open']);
+		chart_names = ['Temperature (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Heater Status', 'Door Open'];
+		xmlGetData(dir + '_data/' + dataFiles[file_ref], sensor_setup, drawCharts, [chart_names]);
 	}
 }
 
@@ -348,9 +359,7 @@ function displayCharts(file_ref) {
 //-------------------------------------------------------------------------------
 function main() {
 
-	var data = xmlGetDataInArray(dir + '_data/' + dataFiles['1d'] , sensor_setup);
-
-	displayValue(data);
+	xmlGetData(dir + '_data/' + dataFiles['1d'], sensor_setup, sidebarData, []);
 
 	displayCharts('1d');
 
@@ -382,7 +391,7 @@ var 	COLOR_BLUE		= '#058DC7',
 // Set up
 //===============================================================================
 var dir = 'weather',
-	dataFiles = {'1d': 'wd_last_1d.xml',
+	dataFiles = {'1d': 'wd_avg_1d.xml',
 				 '2d': 'wd_avg_2d.xml',
 				 '1w': 'wd_avg_1w.xml',
 				 '1m': 'wd_avg_1m.xml',
