@@ -1,32 +1,12 @@
-#-------------------------------------------------------------------------------
 #
-# The MIT License (MIT)
+# rrd_export.py
+# Will De Freitas
 #
-# Copyright (c) 2015 William De Freitas
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-#
-#-------------------------------------------------------------------------------
+
 
 #!/usr/bin/env python
 
-'''Exports current RRD to XML'''
+'''Exports an XML file for each RRA set up from a RRD'''
 
 
 #===============================================================================
@@ -40,7 +20,6 @@ import sys
 import subprocess
 import collections
 
-
 # Third party modules
 
 # Application modules
@@ -53,9 +32,22 @@ import check_process
 #===============================================================================
 # MAIN
 #===============================================================================
-def main():
+def rrd_export(rrd_file, data_sources, rra_list, output_xml_folder):
     
-    '''Entry point for script'''
+    '''
+    Exports and XML file per RRA from an RRD file.
+
+        rrd_file -      rrd file location and script_name
+        data_sources -  a list of the data_sources in the rrd file
+        rra_list -      a dictionary of the RRA set up in the RRD. Should be in the 
+                        format:
+                            XML filename: (Consolidation type, Resolution (minutes), 
+                                                                Recording Period (days))
+                        e.g.
+                            {'wd_avg_1d.xml':  ('LAST',       5,      1.17), 
+                             'wd_avg_2d.xml':  ('AVERAGE',   30,      2)}
+        output_xml_folder - folder to place output XML files.
+    '''
 
 
     script_name = os.path.basename(sys.argv[0])
@@ -93,14 +85,12 @@ def main():
     # Check Rrd File And Set Up Sensor Variables
     #---------------------------------------------------------------------------
     try:
-        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                        fd2= s.DATA_FOLDER,
-                                                        fl= s.RRDTOOL_RRD_FILE))
+        rrd = rrd_tools.RrdFile(rrd_file)
 
-        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
+        if sorted(rrd.ds_list()) != sorted(data_sources):
             logger.error('Data sources in RRD file does not match set up.')
             logger.error(rrd.ds_list())
-            logger.error(list(s.SENSOR_SET.keys()))
+            logger.error(data_sources)
             logger.error('Exiting...')
             sys.exit()
         else:
@@ -115,18 +105,33 @@ def main():
     #---------------------------------------------------------------------------
     # Export RRD to XML
     #---------------------------------------------------------------------------
-    for xml_file in s.RRDTOOL_RRA:
-        rrd.export( start= 'now-{rec_period:.0f}h'.format(rec_period= s.RRDTOOL_RRA[xml_file][2] * 24),
+    for xml_file in rra_list:
+        rrd.export( start= 'now-{rec_period:.0f}h'.format(rec_period= rra_list[xml_file][2] * 24),
                     end= 'now',
-                    cf= s.RRDTOOL_RRA[xml_file][0],
-                    step= s.RRDTOOL_RRA[xml_file][1] * 60,
-                    ds_list= list(s.SENSOR_SET.keys()),
-                    output_file= '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                         fd2= s.DATA_FOLDER,
-                                                         fl= xml_file))
+                    cf= rra_list[xml_file][0],
+                    step= rra_list[xml_file][1] * 60,
+                    ds_list= data_sources,
+                    output_file= '{fd1}{fl}'.format(fd1= output_xml_folder, fl= xml_file))
 
 
     logger.info('--- Script Finished ---')
+
+
+#===============================================================================
+# MAIN
+#===============================================================================
+def main():
+    
+    '''Entry point for script'''
+
+
+    rrd_export( rrd_file= '{fd1}{fd2}{fl}'.format(  fd1= s.SYS_FOLDER,
+                                                    fd2= s.DATA_FOLDER,
+                                                    fl= s.RRDTOOL_RRD_FILE),
+                data_sources= list(s.SENSOR_SET.keys()),
+                rra_list= s.RRDTOOL_RRA,
+                output_xml_folder= '{fd1}{fd2}'.format( fd1= s.SYS_FOLDER, 
+                                                        fd2= s.DATA_FOLDER))
 
 
 #===============================================================================
