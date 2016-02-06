@@ -391,7 +391,7 @@ var 	COLOR_BLUE		= '#058DC7',
 // Set up
 //===============================================================================
 var dir = 'weather',
-	dataFiles = {'1d': 'wd_avg_1d.xml',
+	dataFiles = {'1d': 'wd_last_1d.xml',
 				 '2d': 'wd_avg_2d.xml',
 				 '1w': 'wd_avg_1w.xml',
 				 '1m': 'wd_avg_1m.xml',

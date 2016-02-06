@@ -74,14 +74,8 @@
 				</nav>
 				<div id="graph-container"></div>
             </div>
-        </div>
+        </div> <!-- main-display -->
 
-
-	   	<!--
-	    ============================================================================================= 
-	    	Log file Modal 
-	    ============================================================================================= 
-		-->
 	    <div id="modal_logs" class="modal fade" role="dialog">
 	        <div class="modal-dialog-lg">
 	            <div class="modal-content">
@@ -99,35 +93,55 @@
 	                </div>
 	            </div>
 	        </div>
-	    </div>
+	    </div> <!-- modal_logs -->
 
-	    <!--
-	    ============================================================================================= 
-	    	Settings file Modal 
-	    ============================================================================================= 
-		-->
 	    <div id="modal_settings" class="modal fade" role="dialog">
-	        <div class="modal-dialog-sm">
+	        <div class="modal-dialog">
 	            <div class="modal-content">
 	                <div class="modal-header">
 	                    <h4 class="modal-title" id="settings_file_modal">Settings Files</h4>
 	                </div>
 	                <div class="modal-body">
-	                	<div class="row">HEATER<div>
-	                	<div class="row">ON temperature 10.0*C +- 5*C<div>
-	                	<div class="row">Miplug Sensor Id 1379<div>
-	                </div>
+	                	<h5>HEATER</h5>
+	                	<div class="input-group">
+	                		<div class="checkbox">
+								<label><input id="heater-enable" type="checkbox" value="">Enable Heater</label>
+							</div>
+						</div>	
+	                	<div class="row">
+							<div id="on_temp" class="col-md-6">
+			                	<div class="input-group">
+									<span class="input-group-addon" id="basic-addon2">ON temperature</span>
+								  	<input id="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon2">
+									<span class="input-group-addon">°C</span>
+								</div>
+							</div>
+							<div id="hyst_temp" class="col-md-6">
+								<div class="input-group">
+									<span class="input-group-addon" id="basic-addon3">Hysterisis ±</span>
+								  	<input id="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon3">
+									<span class="input-group-addon">°C</span>
+								</div>
+							</div>
+						</div> <!-- row -->
+
+	                	<div class="input-group">
+							<span class="input-group-addon" id="basic-addon1">Miplug Sensor Id</span>
+						  	<input id="miplug-id" type="text" class="form-control" placeholder="1379" aria-describedby="basic-addon1">
+						</div>
+	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 	                </div>
 	            </div>
 	        </div>
-	    </div>
+	    </div> <!-- modal_settings -->
     </div>
 
     <script src="js/charts_update.js"></script>
     <script src="js/errors.js"></script>
     <script src="js/log.js"></script>
+    <script src="js/config_data.js"></script>
 
 </body>
 </html>  

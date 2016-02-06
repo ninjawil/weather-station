@@ -54,3 +54,9 @@
 	overflow-y: scroll;
 	height: 270px;
 }
+
+.input-group {
+	margin-top: 5px;
+	margin-bottom: 5px;
+	margin-left: 15px;
+}
