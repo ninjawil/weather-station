@@ -12,16 +12,6 @@
 //-------------------------------------------------------------------------------
 function logGetData(directory, filename) {
 
-// 	$.ajax({
-//         async:false,
-//         url: directory + '_logs/' + filename,
-//         dataType: 'text',
-//         success: function(data) 
-//         	{
-// 	        	$('#' + filename.slice(0, -4)).append(data);
-//             }
-//         });
-
 	var rawFile = new XMLHttpRequest();
     rawFile.open("GET", directory + filename, true);
     rawFile.onreadystatechange = function ()
