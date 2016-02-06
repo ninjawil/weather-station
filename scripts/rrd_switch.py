@@ -91,8 +91,13 @@ def operate_switch(temp_threshold, temp_hys, sensors, switch_id, rrd_res, rrd_fi
                         rrd_entry[1], rrd_entry[2]) 
 
         # Grab the last inside temperature value
-        inside_temp = float(
-            rrd_entry.value[len(rrd_entry.value)-2][rrd_entry.ds.index('inside_temp') or 0])
+        inside_temp = (rrd_entry.value[len(rrd_entry.value)-2][rrd_entry.ds.index('inside_temp') or 0])
+
+        if not inside_temp:
+            logger.info('No previous inside temperature reading. Exiting...')
+            sys.exit()
+
+        inside_temp = float(inside_temp)
 
         logger.info(u'Threshold {temp_thresh}\u00B0C \u00B1 {temp_hyst}\u00B0C'.format(
             temp_thresh= temp_threshold,
