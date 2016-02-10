@@ -12,6 +12,7 @@ import os
 import logging
 import collections
 import subprocess
+from xml.etree import cElementTree as ET
 
 # Third party modules
 import rrdtool
@@ -186,4 +187,158 @@ class RrdFile:
             return e
 
 
+#===============================================================================
+# Misc functions
+#===============================================================================
 
+
+#---------------------------------------------------------------------------
+# CREATE DICTIONARY FROM XML FILE
+#---------------------------------------------------------------------------
+def xml_to_dict(filename):
+    '''Converts a RRD exported XML file to dictionary format'''
+
+    logger = logging.getLogger('root')
+
+    logger.debug('Exporting {f1} to dict'.format(f1=filename))
+    
+    try:
+        xml = ET.ElementTree(file=filename)  
+        root = xml.getroot()
+        xml_dict = {'meta': {}, 'data': {}}
+
+        # Fill in meta data
+        for elem in root.find('meta'):
+            if elem:
+                xml_dict['meta'][elem.tag] = [i.text for i in elem]
+            elif elem.text:
+                xml_dict['meta'][elem.tag] = int(elem.text)
+
+        # Grab data from xml and add to dictionary with keys from source name
+        for elem in xml.find('data'):
+            xml_dict['data'][int(elem[0].text)] = [elem[i+1].text for i in range(0, len(xml_dict['meta']['legend']))]
+
+        return xml_dict
+
+    except ValueError, e:
+        logger.error('Export FAIL ({error_v})'.format(error_v= e))
+        return
+
+
+#---------------------------------------------------------------------------
+# COMBINE THREE XML FILES (AVG, MAX, MIN)
+#---------------------------------------------------------------------------
+def avg_max_min_to_xml(xml_max, xml_min, xml_avg, output_xml):
+    '''Exports a single XML file from three sepparate XML files
+    with AVERAGE, MAX, MIN values'''
+
+    logger = logging.getLogger('root')
+
+    logger.debug('Combining XML files')
+
+    try:
+        # Grab data from xml files into dictionary
+        data = {'avg': xml_to_dict(xml_avg),
+                'min': xml_to_dict(xml_min),
+                'max': xml_to_dict(xml_max)}
+
+        # Check is resolution is the same on all files
+        step = data['avg']['meta']['step']
+        if  data['min']['meta']['step'] == step and data['max']['meta']['step'] == step:
+                
+            # Change sensor names to reflect Min or Max values
+            data['min']['meta']['legend'] = [ s + '_min' for s in data['min']['meta']['legend']]
+            data['max']['meta']['legend'] = [ s + '_max' for s in data['max']['meta']['legend']]
+
+            # Create output dictionary and populate with a list of all unique sensors 
+            out_data = {'meta': {'legend': sorted(list(set(s for k in data.keys() for s in data[k]['meta']['legend'])))},
+                        'data': {}}
+
+            # Create a unique list of timestamps from all 3 files
+            times = sorted(list(set(t for f in data.keys() for t in data[f]['data'].keys())))
+
+            # Loop for each uniquetime stamp (create if missing), create a list of NaN,
+            # and then populate if data is available
+            for t in range(min(times), max(times) + step, step):
+                out_data['data'][t] = ['Nan'] * len(out_data['meta']['legend'])
+                for sensor in out_data['meta']['legend']:
+                    for k in data.keys():
+                        if sensor in data[k]['meta']['legend'] and t in list(data[k]['data'].keys()):
+                            out_data['data'][t][out_data['meta']['legend'].index(sensor)] = data[k]['data'][t][data[k]['meta']['legend'].index(sensor)]
+          
+            # Update Legend list
+            out_data['meta']['start'] =     min(times)
+            out_data['meta']['step'] =      step
+            out_data['meta']['end'] =       max(times)
+            out_data['meta']['columns'] =   len(out_data['meta']['legend'])
+            out_data['meta']['rows'] =      len(out_data['data'].keys())
+            
+        dict_to_xml(output_xml, out_data)
+    
+    except ValueError, e:
+        logger.error('Combine XML files FAIL ({error_v})'.format(error_v= e))
+        return
+
+#---------------------------------------------------------------------------
+# INDENT XML FILE
+#---------------------------------------------------------------------------
+def indent(elem, level=0):
+    i = "\n" + level * "  "
+    j = "\n" + (level-1)*"  "
+    if len(elem) and elem.tag is not 'row':
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "  "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for subelem in elem:
+            indent(subelem, level+1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
+    return elem
+
+
+#---------------------------------------------------------------------------
+# CREATE XML FILE FROM DICTIONARY
+#---------------------------------------------------------------------------
+def dict_to_xml(output_xml, data_dict):
+    ''' Create an xml file from a dictionary of data'''
+
+
+    logger = logging.getLogger('root')
+
+    logger.debug('Generating XML file from dictionary')
+
+    try:
+        root = ET.Element('xport')
+
+        # Write meta data
+        meta = ET.SubElement(root, 'meta')
+        for i in ['start', 'step', 'end', 'rows', 'columns', 'legend']:
+            child = ET.SubElement(meta, i)
+            if isinstance(data_dict['meta'][i], list):
+                for j in range(0, len(data_dict['meta'][i])):
+                    childchild = ET.SubElement(child, 'entry')
+                    childchild.text = str(data_dict['meta'][i][j])
+            else:
+                child.text = str(data_dict['meta'][i])
+                    
+        # Add time and values to XML set up
+        data = ET.SubElement(root, 'data')
+        for t in sorted(list(data_dict['data'].keys())):
+            row = ET.SubElement(data, 'row')
+            time = ET.SubElement(row, 't')
+            time.text = str(t)
+            for v in data_dict['data'][t]:
+                value = ET.SubElement(row, 'v')
+                value.text = str(v) 
+
+        # Prettify data and write it to file
+        tree = ET.ElementTree(indent(root))
+        tree.write(output_xml, encoding='utf-8')
+
+    except ValueError, e:
+        logger.error('XML creation FAIL ({error_v})'.format(error_v= e))
+        return

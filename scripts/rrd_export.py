@@ -133,6 +133,17 @@ def main():
                 output_xml_folder= '{fd1}{fd2}'.format( fd1= s.SYS_FOLDER, 
                                                         fd2= s.DATA_FOLDER))
 
+    time.sleep(3)
+
+    rrd_tools.avg_max_min_to_xml('{fd1}/data/{fd2}'.format(fd1= s.SYS_FOLDER, 
+                                                            fd2= 'wd_max_1y.xml'), 
+                                 '{fd1}/data/{fd2}'.format(fd1= s.SYS_FOLDER, 
+                                                            fd2= 'wd_min_1y.xml'),
+                                 '{fd1}/data/{fd2}'.format(fd1= s.SYS_FOLDER, 
+                                                            fd2= 'wd_avg_1y.xml'), 
+                                 '{fd1}/data/{fd2}'.format(fd1= s.SYS_FOLDER, 
+                                                            fd2= 'wd_all_1y.xml'))
+
 
 #===============================================================================
 # BOILER PLATE
