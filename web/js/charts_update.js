@@ -266,7 +266,7 @@ function drawCharts(chart_names, sensors) {
 //-------------------------------------------------------------------------------
 // Prepares yearly data and charts
 //-------------------------------------------------------------------------------
-function displayYearCharts(chart_names, values, values_min) {
+function prepareYearCharts(chart_names, values) {
 
 	var sensors = cloneObject(sensor_setup);
 
@@ -276,6 +276,8 @@ function displayYearCharts(chart_names, values, values_min) {
 	sensors['precip_rate'].chart_no = 3;
 	sensors['precip_acc'].chart_no = 3;
 	sensors['door_open'].chart_no = null;
+	sensors['sw_status'].chart_no = null;
+	sensors['sw_power'].chart_no = 4;
 
 	// Grab max min data
 	// values = xmlGetData(dir + "_data/" + dataFiles['max']);
@@ -283,11 +285,10 @@ function displayYearCharts(chart_names, values, values_min) {
 
 	// sensors = xmlGetDataInArray(dir + "_data/" + dataFiles['1y'] , sensors);
 
-	console.log(values);
-	console.log(values_min);
+	// Append max min data 
+	for(var sensor in sensors) {
 
-	// Append max min data to average data 
-	for(var sensor in values) {
+		sensors[sensor].readings = values[sensor]; 
 
 		if((sensor !== 'precip_acc') && (sensor !== 'precip_rate')){
 		
@@ -299,35 +300,25 @@ function displayYearCharts(chart_names, values, values_min) {
 			sensors[sensor + '_min_max'].lineWidth = 0;
 			sensors[sensor + '_min_max'].fillOpacity = 0.1;
 
-			for(var j = 0; j < values[sensor].length; j++) {
-				values[sensor][j].push(values_min[sensor][j][1]);
+			for(var j = 0; j < values[sensor + '_min'].length; j++) {
+				values[sensor + '_min'][j].push(values[sensor + '_max'][j][1]);
 			}				
 
-			sensors[sensor + '_min_max'].readings = values[sensor]; 
+			sensors[sensor + '_min_max'].readings = values[sensor + '_min']; 
 
 		}
 
 	}
 
+	// Sensors below only show max values
 	sensors['precip_rate'].description = 'Max precipitation rate';
 	sensors['precip_acc'].description = 'Max accumulated precipitation';
-	sensors['precip_rate'].readings = values['precip_rate'];
-	sensors['precip_acc'].readings = values['precip_acc'];
+	sensors['precip_rate'].readings = values['precip_rate_max'];
+	sensors['precip_acc'].readings = values['precip_acc_max'];
 
 	console.log(sensors);
-	
-	displayCharts(chart_names, sensors);
 
-	//return sensors;
-}
-
-//-------------------------------------------------------------------------------
-// Gets min data from xml files
-//-------------------------------------------------------------------------------
-function getMinData(chart_names, max_data) {
-
-	xmlGetData(dir + '_data/' + dataFiles['min'], "", displayYearCharts, [chart_names, max_data]);
-
+	drawCharts(chart_names, sensors);
 }
 
 //-------------------------------------------------------------------------------
@@ -343,10 +334,10 @@ function displayCharts(file_ref) {
 
 	// Display charts
 	if(file_ref === '1y') {
-		chart_names = ['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)'];
+		chart_names = ['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Switch Power (W)'];
 
 		//Gets max data, then min data, then displayYearCharts
-		xmlGetData(dir + '_data/' + dataFiles['max'], "", getMinData, [chart_names]);
+		xmlGetData(dir + '_data/' + dataFiles[file_ref], '', prepareYearCharts, [chart_names]);
 	} else {
 		chart_names = ['Temperature (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Heater Status', 'Door Open'];
 		xmlGetData(dir + '_data/' + dataFiles[file_ref], sensor_setup, drawCharts, [chart_names]);
@@ -396,9 +387,7 @@ var dir = 'weather',
 				 '1w': 'wd_avg_1w.xml',
 				 '1m': 'wd_avg_1m.xml',
 				 '3m': 'wd_avg_3m.xml',
-				 '1y': 'wd_avg_1y.xml',
-				 'min': 'wd_min_1y.xml',
-				 'max': 'wd_max_1y.xml'
+				 '1y': 'wd_all_1y.xml'
 			    },
 	sensor_setup = { 'outside_temp': {
 					description: 'Outside Temperature',
