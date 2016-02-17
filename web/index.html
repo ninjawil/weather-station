@@ -105,32 +105,51 @@
 	                	<h5>HEATER</h5>
 	                	<div class="input-group">
 	                		<div class="checkbox">
-								<label><input id="heater-enable" type="checkbox" value="">Enable Heater</label>
+								<label><input id="heater-enable" type="checkbox" value="enable">Enable Heater</label>
 							</div>
 						</div>	
 	                	<div class="row">
 							<div id="on_temp" class="col-md-6">
 			                	<div class="input-group">
-									<span class="input-group-addon" id="basic-addon2">ON temperature</span>
-								  	<input id="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon2">
+									<span class="input-group-addon" id="basic-addon1">ON temperature</span>
+								  	<input id="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon1">
 									<span class="input-group-addon">°C</span>
 								</div>
 							</div>
 							<div id="hyst_temp" class="col-md-6">
 								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon3">Hysterisis ±</span>
-								  	<input id="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon3">
+									<span class="input-group-addon" id="basic-addon2">Hysterisis ±</span>
+								  	<input id="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon2">
 									<span class="input-group-addon">°C</span>
 								</div>
 							</div>
 						</div> <!-- row -->
-
 	                	<div class="input-group">
-							<span class="input-group-addon" id="basic-addon1">Miplug Sensor Id</span>
-						  	<input id="miplug-id" type="text" class="form-control" placeholder="1379" aria-describedby="basic-addon1">
+							<span class="input-group-addon" id="basic-addon3">Miplug Sensor Id</span>
+						  	<input id="miplug-id" type="text" class="form-control" aria-describedby="basic-addon3">
+						</div>
+						<h5>RAIN GAUGE</h5>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon4">Tick Measurement</span>
+						  	<input id="rain-gauge" type="text" class="form-control" aria-describedby="basic-addon4">
+						  	<span class="input-group-addon">mm per tick</span>
+						</div>
+						<h5>THINGSPEAK</h5>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon5">Host Address</span>
+						  	<input id="ts-host-addr" type="text" class="form-control" aria-describedby="basic-addon5">
+						</div>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon6">API Key</span>
+						  	<input id="ts-api-key" type="text" class="form-control" aria-describedby="basic-addon6">
+						</div>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon7">Channel ID</span>
+						  	<input id="ts-ch-id" type="text" class="form-control" aria-describedby="basic-addon7">
 						</div>
 	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
+	                    <button type="button" class="btn btn-default" data-dismiss="modal">Save</button>
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 	                </div>
 	            </div>
