@@ -215,8 +215,8 @@ def xml_to_dict(filename):
                 xml_dict['meta'][elem.tag] = int(elem.text)
 
         # Grab data from xml and add to dictionary with keys from source name
-        for elem in xml.find('data'):
-            xml_dict['data'][int(elem[0].text)] = [elem[i+1].text for i in range(0, len(xml_dict['meta']['legend']))]
+        no_of_sources = len(xml_dict['meta']['legend'])
+        xml_dict['data'] = {int(elem[0].text): [elem[i+1].text for i in xrange(no_of_sources)] for elem in xml.find('data')}
 
         return xml_dict
 
@@ -251,26 +251,28 @@ def avg_max_min_to_xml(xml_max, xml_min, xml_avg, output_xml):
             data['max']['meta']['legend'] = [ s + '_max' for s in data['max']['meta']['legend']]
 
             # Create output dictionary and populate with a list of all unique sensors 
-            out_data = {'meta': {'legend': sorted(list(set(s for k in data.keys() for s in data[k]['meta']['legend'])))},
+            out_data = {'meta': {'legend': sorted(set(s for k in data for s in data[k]['meta']['legend']))},
                         'data': {}}
 
             # Create a unique list of timestamps from all 3 files
-            times = sorted(list(set(t for f in data.keys() for t in data[f]['data'].keys())))
+            times = sorted(set(t for f in data for t in data[f]['data']))
 
             # Loop for each uniquetime stamp (create if missing), create a list of NaN,
             # and then populate if data is available
-            for t in range(min(times), max(times) + step, step):
-                out_data['data'][t] = ['Nan'] * len(out_data['meta']['legend'])
-                for sensor in out_data['meta']['legend']:
-                    for k in data.keys():
-                        if sensor in data[k]['meta']['legend'] and t in list(data[k]['data'].keys()):
-                            out_data['data'][t][out_data['meta']['legend'].index(sensor)] = data[k]['data'][t][data[k]['meta']['legend'].index(sensor)]
+            no_of_sources = len(out_data['meta']['legend'])
+            out_data['data'] = {t: ['NaN'] * no_of_sources for t in xrange(times[0], times[-1] + step, step)}
+            for k in data:
+                for sensor in data[k]['meta']['legend']:
+                    data_out_loc = out_data['meta']['legend'].index(sensor)
+                    data_loc = data[k]['meta']['legend'].index(sensor)
+                    for t in data[k]['data']:
+                        out_data['data'][t][data_out_loc] = data[k]['data'][t][data_loc]
           
             # Update Legend list
-            out_data['meta']['start'] =     min(times)
+            out_data['meta']['start'] =     times[0]
             out_data['meta']['step'] =      step
-            out_data['meta']['end'] =       max(times)
-            out_data['meta']['columns'] =   len(out_data['meta']['legend'])
+            out_data['meta']['end'] =       times[-1]
+            out_data['meta']['columns'] =   no_of_sources
             out_data['meta']['rows'] =      len(out_data['data'].keys())
             
         dict_to_xml(output_xml, out_data)
@@ -319,7 +321,8 @@ def dict_to_xml(output_xml, data_dict):
         for i in ['start', 'step', 'end', 'rows', 'columns', 'legend']:
             child = ET.SubElement(meta, i)
             if isinstance(data_dict['meta'][i], list):
-                for j in range(0, len(data_dict['meta'][i])):
+                item_length = len(data_dict['meta'][i])
+                for j in xrange(item_length):
                     childchild = ET.SubElement(child, 'entry')
                     childchild.text = str(data_dict['meta'][i][j])
             else:
