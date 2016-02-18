@@ -316,8 +316,6 @@ function prepareYearCharts(chart_names, values) {
 	sensors['precip_rate'].readings = values['precip_rate_max'];
 	sensors['precip_acc'].readings = values['precip_acc_max'];
 
-	console.log(sensors);
-
 	drawCharts(chart_names, sensors);
 }
 

@@ -13,7 +13,9 @@ function grabConfigData(){
 //-------------------------------------------------------------------------------
 // Once config data is loaded, draw it in Settings Modal
 //-------------------------------------------------------------------------------
-function updateSettingsModal(config_data) {
+function updateSettingsModal(json) {
+
+    config_data = json;
 
 	if(config_data.heater.HEATER_ENABLE == 1){
 		$('#heater-enable').prop('checked', true);
@@ -37,21 +39,37 @@ function updateSettingsModal(config_data) {
 	$('#ts-api-key').attr('placeholder', config_data.thingspeak.THINGSPEAK_API_KEY);
 	$('#ts-ch-id').attr('placeholder', config_data.thingspeak.THINGSPEAK_CHANNEL_ID);
 
+    $(function(){
+        $('#checkbox input:checkbox').on('change', function(){
+            if($(this).is(':checked')) {
+                $('#heater-enable').prop('checked', true);
+                $('#heater-on-hyst').prop('disabled', false);
+                $('#miplug-id').prop('disabled', false);
+                $('#heater-on-temp').prop('disabled', false);
+            } else {
+                $('#heater-enable').prop('checked', false);
+                $('#heater-on-hyst').prop('disabled', true);
+                $('#miplug-id').prop('disabled', true);
+                $('#heater-on-temp').prop('disabled', true);                
+            }
+        });
+    });
 
-	$(function(){
-	    $('#chkboxes input:checkbox').on('change', function(){
-	        if($(this).is(':checked'))
-	        {
-	        	$('#heater-enable').prop('checked', true);
-	            $('#heater-on-temp').prop('disabled', false);
-	        }
-	        else
-	        {
-	            $('#heater-enable').prop('checked', false);
-	            $('#heater-on-temp').prop('disabled', true);
-	        }
-	    });​
-	});
+}
+
+
+//-------------------------------------------------------------------------------
+// Once config data is loaded, draw it in Settings Modal
+//-------------------------------------------------------------------------------
+function saveSettings() {
+
+    var json = JSON.stringify(config_data);
+    var encoded = btoa(json);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST','weather_data/save_settings.php',true);
+    xhr.setRequestHeader('Content-type','application/x-www-form-urlencoded');
+    xhr.send('json=' + encoded);
 
 }
 
@@ -68,4 +86,7 @@ function main() {
 //===============================================================================
 // Run on load
 //===============================================================================
+
+var config_data = null;
+
 main();
