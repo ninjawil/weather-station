@@ -32,13 +32,14 @@ W1_DEVICE_PATH      = '/sys/bus/w1/devices/'
 DEBOUNCE_MICROS     = 0.250 #seconds
 SYS_FOLDER          = '/home/pi/weather'
 DATA_FOLDER         = '/data/'
+TICK_DATA           = 'tick_count'
 
 # --- RRDTool set up ---
 RRDTOOL_RRD_FILE     = 'weather_data.rrd'
 RRDTOOL_HEARTBEAT    = 2 # multiplier
 
 # XML filename: Consolidation type, Resolution (minutes), Recording Period (days) 
-RRDTOOL_RRA =  {'wd_avg_1d.xml':  ('LAST',       5,      1.17), 
+RRDTOOL_RRA =  {'wd_last_1d.xml': ('LAST',       5,      1.17), 
                 'wd_avg_2d.xml':  ('AVERAGE',   30,      2), 
                 'wd_avg_1w.xml':  ('AVERAGE',  120,      7), 
                 'wd_avg_1m.xml':  ('AVERAGE',  240,     31), 

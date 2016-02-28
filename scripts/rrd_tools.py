@@ -12,6 +12,7 @@ import os
 import logging
 import collections
 import subprocess
+from xml.etree import cElementTree as ET
 
 # Third party modules
 import rrdtool
@@ -58,8 +59,8 @@ class RrdFile:
         #Prepare RRA files
         rrd_set += ['RRA:{cf}:0.5:{steps}:{rows}'.format(
                                     cf=rra[key].cf,
-                                    steps=str((rra[key].res*60)/update_rate),
-                                    rows=str((rra[key].period*24*60)/rra[key].res))
+                                    steps=str(int((rra[key].res*60)/update_rate)),
+                                    rows=str(int((rra[key].period*24*60)/rra[key].res)))
                         for key in sorted(rra)]
 
         self.logger.debug(rrd_set)
@@ -186,4 +187,161 @@ class RrdFile:
             return e
 
 
+#===============================================================================
+# Misc functions
+#===============================================================================
 
+
+#---------------------------------------------------------------------------
+# CREATE DICTIONARY FROM XML FILE
+#---------------------------------------------------------------------------
+def xml_to_dict(filename):
+    '''Converts a RRD exported XML file to dictionary format'''
+
+    logger = logging.getLogger('root')
+
+    logger.debug('Exporting {f1} to dict'.format(f1=filename))
+    
+    try:
+        xml = ET.ElementTree(file=filename)  
+        root = xml.getroot()
+        xml_dict = {'meta': {}, 'data': {}}
+
+        # Fill in meta data
+        for elem in root.find('meta'):
+            if elem:
+                xml_dict['meta'][elem.tag] = [i.text for i in elem]
+            elif elem.text:
+                xml_dict['meta'][elem.tag] = int(elem.text)
+
+        # Grab data from xml and add to dictionary with keys from source name
+        no_of_sources = len(xml_dict['meta']['legend'])
+        xml_dict['data'] = {int(elem[0].text): [elem[i+1].text for i in xrange(no_of_sources)] for elem in xml.find('data')}
+
+        return xml_dict
+
+    except ValueError, e:
+        logger.error('Export FAIL ({error_v})'.format(error_v= e))
+        return
+
+
+#---------------------------------------------------------------------------
+# COMBINE THREE XML FILES (AVG, MAX, MIN)
+#---------------------------------------------------------------------------
+def avg_max_min_to_xml(xml_max, xml_min, xml_avg, output_xml):
+    '''Exports a single XML file from three sepparate XML files
+    with AVERAGE, MAX, MIN values'''
+
+    logger = logging.getLogger('root')
+
+    logger.debug('Combining XML files')
+
+    try:
+        # Grab data from xml files into dictionary
+        data = {'avg': xml_to_dict(xml_avg),
+                'min': xml_to_dict(xml_min),
+                'max': xml_to_dict(xml_max)}
+
+        # Check is resolution is the same on all files
+        step = data['avg']['meta']['step']
+        if  data['min']['meta']['step'] == step and data['max']['meta']['step'] == step:
+                
+            # Change sensor names to reflect Min or Max values
+            data['min']['meta']['legend'] = [ s + '_min' for s in data['min']['meta']['legend']]
+            data['max']['meta']['legend'] = [ s + '_max' for s in data['max']['meta']['legend']]
+
+            # Create output dictionary and populate with a list of all unique sensors 
+            out_data = {'meta': {'legend': sorted(set(s for k in data for s in data[k]['meta']['legend']))},
+                        'data': {}}
+
+            # Create a unique list of timestamps from all 3 files
+            times = sorted(set(t for f in data for t in data[f]['data']))
+
+            # Loop for each uniquetime stamp (create if missing), create a list of NaN,
+            # and then populate if data is available
+            no_of_sources = len(out_data['meta']['legend'])
+            out_data['data'] = {t: ['NaN'] * no_of_sources for t in xrange(times[0], times[-1] + step, step)}
+            for k in data:
+                for sensor in data[k]['meta']['legend']:
+                    data_out_loc = out_data['meta']['legend'].index(sensor)
+                    data_loc = data[k]['meta']['legend'].index(sensor)
+                    for t in data[k]['data']:
+                        out_data['data'][t][data_out_loc] = data[k]['data'][t][data_loc]
+          
+            # Update Legend list
+            out_data['meta']['start'] =     times[0]
+            out_data['meta']['step'] =      step
+            out_data['meta']['end'] =       times[-1]
+            out_data['meta']['columns'] =   no_of_sources
+            out_data['meta']['rows'] =      len(out_data['data'].keys())
+            
+        dict_to_xml(output_xml, out_data)
+    
+    except ValueError, e:
+        logger.error('Combine XML files FAIL ({error_v})'.format(error_v= e))
+        return
+
+#---------------------------------------------------------------------------
+# INDENT XML FILE
+#---------------------------------------------------------------------------
+def indent(elem, level=0):
+    i = "\n" + level * "  "
+    j = "\n" + (level-1)*"  "
+    if len(elem) and elem.tag is not 'row':
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "  "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for subelem in elem:
+            indent(subelem, level+1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
+    return elem
+
+
+#---------------------------------------------------------------------------
+# CREATE XML FILE FROM DICTIONARY
+#---------------------------------------------------------------------------
+def dict_to_xml(output_xml, data_dict):
+    ''' Create an xml file from a dictionary of data'''
+
+
+    logger = logging.getLogger('root')
+
+    logger.debug('Generating XML file from dictionary')
+
+    try:
+        root = ET.Element('xport')
+
+        # Write meta data
+        meta = ET.SubElement(root, 'meta')
+        for i in ['start', 'step', 'end', 'rows', 'columns', 'legend']:
+            child = ET.SubElement(meta, i)
+            if isinstance(data_dict['meta'][i], list):
+                item_length = len(data_dict['meta'][i])
+                for j in xrange(item_length):
+                    childchild = ET.SubElement(child, 'entry')
+                    childchild.text = str(data_dict['meta'][i][j])
+            else:
+                child.text = str(data_dict['meta'][i])
+                    
+        # Add time and values to XML set up
+        data = ET.SubElement(root, 'data')
+        for t in sorted(list(data_dict['data'].keys())):
+            row = ET.SubElement(data, 'row')
+            time = ET.SubElement(row, 't')
+            time.text = str(t)
+            for v in data_dict['data'][t]:
+                value = ET.SubElement(row, 'v')
+                value.text = str(v) 
+
+        # Prettify data and write it to file
+        tree = ET.ElementTree(indent(root))
+        tree.write(output_xml, encoding='utf-8')
+
+    except ValueError, e:
+        logger.error('XML creation FAIL ({error_v})'.format(error_v= e))
+        return

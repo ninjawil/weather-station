@@ -12,15 +12,20 @@
 //-------------------------------------------------------------------------------
 function logGetData(directory, filename) {
 
-	$.ajax({
-        async:false,
-        url: directory + '_logs/' + filename,
-        dataType: 'text',
-        success: function(data) 
-        	{
-	        	$('#' + filename.slice(0, -4)).append(data);
+	var rawFile = new XMLHttpRequest();
+    rawFile.open("GET", directory + filename, true);
+    rawFile.onreadystatechange = function ()
+    {
+        if(rawFile.readyState === 4)
+        {
+            if(rawFile.status === 200 || rawFile.status == 0)
+            {
+                $('#' + filename.slice(0, -4)).append(rawFile.responseText);
             }
-        });
+        }
+    }
+    rawFile.send(null);
+
 }
 
 
@@ -53,7 +58,7 @@ function displayLogData(directory, filenames) {
 //-------------------------------------------------------------------------------
 function main() {
 
-	var dir = 'weather',
+	var dir = 'weather_logs/',
 		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log', 'rrd_switch.log'];
 
 	displayLogData(dir, logFiles);

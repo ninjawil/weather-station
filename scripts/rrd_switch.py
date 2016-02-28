@@ -18,7 +18,7 @@ import json
 # Third party modules
 
 # Application modules
-import log
+import log, logging
 import pyenergenie.ener314rt as ener314rt
 import settings as s
 import rrd_tools
@@ -28,7 +28,8 @@ import rrd_tools
 #===============================================================================
 # MAIN
 #===============================================================================
-def operate_switch(temp_threshold, temp_hys, sensors, switch_id, rrd_res, rrd_file, log_folder):
+def operate_switch( temp_threshold, temp_hys, force_on, sensors, switch_id, 
+                    rrd_res, rrd_file):
     
     '''
     Operates a MiPlug switch depending on the last temperature value entered
@@ -40,22 +41,9 @@ def operate_switch(temp_threshold, temp_hys, sensors, switch_id, rrd_res, rrd_fi
         sensors        - list of names of each sensor
         rrd_res        - rrd resolution in seconds
         rrd_file       - rrd file location
-    '''
+    ''' 
 
-
-    script_name = os.path.basename(sys.argv[0])
-    path_name = os.path.dirname(sys.argv[0])
-
-    #---------------------------------------------------------------------------
-    # Set up logger
-    #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= log_folder,
-                                                    script= script_name[:-3]))
-
-    logger.info('')
-    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
-    
+    logger = logging.getLogger('root')   
 
     try:
         #-----------------------------------------------------------------------
@@ -91,13 +79,20 @@ def operate_switch(temp_threshold, temp_hys, sensors, switch_id, rrd_res, rrd_fi
                         rrd_entry[1], rrd_entry[2]) 
 
         # Grab the last inside temperature value
-        inside_temp = float(
-            rrd_entry.value[len(rrd_entry.value)-2][rrd_entry.ds.index('inside_temp') or 0])
+        inside_temp = (rrd_entry.value[len(rrd_entry.value)-2][rrd_entry.ds.index('inside_temp') or 0])
+
+        if not inside_temp:
+            logger.info('No previous inside temperature reading. Exiting...')
+            sys.exit()
+
+        inside_temp = float(inside_temp)
 
         logger.info(u'Threshold {temp_thresh}\u00B0C \u00B1 {temp_hyst}\u00B0C'.format(
             temp_thresh= temp_threshold,
             temp_hyst= temp_hys))
         logger.info(u'Inside temperature is {temp}\u00B0C'.format(temp= inside_temp))
+        if force_on:
+            logger.info('User force ON switch')
 
     except Exception, e:
         logger.critical('RRD fetch failed ({error_v}). Exiting...'.format(
@@ -112,7 +107,7 @@ def operate_switch(temp_threshold, temp_hys, sensors, switch_id, rrd_res, rrd_fi
         switch = ener314rt.MiPlug(sensorid= switch_id)
 
         # Turn ON/OFF heater depending on inside temp value from RRD
-        if inside_temp <= (temp_threshold - temp_hys):
+        if force_on or inside_temp <= (temp_threshold - temp_hys):
             switch.send_data(True)
             logger.info('Switch turned ON')
 
@@ -128,17 +123,25 @@ def operate_switch(temp_threshold, temp_hys, sensors, switch_id, rrd_res, rrd_fi
         switch.close()
 
 
-    #-------------------------------------------------------------------
-    # Prepare to end script
-    #-------------------------------------------------------------------
-    logger.info('--- Read Sensors Finished ---')
-    sys.exit()
-
-
 #===============================================================================
 # MAIN
 #===============================================================================
 def main():
+
+
+    script_name = os.path.basename(sys.argv[0])
+    path_name = os.path.dirname(sys.argv[0])
+
+    #---------------------------------------------------------------------------
+    # Set up logger
+    #---------------------------------------------------------------------------
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                        folder= '{fd1}'.format(fd1= s.SYS_FOLDER),
+                                        script= script_name[:-3]))
+
+    logger.info('')
+    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
+
 
     #---------------------------------------------------------------------------
     # SET UP SENSOR VARIABLES
@@ -155,9 +158,11 @@ def main():
         with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
             config = json.load(f)
 
-        on_temp   = config['heater']['TEMP_HEATER_ON']
-        hys_temp  = config['heater']['TEMP_HYSTERISIS']
-        switch_id = config['heater']['MIPLUG_SENSOR_ID']
+        sw_user_enable  = config['heater']['HEATER_ENABLE']
+        sw_user_force   = config['heater']['HEATER_FORCE_ON']
+        on_temp         = config['heater']['TEMP_HEATER_ON']
+        hys_temp        = config['heater']['TEMP_HYSTERISIS']
+        switch_id       = config['heater']['MIPLUG_SENSOR_ID']
 
     except Exception, e:
         print(e)
@@ -167,16 +172,32 @@ def main():
     #-----------------------------------------------------------------------
     # OPERATE SWITCH IF ENABLED
     #-----------------------------------------------------------------------
-    if sensor['sw_status'].enable or sensor['sw_power'].enable:
-        operate_switch( on_temp, 
-                        hys_temp,
-                        list(s.SENSOR_SET.keys()),
-                        switch_id, 
-                        s.UPDATE_RATE, 
-                        '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                fd2= s.DATA_FOLDER,
-                                                fl= s.RRDTOOL_RRD_FILE),
-                        '{fd1}'.format(fd1= s.SYS_FOLDER))
+    if sw_user_enable:
+        if sensor['sw_status'].enable or sensor['sw_power'].enable:
+            operate_switch( on_temp, 
+                            hys_temp,
+                            sw_user_force,
+                            list(s.SENSOR_SET.keys()),
+                            switch_id, 
+                            s.UPDATE_RATE, 
+                            '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                    fd2= s.DATA_FOLDER,
+                                                    fl= s.RRDTOOL_RRD_FILE))
+    # If user enable is DISABLED switch OFF heater
+    else:
+        logger.info('User enable set to DISABLED')
+        try:
+            switch = ener314rt.MiPlug(sensorid= switch_id)
+            switch.send_data(False)      
+           
+        except Exception, e:
+            logger.warning('Failed to set switch ({value_error})'.format(
+                value_error=e), exc_info=True)
+                
+        finally:
+            switch.close()
+
+    logger.info('--- Read Sensors Finished ---')
 
 
 #===============================================================================

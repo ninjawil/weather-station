@@ -10,7 +10,9 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="js/helper.js"></script>
-    <script src="js/highstock.js"></script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <!-- <script src="my_jquery_functions.js"></script> -->
 </head>
 
 <body>
@@ -32,19 +34,19 @@
 				    	</div>
 				    	<div>
 					      	<ul class="nav navbar-nav hidden-xs hidden-sm">
-						        <li><a href="?1d">24 hours</a></li>
-						        <li><a href="?2d">48 hours</a></li>
-						        <li><a href="?1w">1 week</a></li>
-						        <li><a href="?1m">1 month</a></li> 
-						        <li><a href="?3m">3 months</a></li>
-						        <li><a href="?1y">1 year</a></li> 
+						        <li><a href="#" id="1d" onclick="displayCharts('1d')">24 hours</a></li>
+						        <li><a href="#" id="2d" onclick="displayCharts('2d')">48 hours</a></li>
+						        <li><a href="#" id="1w" onclick="displayCharts('1w')">1 week</a></li>
+						        <li><a href="#" id="1m" onclick="displayCharts('1m')">1 month</a></li>
+						        <li><a href="#" id="3m" onclick="displayCharts('3m')">3 months</a></li>
+						        <li><a href="#" id="1y" onclick="displayCharts('1y')">1 year</a></li>
 					      	</ul>
 					      	<ul class="nav navbar-nav hidden-xs hidden-md hidden-lg">
 						      	<li class="dropdown">
 							        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Plots <span class="caret"></span></a>
 							        <ul class="dropdown-menu">
 							        	<li class="active"><a href="#">3 hours</a></li>
-								        <li><a href="#">24 hours</a></li>
+								        <li><a href="#" onclick="bob()">24 hours</a></li>
 								        <li><a href="#">48 hours</a></li>
 								        <li><a href="#">1 week</a></li>
 								        <li><a href="#">1 month</a></li> 
@@ -72,14 +74,8 @@
 				</nav>
 				<div id="graph-container"></div>
             </div>
-        </div>
+        </div> <!-- main-display -->
 
-
-	   	<!--
-	    ============================================================================================= 
-	    	Log file Modal 
-	    ============================================================================================= 
-		-->
 	    <div id="modal_logs" class="modal fade" role="dialog">
 	        <div class="modal-dialog-lg">
 	            <div class="modal-content">
@@ -97,35 +93,74 @@
 	                </div>
 	            </div>
 	        </div>
-	    </div>
+	    </div> <!-- modal_logs -->
 
-	    <!--
-	    ============================================================================================= 
-	    	Settings file Modal 
-	    ============================================================================================= 
-		-->
 	    <div id="modal_settings" class="modal fade" role="dialog">
-	        <div class="modal-dialog-sm">
+	        <div class="modal-dialog">
 	            <div class="modal-content">
 	                <div class="modal-header">
 	                    <h4 class="modal-title" id="settings_file_modal">Settings Files</h4>
 	                </div>
 	                <div class="modal-body">
-	                	<div class="row">HEATER<div>
-	                	<div class="row">ON temperature 10.0*C +- 5*C<div>
-	                	<div class="row">Miplug Sensor Id 1379<div>
-	                </div>
+	                	<h5>HEATER</h5>
+	                	<div class="input-group">
+	                		<div id="checkbox">
+								<input id="heater-enable" type="checkbox"> Enable Heater
+							</div>
+						</div>	
+	                	<div class="row">
+							<div id="on_temp" class="col-md-6">
+			                	<div class="input-group">
+									<span class="input-group-addon" id="basic-addon1">ON temperature</span>
+								  	<input id="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon1">
+									<span class="input-group-addon">°C</span>
+								</div>
+							</div>
+							<div id="hyst_temp" class="col-md-6">
+								<div class="input-group">
+									<span class="input-group-addon" id="basic-addon2">Hysterisis ±</span>
+								  	<input id="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon2">
+									<span class="input-group-addon">°C</span>
+								</div>
+							</div>
+						</div> <!-- row -->
+	                	<div class="input-group">
+							<span class="input-group-addon" id="basic-addon3">Miplug Sensor Id</span>
+						  	<input id="miplug-id" type="text" class="form-control" aria-describedby="basic-addon3">
+						</div>
+						<h5>RAIN GAUGE</h5>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon4">Tick Measurement</span>
+						  	<input id="rain-gauge" type="text" class="form-control" aria-describedby="basic-addon4">
+						  	<span class="input-group-addon">mm per tick</span>
+						</div>
+						<h5>THINGSPEAK</h5>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon5">Host Address</span>
+						  	<input id="ts-host-addr" type="text" class="form-control" aria-describedby="basic-addon5">
+						</div>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon6">API Key</span>
+						  	<input id="ts-api-key" type="text" class="form-control" aria-describedby="basic-addon6">
+						</div>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon7">Channel ID</span>
+						  	<input id="ts-ch-id" type="text" class="form-control" aria-describedby="basic-addon7">
+						</div>
+	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
+	                    <button type="button" class="btn btn-default" onclick="saveSettings()">Save</button>
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 	                </div>
 	            </div>
 	        </div>
-	    </div>
+	    </div> <!-- modal_settings -->
     </div>
 
     <script src="js/charts_update.js"></script>
     <script src="js/errors.js"></script>
     <script src="js/log.js"></script>
+    <script src="js/config_data.js"></script>
 
 </body>
 </html>  
