@@ -1,21 +1,20 @@
 {
-	"error_1": {
-		"message": "There is an error!",
-		"type":"Error", 
-		"active": 1,
-		"displayed":0 
+	"0001": {
+		"time":1457546599,
+		"msg": "read_rain_gauge script stopped",
+		"notified":1 
 	},
-	"error_2": {
-		"message": "There is an error!",
-		"type":"Error", 
-		"active": 0,
-		"displayed":0
+
+	"0002": {
+		"time":0,
+		"msg": "read_rain_gauge script stopped",
+		"notified":0 
 	},
-	"error_3": {
-		"message": "There is an error!",
-		"type":"Error", 
-		"active": 0,
-		"displayed":0
+
+	"0003": {
+		"time":1457546599,
+		"msg": "another error",
+		"notified":0 
 	}
 
 }
