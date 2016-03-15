@@ -6,9 +6,7 @@
 # Standard Library
 import os
 import sys
-import datetime
 import time
-import collections
 import json
 import logging
 
@@ -16,65 +14,151 @@ import logging
 
 
 # Application modules
-import settings as s
 import log
-import check_process
 import maker_ch
 
 
-
 #===============================================================================
-# Send to Maker channel
+# CLASS DEFINITION AND FUNCTIONS
 #===============================================================================
-def send_to_maker_ch(event, v1= '', v2= '', v3= ''):
+class Script:
 
-    '''Load Maker Channel details from config.json file, set up an instance
-    for the event and send data.'''
+    '''
+    Sets up a watchdog account. 
+        filename    - Error JSON filename with complete path
+    '''
 
-    logger = logging.getLogger('root')
+    def __init__(self, filename, error_code):
 
-    try:
-        with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
-            config = json.load(f)
+        self.logger     = logging.getLogger('root')
+        self.file_loc   = filename
 
-        maker_ch_addr  = config['maker_channel']['MAKER_CH_ADDR']
-        maker_ch_key   = config['maker_channel']['MAKER_CH_KEY']
 
-        mc = maker_ch.MakerChannel(maker_ch_addr, maker_ch_key, event)
+    #---------------------------------------------------------------------------
+    # Check for errors in file
+    #---------------------------------------------------------------------------
+    def notify_errors_via_maker_ch(self, maker_ch_addr, maker_ch_key):
 
-        mc.trigger_an_event(value1= v1,
-                            value2= v2,
-                            value3= v3)
+        '''Load errors from json file and send unnotified errors. An active error
+        is indicated by the presence of a timestamp.'''
+
+        mc = maker_ch.MakerChannel(maker_ch_addr, maker_ch_key, 'WS_error')
+
+        with open(self.file_loc, 'r') as f:
+            errors = json.load(f)
+
+            for key in errors:
+                if errors[key]['notified'] == 0 and errors[key]['time'] > 0:
+                    self.logger.info('Error notified: {err_msg}'.format(err_msg=errors[key]))
+                    
+                    # POST formatted time and error message to Maker channel
+                    mc.trigger_an_event(value1= time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(errors[key]['time'])), 
+                                        value2= errors[key]['msg'])
+                    errors[key]['notified'] = 1
+                    data_changed = True
         
-    except Exception, e:
-        logger.error('Failed to send data ({error_v}). Exiting...'.format(
-        error_v=e))
-        sys.exit()
+            if data_changed:
+                f.write(json.dumps(errors))
+
+    #---------------------------------------------------------------------------
+    # Clear error
+    #---------------------------------------------------------------------------
+    def clear(self):
+
+        '''Removes timestamp from all error records'''
+
+        with open(self.file_loc, 'rw') as f:
+            errors = json.load(f)
+
+            for error_code in errors:
+                errors[error_code]['time'] = 0
+                errors[error_code]['notified'] = 0
+
+            f.write(json.dumps(errors))
 
 
 #===============================================================================
-# Check for errors in file
-#===============================================================================
-def notify_errors():
+class Error(Script):
 
-    '''Load errors from json file and send unnotified errors'''
+    def __init__(self, error_code):
 
-    logger = logging.getLogger('root')
+        self.err_code   = error_code
 
-    with open('{fl}/data/error.json'.format(fl= s.SYS_FOLDER), 'r') as f:
-        errors = json.load(f)
+    #---------------------------------------------------------------------------
+    # Check watchdog counter is being incremented then reset
+    #---------------------------------------------------------------------------
+    def increment_counter(self, step= 1):
 
-    for key in errors:
-        if errors[key]['notified'] == 0 and errors[key]['time'] > 0:
-            logger.info('Error notified: {err_msg}'.format(err_msg=errors[key]))
-            send_to_maker_ch('WS_error', 
-                              v1= time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(errors[key]['time'])), 
-                              v2= errors[key]['msg'])
-            errors[key]['notified'] = 1
-            data_changed = True
+        '''Increments the watchdog counter from an error code'''
     
-    if data_changed:
-        with open('{fl}/data/error.json'.format(fl= s.SYS_FOLDER), 'w') as f:
+        with open(self.file_loc, 'rw') as f:
+            errors = json.load(f)
+            
+            errors[error_code]['watchdog'] += step
+
+            f.write(json.dumps(errors))
+
+
+    #---------------------------------------------------------------------------
+    # Check watchdog counter is being incremented then reset
+    #---------------------------------------------------------------------------
+    def check_counter(self):
+
+        '''Certain scripts will increment the counter when running. This 
+        watchdog code will reset the tick back to zero. If this code finds that the 
+        counter is not being incremented it will assume that the script has stopped
+        running and throw an error.
+
+        Returns a True if script is still running.'''
+
+        with open(self.file_loc, 'rw') as f:
+            errors = json.load(f)
+            
+            # check tick count is being incremented
+            if errors[error_code]['watchdog'] > 0:
+                script_ok = True
+            else:
+                script_ok = False
+
+            # reset tick count
+            errors[error_code]['watchdog'] = 0
+
+            f.write(json.dumps(errors))
+
+        return script_ok    
+
+
+    #---------------------------------------------------------------------------
+    # Set error
+    #---------------------------------------------------------------------------
+    def set(self):
+        
+        '''Add timestamp to error record if none present and clears notified 
+        flag.'''
+
+        with open(self.file_loc, 'rw') as f:
+            errors = json.load(f)
+
+            if errors[error_code]['time'] == 0:
+                errors[error_code]['time'] = int(time.time())
+                errors[error_code]['notified'] = 0
+
+            f.write(json.dumps(errors))
+
+
+    #---------------------------------------------------------------------------
+    # Clear error
+    #---------------------------------------------------------------------------
+    def clear(self):
+
+        '''Removes timestamp from error record'''
+
+        with open(self.file_loc, 'rw') as f:
+            errors = json.load(f)
+
+            errors[error_code]['time'] = 0
+            errors[error_code]['notified'] = 0
+
             f.write(json.dumps(errors))
 
 
@@ -83,21 +167,19 @@ def notify_errors():
 #===============================================================================
 def main():
 
-    '''
+    '''Entry point for the script'''
     
-    '''
-   
-   
     script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts/', '')
 
 
     #---------------------------------------------------------------------------
     # SET UP LOGGER
     #---------------------------------------------------------------------------
     logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
+                                                    folder= folder_loc,
                                                     script= script_name[:-3]))
-
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name))  
 
@@ -105,36 +187,35 @@ def main():
     #---------------------------------------------------------------------------
     # CHECK SCRIPT IS NOT ALREADY RUNNING
     #---------------------------------------------------------------------------    
-    try:
-        other_script_found = check_process.is_running(script_name)
-
-        if other_script_found:
-            logger.critical('Script already runnning. Exiting...')
-            logger.error(other_script_found)
-            sys.exit()
-
-    except Exception, e:
-        logger.error('System check failed ({error_v}). Exiting...'.format(
-            error_v=e))
+    if check_process.is_running(script_name):
         sys.exit()
 
 
     #---------------------------------------------------------------------------
-    # CHECK FOR ERRORS AMD SEND 
+    # CHECK FOR ERRORS AND NOTIFY
     #---------------------------------------------------------------------------    
     try:
 
-        notify_errors()
+        wd_script = Script('{fl}/data/error.json'.format(fl= folder_loc)) 
+        wd_rain_counter = Error('0001')
 
+        if not wd_rain_counter.check_counter():
+            wd_rain_counter.set()
 
-    
-        logger.info('--- Script Finished ---')
+        with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
+            config = json.load(f)
 
+        wd_script.notify_errors_via_maker_ch(config['maker_channel']['MAKER_CH_ADDR'],
+                                             config['maker_channel']['MAKER_CH_KEY'])
 
     except Exception, e:
         logger.error('Update failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
         sys.exit()
+
+    finally:
+        logger.info('--- Script Finished ---')
+
 
     
 #===============================================================================

@@ -1,19 +1,26 @@
 {
 	"0001": {
-		"time":1457546599,
-		"msg": "read_rain_gauge script stopped",
-		"notified":1 
+		"time":0,
+		"msg": "Script read_rain_gauge stopped",
+		"notified":1,
+		"watchdog":0 
 	},
 
 	"0002": {
 		"time":0,
-		"msg": "read_rain_gauge script stopped",
+		"msg": "Script read_rain_gauge error!",
 		"notified":0 
 	},
 
 	"0003": {
-		"time":1457546599,
-		"msg": "another error",
+		"time":0,
+		"msg": "Script read_sensors.py error!",
+		"notified":0 
+	},
+
+	"0004": {
+		"time":0,
+		"msg": "Accumulate precipitation failed",
 		"notified":0 
 	}
 
