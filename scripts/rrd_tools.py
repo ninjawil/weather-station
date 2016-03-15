@@ -98,6 +98,30 @@ class RrdFile:
 
 
     #---------------------------------------------------------------------------
+    # CHECK FILE
+    #---------------------------------------------------------------------------
+    def check_ds_list_match(self, sensor_list):
+
+        try:
+            list_in_file = ds_list()
+
+            if sorted(list_in_file) != sorted(sensor_list):
+                self.logger.error('Data sources in RRD file does not match set up.')
+                self.logger.error(list_in_file)
+                self.logger.error(sensor_list)
+                self.logger.error('Exiting...')
+                return False
+            else:
+                self.logger.info('RRD fetch successful.')
+                return True
+
+        except Exception, e:
+            self.logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
+                error_v=e))
+            return False
+
+
+    #---------------------------------------------------------------------------
     # INFO
     #---------------------------------------------------------------------------
     def info(self):
