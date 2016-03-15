@@ -40,11 +40,6 @@ class MakerChannel:
     #---------------------------------------------------------------------------
     def trigger_an_event(self, **args):
 
-        # print(args)
-        # if args:
-        #     values = {'value' + str(i): args['value' + str(i)] 
-        #                                     for i in range(1, len(args)+1)}
-
         values = args
         cmd = '{host}{event}/with/key/{key}'.format(
                 host=   self.addr,
