@@ -29,6 +29,8 @@ import DS18B20.DS18B20 as DS18B20
 import pyenergenie.ener314rt as ener314rt
 import settings as s
 import rrd_tools
+import check_process
+import watchdog as wd
 
 
 
@@ -39,8 +41,9 @@ def main():
     
     '''Entry point for script'''
 
-
     script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts/', '')
 
 
     #---------------------------------------------------------------------------
@@ -55,6 +58,21 @@ def main():
     
 
     #---------------------------------------------------------------------------
+    # SET UP WATCHDOG
+    #---------------------------------------------------------------------------
+    wd_script   = wd.Script('{fl}/data/error.json'.format(fl= folder_loc)) 
+    wd_err      = wd.Error(error_code= '0003')
+
+
+    #---------------------------------------------------------------------------
+    # CHECK SCRIPT IS NOT ALREADY RUNNING
+    #---------------------------------------------------------------------------    
+    if check_process.is_running(script_name):
+        wd_err.set()
+        sys.exit()
+  
+
+    #---------------------------------------------------------------------------
     # Load PIGPIO
     #---------------------------------------------------------------------------
     try:
@@ -63,30 +81,21 @@ def main():
     except Exception, e:
         logger.error('Failed to connect to PIGPIO ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
+        wd_err.set()
         sys.exit()
 
 
     #---------------------------------------------------------------------------
-    # Check Rrd File And Set Up Sensor Variables
+    # Check Rrd File
     #---------------------------------------------------------------------------
-    try:
-        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                        fd2= s.DATA_FOLDER,
-                                                        fl= s.RRDTOOL_RRD_FILE))
-
-        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.error('Data sources in RRD file does not match set up.')
-            logger.error(rrd.ds_list())
-            logger.error(list(s.SENSOR_SET.keys()))
-            logger.error('Exiting...')
-            sys.exit()
-        else:
-            logger.info('RRD fetch successful')
-
-    except Exception, e:
-        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
-            error_v=e), exc_info=True)
+    rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                    fd2= s.DATA_FOLDER,
+                                                    fl= s.RRDTOOL_RRD_FILE))
+        
+    if not rrd_tools.check_ds_list_match(list(s.SENSOR_SET.keys())):
+        wd_err.set()
         sys.exit()
+
 
 
     #---------------------------------------------------------------------------
@@ -125,6 +134,7 @@ def main():
         except ValueError:
             logger.warning('Failed to read DHT22 ({value_error})'.format(
                 value_error=ValueError))
+            wd_err.set()
                 
         finally:
             DHT22_sensor.cancel()
@@ -142,6 +152,7 @@ def main():
         except ValueError:
             logger.warning('Failed to read door sensor ({value_error})'.format(
                 value_error=ValueError))
+            wd_err.set()
 
 
     #-------------------------------------------------------------------
@@ -164,6 +175,7 @@ def main():
         except Exception, e:
             logger.warning('Failed to read switch data ({value_error})'.format(
                 value_error=e), exc_info=True)
+            wd_err.set()
                 
         finally:
             switch.close()
@@ -181,6 +193,7 @@ def main():
         except ValueError:
             logger.warning('Failed to read door sensor ({value_error})'.format(
                 value_error=ValueError))
+            wd_err.set()
 
 
     #-------------------------------------------------------------------
@@ -200,6 +213,7 @@ def main():
         except Exception, e:
             logger.warning('Failed to read DS18B20 ({value_error})'.format(
                 value_error=e), exc_info=True)
+            wd_err.set()
         
 
     #-------------------------------------------------------------------
@@ -218,6 +232,7 @@ def main():
         logger.error('Failed to update RRD file ({value_error})'.format(
             value_error=result))
         logger.error(sensor_value)
+        wd_err.set()
 
 
     #-------------------------------------------------------------------
