@@ -103,7 +103,7 @@ class RrdFile:
     def check_ds_list_match(self, sensor_list):
 
         try:
-            list_in_file = ds_list()
+            list_in_file = self.ds_list()
 
             if sorted(list_in_file) != sorted(sensor_list):
                 self.logger.error('Data sources in RRD file does not match set up.')
