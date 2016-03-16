@@ -34,7 +34,7 @@ import logging
 import settings as s
 import rrd_tools
 import check_process
-import watchdog
+import watchdog as wd
 
 
 #===============================================================================
