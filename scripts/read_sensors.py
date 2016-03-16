@@ -43,7 +43,7 @@ def main():
 
     script_name = os.path.basename(sys.argv[0])
     folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
-    folder_loc  = folder_loc.replace('scripts/', '')
+    folder_loc  = folder_loc.replace('scripts', '')
 
 
     #---------------------------------------------------------------------------
@@ -60,8 +60,8 @@ def main():
     #---------------------------------------------------------------------------
     # SET UP WATCHDOG
     #---------------------------------------------------------------------------
-    wd_script   = wd.Script('{fl}/data/error.json'.format(fl= folder_loc)) 
-    wd_err      = wd.Error(error_code= '0003')
+    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
+    wd_err      = wd.ErrorCode(err_file, '0003')
 
 
     #---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ def main():
                                                     fd2= s.DATA_FOLDER,
                                                     fl= s.RRDTOOL_RRD_FILE))
         
-    if not rrd_tools.check_ds_list_match(list(s.SENSOR_SET.keys())):
+    if not rrd.check_ds_list_match(list(s.SENSOR_SET.keys())):
         wd_err.set()
         sys.exit()
 
