@@ -34,6 +34,12 @@
 		"time":0,
 		"msg": "Script RRD_EXPORT error",
 		"notified":0 
+	},
+
+	"0007": {
+		"time":0,
+		"msg": "Script RRD_TS_SYNC error",
+		"notified":0 
 	}
 
 }

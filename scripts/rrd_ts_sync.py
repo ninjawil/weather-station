@@ -19,6 +19,7 @@ import rrd_tools
 import settings as s
 import log
 import check_process
+import watchdog as wd
 
 
 #===============================================================================
@@ -48,35 +49,35 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
    
    
     script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts', '')
 
 
     #---------------------------------------------------------------------------
-    # SET UP LOGGER
+    # Set up logger
     #---------------------------------------------------------------------------
     logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
+                                                    folder= folder_loc,
                                                     script= script_name[:-3]))
 
     logger.info('')
-    logger.info('--- Script {script} Started ---'.format(script= script_name))  
+    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
+    
+
+    #---------------------------------------------------------------------------
+    # SET UP WATCHDOG
+    #---------------------------------------------------------------------------
+    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
+    wd_err      = wd.ErrorCode(err_file, '0007')
 
 
     #---------------------------------------------------------------------------
     # CHECK SCRIPT IS NOT ALREADY RUNNING
     #---------------------------------------------------------------------------    
-    try:
-        other_script_found = check_process.is_running(script_name)
-
-        if other_script_found:
-            logger.critical('Script already runnning. Exiting...')
-            logger.error(other_script_found)
-            sys.exit()
-
-    except Exception, e:
-        logger.error('System check failed ({error_v}). Exiting...'.format(
-            error_v=e))
+    if check_process.is_running(script_name):
+        wd_err.set()
         sys.exit()
-
+  
     
     try:
         #-----------------------------------------------------------------------
@@ -110,14 +111,9 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
         #-----------------------------------------------------------------------
         rrd = rrd_tools.RrdFile(rrd_file)
         
-        if sorted(rrd.ds_list()) != sorted(sensors):
-            logger.error('Data sources in RRD file does not match set up.')
-            logger.error(rrd.ds_list())
-            logger.error(sensors)
-            logger.error('Exiting...')
+        if check_process.is_running(script_name):
+            wd_err.set()
             sys.exit()
-        else:
-            logger.info('RRD fetch successful.')
 
               
         #-----------------------------------------------------------------------
@@ -192,6 +188,7 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
 
                 if n >= 3:
                     logger.error('Failed to update Thingspeak. Exiting...')
+                    wd_err.set()
                     sys.exit()          
                 else:
                     #Thingspeak update rate is limited to 15s per entry
@@ -204,6 +201,7 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
     except Exception, e:
         logger.error('Update failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
+        wd_err.set()
         sys.exit()
 
 
