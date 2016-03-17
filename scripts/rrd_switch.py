@@ -22,6 +22,7 @@ import log, logging
 import pyenergenie.ener314rt as ener314rt
 import settings as s
 import rrd_tools
+import watchdog as wd
 
 
 
@@ -29,7 +30,7 @@ import rrd_tools
 # MAIN
 #===============================================================================
 def operate_switch( temp_threshold, temp_hys, force_on, sensors, switch_id, 
-                    rrd_res, rrd_file):
+                    rrd_res, rrd_file, err_code):
     
     '''
     Operates a MiPlug switch depending on the last temperature value entered
@@ -51,14 +52,9 @@ def operate_switch( temp_threshold, temp_hys, force_on, sensors, switch_id,
         #-----------------------------------------------------------------------
         rrd = rrd_tools.RrdFile(rrd_file)
         
-        if sorted(rrd.ds_list()) != sorted(sensors):
-            logger.error('Data sources in RRD file does not match set up.')
-            logger.error(rrd.ds_list())
-            logger.error(sensors)
-            logger.error('Exiting...')
+        if not rrd.check_ds_list_match(sensors):
+            wd_err.set()
             sys.exit()
-        else:
-            logger.info('RRD fetch successful.')
 
         #-----------------------------------------------------------------------
         # Get last feed update from RRD
@@ -97,6 +93,7 @@ def operate_switch( temp_threshold, temp_hys, force_on, sensors, switch_id,
     except Exception, e:
         logger.critical('RRD fetch failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
+        wd_err.set()
         sys.exit()
 
 
@@ -118,6 +115,7 @@ def operate_switch( temp_threshold, temp_hys, force_on, sensors, switch_id,
     except Exception, e:
         logger.warning('Failed to set switch ({value_error})'.format(
             value_error=e), exc_info=True)
+        wd_err.set()
             
     finally:
         switch.close()
@@ -130,17 +128,26 @@ def main():
 
 
     script_name = os.path.basename(sys.argv[0])
-    path_name = os.path.dirname(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts', '')
+
 
     #---------------------------------------------------------------------------
     # Set up logger
     #---------------------------------------------------------------------------
     logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                        folder= '{fd1}'.format(fd1= s.SYS_FOLDER),
-                                        script= script_name[:-3]))
+                                                    folder= folder_loc,
+                                                    script= script_name[:-3]))
 
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name)) 
+ 
+
+    #---------------------------------------------------------------------------
+    # SET UP WATCHDOG
+    #---------------------------------------------------------------------------
+    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
+    wd_err      = wd.ErrorCode(err_file, '0005')
 
 
     #---------------------------------------------------------------------------
@@ -155,7 +162,7 @@ def main():
     # Get data from config file
     #-------------------------------------------------------------------
     try:
-        with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
+        with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
 
         sw_user_enable  = config['heater']['HEATER_ENABLE']
@@ -165,7 +172,9 @@ def main():
         switch_id       = config['heater']['MIPLUG_SENSOR_ID']
 
     except Exception, e:
-        print(e)
+        logger.error('Could not load config data ({error_v})'.format(
+            error_v=e), exc_info=True)
+        wd_err.set()
         sys.exit()
 
 
@@ -180,9 +189,9 @@ def main():
                             list(s.SENSOR_SET.keys()),
                             switch_id, 
                             s.UPDATE_RATE, 
-                            '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                    fd2= s.DATA_FOLDER,
-                                                    fl= s.RRDTOOL_RRD_FILE))
+                            '{fd1}/data/{fl}'.format(fd1= folder_loc,
+                                                     fl= s.RRDTOOL_RRD_FILE),
+                            wd_err)
     # If user enable is DISABLED switch OFF heater
     else:
         logger.info('User enable set to DISABLED')
@@ -193,6 +202,7 @@ def main():
         except Exception, e:
             logger.warning('Failed to set switch ({value_error})'.format(
                 value_error=e), exc_info=True)
+            wd_err.set()
                 
         finally:
             switch.close()

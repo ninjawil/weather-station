@@ -1,20 +1,20 @@
 {
 	"0001": {
 		"time":0,
-		"msg": "Script read_rain_gauge stopped",
+		"msg": "Script READ_RAIN_GAUGE stopped",
 		"notified":0,
 		"watchdog":0 
 	},
 
 	"0002": {
 		"time":0,
-		"msg": "Script read_rain_gauge error!",
+		"msg": "Script READ_RAIN_GAUGE error",
 		"notified":0 
 	},
 
 	"0003": {
 		"time":1458161267,
-		"msg": "Script read_sensors.py error!",
+		"msg": "Script READ_SENSORS error",
 		"notified":0 
 	},
 
