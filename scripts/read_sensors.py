@@ -88,8 +88,7 @@ def main():
     #---------------------------------------------------------------------------
     # Check Rrd File
     #---------------------------------------------------------------------------
-    rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                    fd2= s.DATA_FOLDER,
+    rrd = rrd_tools.RrdFile('{fd1}/data/{fl}'.format(fd1= folder_loc,
                                                     fl= s.RRDTOOL_RRD_FILE))
         
     if not rrd.check_ds_list_match(list(s.SENSOR_SET.keys())):
