@@ -13,7 +13,7 @@
 	},
 
 	"0003": {
-		"time":1458161267,
+		"time":0,
 		"msg": "Script READ_SENSORS error",
 		"notified":0 
 	},
@@ -21,6 +21,18 @@
 	"0004": {
 		"time":0,
 		"msg": "Accumulate precipitation failed",
+		"notified":0 
+	},
+
+	"0005": {
+		"time":0,
+		"msg": "Script RRD_SWITCH error",
+		"notified":0 
+	},
+
+	"0006": {
+		"time":0,
+		"msg": "Script RRD_EXPORT error",
 		"notified":0 
 	}
 

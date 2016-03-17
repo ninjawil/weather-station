@@ -27,6 +27,7 @@ import log
 import settings as s
 import rrd_tools
 import check_process
+import watchdog as wd
 
 
 #===============================================================================
@@ -51,68 +52,65 @@ def rrd_export(rrd_file, data_sources, rra_list, output_xml_folder):
 
 
     script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts', '')
 
 
     #---------------------------------------------------------------------------
-    # SET UP LOGGER
+    # Set up logger
     #---------------------------------------------------------------------------
     logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
+                                                    folder= folder_loc,
                                                     script= script_name[:-3]))
 
     logger.info('')
-    logger.info('--- Script {script} Started ---'.format(script= script_name))
+    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
+    
+
+    #---------------------------------------------------------------------------
+    # SET UP WATCHDOG
+    #---------------------------------------------------------------------------
+    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
+    wd_err      = wd.ErrorCode(err_file, '0006')
 
 
     #---------------------------------------------------------------------------
     # CHECK SCRIPT IS NOT ALREADY RUNNING
     #---------------------------------------------------------------------------    
-    try:
-        other_script_found = check_process.is_running(script_name)
-
-        if other_script_found:
-            logger.critical('Script already runnning. Exiting...')
-            logger.error(other_script_found)
-            sys.exit()
-
-    except Exception, e:
-        logger.error('System check failed ({error_v}). Exiting...'.format(
-            error_v=e))
+    if check_process.is_running(script_name):
+        wd_err.set()
         sys.exit()
-
+  
 
     #---------------------------------------------------------------------------
-    # Check Rrd File And Set Up Sensor Variables
+    # Check Rrd File
     #---------------------------------------------------------------------------
-    try:
-        rrd = rrd_tools.RrdFile(rrd_file)
-
-        if sorted(rrd.ds_list()) != sorted(data_sources):
-            logger.error('Data sources in RRD file does not match set up.')
-            logger.error(rrd.ds_list())
-            logger.error(data_sources)
-            logger.error('Exiting...')
-            sys.exit()
-        else:
-            logger.info('RRD fetch successful')
-
-    except Exception, e:
-        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(error_v=e), 
-                        exc_info=True)
+    rrd = rrd_tools.RrdFile('{fd1}/data/{fl}'.format(fd1= folder_loc,
+                                                    fl= s.RRDTOOL_RRD_FILE))
+        
+    if not rrd.check_ds_list_match(list(s.SENSOR_SET.keys())):
+        wd_err.set()
         sys.exit()
 
 
     #---------------------------------------------------------------------------
     # Export RRD to XML
     #---------------------------------------------------------------------------
-    for xml_file in rra_list:
-        rrd.export( start= 'now-{rec_period:.0f}h'.format(rec_period= rra_list[xml_file][2] * 24),
-                    end= 'now',
-                    cf= rra_list[xml_file][0],
-                    step= rra_list[xml_file][1] * 60,
-                    ds_list= data_sources,
-                    output_file= '{fd1}{fl}'.format(fd1= output_xml_folder, fl= xml_file))
-
+    try:
+        for xml_file in rra_list:
+            rrd.export( start= 'now-{rec_period:.0f}h'.format(
+                                        rec_period= rra_list[xml_file][2] * 24),
+                        end= 'now',
+                        cf= rra_list[xml_file][0],
+                        step= rra_list[xml_file][1] * 60,
+                        ds_list= data_sources,
+                        output_file= '{fd1}{fl}'.format(fd1= output_xml_folder, 
+                                                        fl= xml_file))
+    except ValueError:
+        logger.warning('Failed to export RRD ({value_error})'.format(
+            value_error=ValueError))
+        wd_err.set()
+                
 
     logger.info('--- Script Finished ---')
 
