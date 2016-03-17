@@ -59,7 +59,7 @@ function displayLogData(directory, filenames) {
 function main() {
 
 	var dir = 'weather_logs/',
-		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log', 'rrd_switch.log'];
+		logFiles = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log', 'rrd_switch.log', 'watchdog.log'];
 
 	displayLogData(dir, logFiles);
 
