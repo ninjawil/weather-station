@@ -3,43 +3,50 @@
 		"time":0,
 		"msg": "Script READ_RAIN_GAUGE stopped",
 		"notified":0,
-		"watchdog":0 
+		"watchdog":0,
+		"count":0 
 	},
 
 	"0002": {
 		"time":0,
 		"msg": "Script READ_RAIN_GAUGE error",
-		"notified":0 
+		"notified":0,
+		"count":0 
 	},
 
 	"0003": {
 		"time":0,
 		"msg": "Script READ_SENSORS error",
-		"notified":0 
+		"notified":0,
+		"count":0 
 	},
 
 	"0004": {
 		"time":0,
 		"msg": "Accumulate precipitation failed",
-		"notified":0 
+		"notified":0,
+		"count":0 
 	},
 
 	"0005": {
 		"time":0,
 		"msg": "Script RRD_SWITCH error",
-		"notified":0 
+		"notified":0,
+		"count":0 
 	},
 
 	"0006": {
 		"time":0,
 		"msg": "Script RRD_EXPORT error",
-		"notified":0 
+		"notified":0,
+		"count":0 
 	},
 
 	"0007": {
 		"time":0,
 		"msg": "Script RRD_TS_SYNC error",
-		"notified":0 
+		"notified":0,
+		"count":0 
 	}
 
 }

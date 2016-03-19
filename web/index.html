@@ -167,29 +167,24 @@
 	    </div> <!-- modal_settings -->
 
 	    <div id="modal_errors" class="modal fade" role="dialog">
-	        <div class="modal-dialog">
+	        <div class="modal-dialog modal-lg">
 	            <div class="modal-content">
 	                <div class="modal-header">
 	                    <h4 class="modal-title" id="log_file_modal">Errors</h4>
 	                </div>
 	                <div class="modal-body">
-	                	<div class="panel panel-default">
-						  	<!-- Default panel contents -->
-						 	<div class="panel-heading">Active errors</div>
-
-						  	<!-- Table -->
-						  	<table class="table table-hover">
-						  		<thead>
-							      	<tr>
-								        <th>Date</th>
-								        <th>No.</th>
-								        <th>Message</th>
-								        <th>Notified</th>
-							      	</tr>
-							    </thead>
-							    <tbody id="error_table"></tbody>
-						  	</table>
-						</div>
+	                	<table class="table">
+					  		<thead>
+						      	<tr>
+							        <th>Date</th>
+							        <th>No.</th>
+							        <th>Message</th>
+							        <th>Notified</th>
+							        <th>Count</th>
+						      	</tr>
+						    </thead>
+						    <tbody id="error_table"></tbody>
+					  	</table>
 	                </div>
 	                <div class="modal-footer">
 	                	<button type="button" class="btn btn-default" onclick="saveSettings()">Clear Errors</button>

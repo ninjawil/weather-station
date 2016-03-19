@@ -59,6 +59,7 @@ class AllErrors:
         for error_code in errors:
             errors[error_code]['time'] = 0
             errors[error_code]['notified'] = 0
+            errors[error_code]['count'] = 0
 
         self.write_data(errors)
 
@@ -168,6 +169,8 @@ class ErrorCode(AllErrors):
         if errors[self.err_code]['time'] == 0:
             errors[self.err_code]['time'] = int(time.time())
             errors[self.err_code]['notified'] = 0
+        
+        errors[self.err_code]['count'] += 1
 
         self.write_data(errors)
 
@@ -183,6 +186,7 @@ class ErrorCode(AllErrors):
 
         errors[self.err_code]['time'] = 0
         errors[self.err_code]['notified'] = 0
+        errors[self.err_code]['count'] = 0
 
         self.write_data(errors)
 

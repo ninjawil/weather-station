@@ -69,6 +69,7 @@ function parseErrorMsgTable(error_data) {
 			var formattedError 	= HTMLerrorTable.replace("%date%", datetime);
 			formattedError 		= formattedError.replace("%errornumber%", error);
 			formattedError 		= formattedError.replace("%message%", error_data[error].msg);
+			formattedError 		= formattedError.replace("%count%", error_data[error].count);
 
 			var notified = 'No';
 			

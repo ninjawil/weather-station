@@ -20,5 +20,5 @@ var HTMLvalue = '<div class="row reading-value">%value%<span class="reading-unit
 
 var HTMLlogBox = '<h4>%logFileName%</h4><pre id="%logName%" class="log-display"></pre>';
 
-var HTMLerrorTable = '<tr><th>%date%</th><th>%errornumber%</th><th>%message%</th><th>%notified%</th></tr>';
+var HTMLerrorTable = '<tr><td>%date%</td><td>%errornumber%</td><td>%message%</td><td>%notified%</td><td>%count%</td></tr>';
 
