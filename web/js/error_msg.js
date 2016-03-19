@@ -19,10 +19,10 @@ function pad(num, size) {
 //-------------------------------------------------------------------------------
 // Grab error.json data
 //-------------------------------------------------------------------------------
-function grabConfigData(){
+function grabErrorData(functionCall){
 
 	$.getJSON('weather_data/error.json', function(json) {
-	    displayErrorMessage(json);
+		functionCall(json);
 	});
 
 }
@@ -31,9 +31,7 @@ function grabConfigData(){
 //-------------------------------------------------------------------------------
 // Manages error messages depending on passed error code
 //-------------------------------------------------------------------------------
-function displayErrorMessage(json) {
-
-	error_data = json;
+function displayErrorMessage(error_data) {
 
 	errorValue = 0;
 	errorMessage = '';
@@ -49,10 +47,36 @@ function displayErrorMessage(json) {
 
 		var displayErrorType = "   Error E"+ pad(errorValue, 4) + ": ";
 
-		var formattedErrorMsg = HTMLerrorMSG.replace("%error_type%", displayErrorType);
-		formattedErrorMsg = formattedErrorMsg.replace("%error_msg%", errorMessage);
+		var formattedErrorMsg 	= HTMLerrorMSG.replace("%error_type%", displayErrorType);
+		formattedErrorMsg 		= formattedErrorMsg.replace("%error_msg%", errorMessage);
 
 		$('#error_display').append(formattedErrorMsg);
+	}
+}
+
+
+//-------------------------------------------------------------------------------
+// Parses error messages to error table
+//-------------------------------------------------------------------------------
+function parseErrorMsgTable(error_data) {
+
+	for (var error in error_data) {
+		if(error_data[error].time != 0) {
+
+			var datetime = new Date(error_data[error].time);
+			datetime = datetime.toUTCString();
+
+			var formattedError 	= HTMLerrorTable.replace("%date%", datetime);
+			formattedError 		= formattedError.replace("%errornumber%", error);
+			formattedError 		= formattedError.replace("%message%", error_data[error].msg);
+
+			var notified = 'No';
+			
+			if(error_data[error].notified === '1') { notified = 'YES' }
+			formattedError 		= formattedError.replace("%notified%", notified);
+
+			$('#error_table').append(formattedError);
+		}
 	}
 }
 
@@ -62,7 +86,15 @@ function displayErrorMessage(json) {
 //-------------------------------------------------------------------------------
 function main() {
 
-	grabConfigData();
+	grabErrorData(displayErrorMessage);
+
+	$('#modal_errors').on('shown.bs.modal', function (e) {
+    	grabErrorData(parseErrorMsgTable);
+	});
+
+	$('#modal_errors').on('hidden.bs.modal', function (e) {
+    	$('#error_table').empty()
+	});
 }
 
 

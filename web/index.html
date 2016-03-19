@@ -64,6 +64,7 @@
 						          	</a>
 						          	<ul class="dropdown-menu">
 							            <li><a href="#" data-toggle="modal" data-target="#modal_logs">View Logs</a></li>
+							            <li><a href="#" data-toggle="modal" data-target="#modal_errors">Errors</a></li>
 							            <li role="separator" class="divider"></li>
 							            <li><a href="#" data-toggle="modal" data-target="#modal_settings">Settings</a></li>
 						          	</ul>
@@ -166,17 +167,32 @@
 	    </div> <!-- modal_settings -->
 
 	    <div id="modal_errors" class="modal fade" role="dialog">
-	        <div class="modal-dialog-lg">
+	        <div class="modal-dialog">
 	            <div class="modal-content">
 	                <div class="modal-header">
 	                    <h4 class="modal-title" id="log_file_modal">Errors</h4>
 	                </div>
 	                <div class="modal-body">
-	                	<div class="row">
+	                	<div class="panel panel-default">
+						  	<!-- Default panel contents -->
+						 	<div class="panel-heading">Active errors</div>
 
+						  	<!-- Table -->
+						  	<table class="table table-hover">
+						  		<thead>
+							      	<tr>
+								        <th>Date</th>
+								        <th>No.</th>
+								        <th>Message</th>
+								        <th>Notified</th>
+							      	</tr>
+							    </thead>
+							    <tbody id="error_table"></tbody>
+						  	</table>
 						</div>
 	                </div>
 	                <div class="modal-footer">
+	                	<button type="button" class="btn btn-default" onclick="saveSettings()">Clear Errors</button>
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 	                </div>
 	            </div>
