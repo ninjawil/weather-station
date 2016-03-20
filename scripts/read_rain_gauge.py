@@ -34,6 +34,7 @@ import logging
 import settings as s
 import rrd_tools
 import check_process
+import watchdog as wd
 
 
 #===============================================================================
@@ -78,8 +79,8 @@ def count_rain_ticks(gpio, level, tick):
         logger.debug('Precip tick count : {tick}'.format(tick= precip_tick_count))
         with open('{fd1}/data/tick_count'.format(fd1= s.SYS_FOLDER), 'w') as f:
             f.write('{tick_time}:{tick_count}'.format(
-                                        tick_time=int(datetime.datetime.now().strftime("%s")),
-                                        tick_count=int(precip_tick_count)))
+                                tick_time=int(datetime.datetime.now().strftime("%s")),
+                                tick_count=int(precip_tick_count)))
         
  
 
@@ -97,10 +98,12 @@ def main():
     precip_accu       = 0
 
     script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts', '')
 
 
     #---------------------------------------------------------------------------
-    # SET UP LOGGER
+    # SET UP LOGGER AND WATCHDOG
     #---------------------------------------------------------------------------
     logger = log.setup('root', '{folder}/logs/{script}.log'.format(
                                                     folder= s.SYS_FOLDER,
@@ -111,19 +114,19 @@ def main():
 
 
     #---------------------------------------------------------------------------
+    # SET UP WATCHDOG
+    #---------------------------------------------------------------------------
+    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
+    wd_counter  = wd.ErrorCode(err_file, '0001')    # Script READ_RAIN_GAUGE stopped
+    wd_err      = wd.ErrorCode(err_file, '0002')    # Script READ_RAIN_GAUGE error
+    wd_acc_err  = wd.ErrorCode(err_file, '0004')    # Accumulate precipitation failed
+
+
+    #---------------------------------------------------------------------------
     # CHECK SCRIPT IS NOT ALREADY RUNNING
     #---------------------------------------------------------------------------    
-    try:
-        other_script_found = check_process.is_running(script_name)
-
-        if other_script_found:
-            logger.critical('Script already runnning. Exiting...')
-            logger.error(other_script_found)
-            sys.exit()
-
-    except Exception, e:
-        logger.error('System check failed ({error_v}). Exiting...'.format(
-            error_v=e))
+    if check_process.is_running(script_name):
+        wd_err.set()
         sys.exit()
 
 
@@ -136,29 +139,7 @@ def main():
     except Exception, e:
         logger.error('Failed to connect to PIGPIO ({error_v}). Exiting...'.format(
             error_v=e))
-        sys.exit()
-
-
-    #---------------------------------------------------------------------------
-    # CHECK RRD FILE
-    #---------------------------------------------------------------------------
-    try:
-        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                        fd2= s.DATA_FOLDER,
-                                                        fl= s.RRDTOOL_RRD_FILE))
-        
-        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.error('Data sources in RRD file does not match set up.')
-            logger.error(rrd.ds_list())
-            logger.error(list(s.SENSOR_SET.keys()))
-            logger.error('Exiting...')
-            sys.exit()
-        else:
-            logger.info('RRD fetch successful.')
-
-    except Exception, e:
-        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
-            error_v=e))
+        wd_err.set()
         sys.exit()
 
 
@@ -166,6 +147,18 @@ def main():
     # INITIATE CHECKS
     #---------------------------------------------------------------------------
     try:
+
+        #-----------------------------------------------------------------------
+        # CHECK RRD FILE AND SET UP WATCHDOG
+        #-----------------------------------------------------------------------
+        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                            fd2= s.DATA_FOLDER,
+                                                            fl= s.RRDTOOL_RRD_FILE))
+            
+        if not rrd.check_ds_list_match(list(s.SENSOR_SET.keys())):
+            wd_err.set()
+            sys.exit()
+
 
         #-----------------------------------------------------------------------
         # SET UP SENSOR VARIABLES
@@ -206,7 +199,14 @@ def main():
         # TIMED LOOP
         #-----------------------------------------------------------------------
         while True:
-            
+
+
+            #-------------------------------------------------------------------
+            # Increment watchdog counter
+            #-------------------------------------------------------------------
+            wd_counter.increment_counter(step= 1)
+
+
             #-------------------------------------------------------------------
             # Delay to give update rate
             #-------------------------------------------------------------------
@@ -224,7 +224,7 @@ def main():
             #-------------------------------------------------------------------
             loop_start = datetime.datetime.utcnow()
             logger.info('*** Loop start time: {start_time} ***'.format(
-                start_time=loop_start.strftime('%Y-%m-%d %H:%M:%S')))
+                            start_time=loop_start.strftime('%Y-%m-%d %H:%M:%S')))
 
 
             #-------------------------------------------------------------------
@@ -240,6 +240,7 @@ def main():
             except Exception, e:
                 logger.critical('Failed to get config data ({value_error})'.format(
                     value_error=e), exc_info=True)
+                wd_err.set()
                 sys.exit()
 
 
@@ -299,6 +300,7 @@ def main():
                 except Exception, e:
                     logger.error('Accumulate precipitation failed ({error_v}). Exiting...'.format(
                         error_v=e))
+                    wd_acc_err.set()
 
 
             #Round values
@@ -330,6 +332,7 @@ def main():
                 logger.error('Failed to update RRD file ({value_error})'.format(
                     value_error=result))
                 logger.error(sensor_value)
+                wd_err.set()
 
 
     #---------------------------------------------------------------------------
@@ -337,6 +340,7 @@ def main():
     #---------------------------------------------------------------------------
     except KeyboardInterrupt:
         logger.info('USER ACTION: End command')
+        wd_err.set()
         sys.exit()
 
 
@@ -345,6 +349,7 @@ def main():
     #---------------------------------------------------------------------------
     except Exception, e:
         logger.error('Script Error', exc_info=True)
+        wd_err.set()
         sys.exit()
 
 
@@ -352,7 +357,7 @@ def main():
     # Stop processes
     #---------------------------------------------------------------------------
     finally:
-        rain_gauge.cancel()       
+        rain_gauge.cancel()
         logger.info('--- Read Rain Gauge Finished ---')
         
 

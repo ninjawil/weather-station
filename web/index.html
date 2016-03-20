@@ -64,6 +64,7 @@
 						          	</a>
 						          	<ul class="dropdown-menu">
 							            <li><a href="#" data-toggle="modal" data-target="#modal_logs">View Logs</a></li>
+							            <li><a href="#" data-toggle="modal" data-target="#modal_errors">Errors</a></li>
 							            <li role="separator" class="divider"></li>
 							            <li><a href="#" data-toggle="modal" data-target="#modal_settings">Settings</a></li>
 						          	</ul>
@@ -147,6 +148,15 @@
 							<span class="input-group-addon" id="basic-addon7">Channel ID</span>
 						  	<input id="ts-ch-id" type="text" class="form-control" aria-describedby="basic-addon7">
 						</div>
+						<h5>MAKER CHANNEL</h5>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon8">POST Address</span>
+						  	<input id="mk-addr" type="text" class="form-control" aria-describedby="basic-addon8">
+						</div>
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon9">Key</span>
+						  	<input id="mk-key" type="text" class="form-control" aria-describedby="basic-addon9">
+						</div>
 	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
 	                    <button type="button" class="btn btn-default" onclick="saveSettings()">Save</button>
@@ -155,12 +165,40 @@
 	            </div>
 	        </div>
 	    </div> <!-- modal_settings -->
+
+	    <div id="modal_errors" class="modal fade" role="dialog">
+	        <div class="modal-dialog modal-lg">
+	            <div class="modal-content">
+	                <div class="modal-header">
+	                    <h4 class="modal-title" id="log_file_modal">Errors</h4>
+	                </div>
+	                <div class="modal-body">
+	                	<table class="table">
+					  		<thead>
+						      	<tr>
+							        <th>Date</th>
+							        <th>No.</th>
+							        <th>Message</th>
+							        <th>Notified</th>
+							        <th>Count</th>
+						      	</tr>
+						    </thead>
+						    <tbody id="error_table"></tbody>
+					  	</table>
+	                </div>
+	                <div class="modal-footer">
+	                	<button type="button" class="btn btn-default" onclick="saveSettings()">Clear Errors</button>
+	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	                </div>
+	            </div>
+	        </div>
+	    </div> <!-- modal_errors -->
     </div>
 
     <script src="js/charts_update.js"></script>
-    <script src="js/errors.js"></script>
     <script src="js/log.js"></script>
     <script src="js/config_data.js"></script>
+    <script src="js/error_msg.js"></script>
 
 </body>
 </html>  

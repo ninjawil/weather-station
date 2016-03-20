@@ -39,6 +39,9 @@ function updateSettingsModal(json) {
 	$('#ts-api-key').attr('placeholder', config_data.thingspeak.THINGSPEAK_API_KEY);
 	$('#ts-ch-id').attr('placeholder', config_data.thingspeak.THINGSPEAK_CHANNEL_ID);
 
+	$('#mk-addr').attr('placeholder', config_data.maker_channel.MAKER_CH_ADDR);
+	$('#mk-key').attr('placeholder', config_data.maker_channel.MAKER_CH_KEY);
+
     $(function(){
         $('#checkbox input:checkbox').on('change', function(){
             if($(this).is(':checked')) {
