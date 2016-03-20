@@ -1,29 +1,3 @@
-#-------------------------------------------------------------------------------
-#
-# The MIT License (MIT)
-#
-# Copyright (c) 2015 William De Freitas
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-#
-#-------------------------------------------------------------------------------
-
 #!/usr/bin/env python
 
 ''' Script sets up hardware as long as sensor is enabled.
@@ -51,9 +25,12 @@ import DHT22
 
 # Application modules
 import log
-import DS18B20
+import DS18B20.DS18B20 as DS18B20
+import pyenergenie.ener314rt as ener314rt
 import settings as s
 import rrd_tools
+import check_process
+import watchdog as wd
 
 
 
@@ -64,18 +41,36 @@ def main():
     
     '''Entry point for script'''
 
-
     script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts', '')
 
 
     #---------------------------------------------------------------------------
     # Set up logger
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '/home/pi/weather/logs/read_sensors.log')
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= folder_loc,
+                                                    script= script_name[:-3]))
 
     logger.info('')
-    logger.info('--- Script {script} Started ---'.format(script= script_name))  
+    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
     
+
+    #---------------------------------------------------------------------------
+    # SET UP WATCHDOG
+    #---------------------------------------------------------------------------
+    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
+    wd_err      = wd.ErrorCode(err_file, '0003')
+
+
+    #---------------------------------------------------------------------------
+    # CHECK SCRIPT IS NOT ALREADY RUNNING
+    #---------------------------------------------------------------------------    
+    if check_process.is_running(script_name):
+        wd_err.set()
+        sys.exit()
+  
 
     #---------------------------------------------------------------------------
     # Load PIGPIO
@@ -86,28 +81,20 @@ def main():
     except Exception, e:
         logger.error('Failed to connect to PIGPIO ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
+        wd_err.set()
         sys.exit()
 
 
     #---------------------------------------------------------------------------
-    # Check Rrd File And Set Up Sensor Variables
+    # Check Rrd File
     #---------------------------------------------------------------------------
-    try:
-        rrd = rrd_tools.RrdFile(s.RRDTOOL_RRD_FILE)
-
-        if sorted(rrd.ds_list()) != sorted(list(s.SENSOR_SET.keys())):
-            logger.error('Data sources in RRD file does not match set up.')
-            logger.error(rrd.ds_list())
-            logger.error(list(s.SENSOR_SET.keys()))
-            logger.error('Exiting...')
-            sys.exit()
-        else:
-            logger.info('RRD fetch successful')
-
-    except Exception, e:
-        logger.error('RRD fetch failed ({error_v}). Exiting...'.format(
-            error_v=e), exc_info=True)
+    rrd = rrd_tools.RrdFile('{fd1}/data/{fl}'.format(fd1= folder_loc,
+                                                    fl= s.RRDTOOL_RRD_FILE))
+        
+    if not rrd.check_ds_list_match(list(s.SENSOR_SET.keys())):
+        wd_err.set()
         sys.exit()
+
 
 
     #---------------------------------------------------------------------------
@@ -128,19 +115,28 @@ def main():
             DHT22_sensor = DHT22.sensor(pi, sensor['inside_temp'].ref)
             DHT22_sensor.trigger()
             time.sleep(0.2)  #Do not over poll DHT22
-            DHT22_sensor.cancel()
 
-            if sensor['inside_temp'].enable:
-                sensor_value['inside_temp'] = DHT22_sensor.temperature()
+            temp = DHT22_sensor.temperature()
+            hum = DHT22_sensor.humidity() 
 
-            if sensor['inside_hum'].enable: 
-                sensor_value['inside_hum']  = DHT22_sensor.humidity() 
+            if temp == -999 or hum == -999:
+                logger.warning('Reading value from DHT22 sensor... FAILED')
 
-            logger.info('Reading value from DHT22 sensor... OK')
+            else:
+                if sensor['inside_temp'].enable:
+                    sensor_value['inside_temp'] = temp
+                if sensor['inside_hum'].enable: 
+                    sensor_value['inside_hum']  = hum 
+
+                logger.info('Reading value from DHT22 sensor... OK')
 
         except ValueError:
             logger.warning('Failed to read DHT22 ({value_error})'.format(
                 value_error=ValueError))
+            wd_err.set()
+                
+        finally:
+            DHT22_sensor.cancel()
 
 
     #-------------------------------------------------------------------
@@ -155,6 +151,48 @@ def main():
         except ValueError:
             logger.warning('Failed to read door sensor ({value_error})'.format(
                 value_error=ValueError))
+            wd_err.set()
+
+
+    #-------------------------------------------------------------------
+    # Get switch data
+    #-------------------------------------------------------------------
+    if sensor['sw_status'].enable or sensor['sw_power'].enable:
+        try:
+            switch = ener314rt.MiPlug()
+            switch_data = switch.get_data()
+            
+            if not switch_data or switch_data['switch'] == 'U' or switch_data['real'] == 'U':
+                logger.warning('Reading value from switch data... FAILED')
+            else:
+                logger.info('Reading value from switch data... OK')
+                if sensor['sw_status'].enable:
+                    sensor_value['sw_status'] = switch_data['switch']
+                if sensor['sw_power'].enable:
+                    sensor_value['sw_power']  = switch_data['real']
+
+        except Exception, e:
+            logger.warning('Failed to read switch data ({value_error})'.format(
+                value_error=e), exc_info=True)
+            wd_err.set()
+                
+        finally:
+            switch.close()
+
+
+    #-------------------------------------------------------------------
+    # Get door switch values
+    #-------------------------------------------------------------------
+    if sensor['door_open'].enable:
+        try:
+            pi.set_mode(sensor['door_open'].ref, pigpio.INPUT)
+            sensor_value['door_open'] = pi.read(sensor['door_open'].ref)
+            logger.info('Reading value from door sensor... OK')
+
+        except ValueError:
+            logger.warning('Failed to read door sensor ({value_error})'.format(
+                value_error=ValueError))
+            wd_err.set()
 
 
     #-------------------------------------------------------------------
@@ -174,14 +212,14 @@ def main():
         except Exception, e:
             logger.warning('Failed to read DS18B20 ({value_error})'.format(
                 value_error=e), exc_info=True)
+            wd_err.set()
         
-
 
     #-------------------------------------------------------------------
     # Add data to RRD
     #-------------------------------------------------------------------
     logger.debug('Update time = {update_time}'.format(update_time= 'N'))#rrd.next_update()))
-    logger.debug([v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
+    logger.info([v for (k, v) in sorted(sensor_value.items()) if v != 'U'])
     
     result = rrd.update_file(timestamp= 'N',
             ds_name= [k for (k, v) in sorted(sensor_value.items()) if v!='U'],
@@ -193,6 +231,7 @@ def main():
         logger.error('Failed to update RRD file ({value_error})'.format(
             value_error=result))
         logger.error(sensor_value)
+        wd_err.set()
 
 
     #-------------------------------------------------------------------

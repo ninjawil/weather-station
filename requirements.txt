@@ -1,0 +1,4 @@
+numpy==1.6.2
+pigpio==1.18
+requests==2.7.0
+RPi.GPIO==0.5.11

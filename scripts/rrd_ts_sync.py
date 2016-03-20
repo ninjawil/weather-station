@@ -1,55 +1,31 @@
-#-------------------------------------------------------------------------------
-#
-# Controls shed weather station
-#
-# The MIT License (MIT)
-#
-# Copyright (c) 2015 William De Freitas
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-#
-#-------------------------------------------------------------------------------
-
 #!usr/bin/env python
 
 #===============================================================================
 # Import modules
 #===============================================================================
 # Standard Library
+import os
 import sys
 import datetime
 import time
 import collections
+import json
 
 # Third party modules
 
 # Application modules
-import thingspeak
+import thingspeak.thingspeak as thingspeak
 import rrd_tools
 import settings as s
 import log
+import check_process
+import watchdog as wd
 
 
 #===============================================================================
 # SYNC
 #===============================================================================
-def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
+def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
 
     '''
     Synchronizes thingspeak account with the data in the local Round Robin
@@ -71,19 +47,43 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
         rrd_file       - rrd file location
     '''
    
+   
+    script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts', '')
+
 
     #---------------------------------------------------------------------------
-    # SET UP LOGGER
+    # Set up logger
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '/home/pi/weather/logs/rrd_ts_sync.log')
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= folder_loc,
+                                                    script= script_name[:-3]))
 
-    logger.info('--- RRD To Thingspeak Sync Script Started ---')   
+    logger.info('')
+    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
+    
+
+    #---------------------------------------------------------------------------
+    # SET UP WATCHDOG
+    #---------------------------------------------------------------------------
+    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
+    wd_err      = wd.ErrorCode(err_file, '0007')
+
+
+    #---------------------------------------------------------------------------
+    # CHECK SCRIPT IS NOT ALREADY RUNNING
+    #---------------------------------------------------------------------------    
+    if check_process.is_running(script_name):
+        wd_err.set()
+        sys.exit()
+  
     
     try:
         #-----------------------------------------------------------------------
         # SET UP THINGSPEAK ACCOUNT
         #-----------------------------------------------------------------------
-        ts_acc = thingspeak.TSChannel(ts_host, file= ts_filename, ch_id= ts_channel_id)
+        ts_acc = thingspeak.TSChannel(ts_host, api_key= ts_key, ch_id= ts_channel_id)
         
         ch_feed = ts_acc.get_a_channel_field_feed(field_id= 1, 
                                                 parameters= {'results': 1})
@@ -111,14 +111,9 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
         #-----------------------------------------------------------------------
         rrd = rrd_tools.RrdFile(rrd_file)
         
-        if sorted(rrd.ds_list()) != sorted(sensors):
-            logger.error('Data sources in RRD file does not match set up.')
-            logger.error(rrd.ds_list())
-            logger.error(sensors)
-            logger.error('Exiting...')
+        if check_process.is_running(script_name):
+            wd_err.set()
             sys.exit()
-        else:
-            logger.info('RRD fetch successful.')
 
               
         #-----------------------------------------------------------------------
@@ -175,26 +170,29 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
                 if value is not None:
                     tx_data[sensor_to_field[sensor]] = str(value)
 
-            logger.info(tx_data)
-            response = ts_acc.update_channel(tx_data)
-            logger.info('Thingspeak update: {reason}'.format(reason= response.reason))
-            
-            #Thingspeak update rate is limited to 15s per entry
-            time.sleep(20)
-            
-            n = 0
-            while response.status_code is not 200 and n < 3:
-                time.sleep(20)
+            # Ignore entries without field entries
+            if len(tx_data) == 2:
+                logger.info(tx_data)
                 response = ts_acc.update_channel(tx_data)
-                logger.error('Retry: {reason}'.format(reason= response.reason))
-                n += 1 
-
-            if n >= 3:
-                logger.error('Failed to update Thingspeak. Exiting...')
-                sys.exit()          
-            else:
+                logger.info('Thingspeak update: {reason}'.format(reason= response.reason))
+                
                 #Thingspeak update rate is limited to 15s per entry
                 time.sleep(20)
+                
+                n = 0
+                while response.status_code is not 200 and n < 3:
+                    time.sleep(20)
+                    response = ts_acc.update_channel(tx_data)
+                    logger.error('Retry: {reason}'.format(reason= response.reason))
+                    n += 1 
+
+                if n >= 3:
+                    logger.error('Failed to update Thingspeak. Exiting...')
+                    wd_err.set()
+                    sys.exit()          
+                else:
+                    #Thingspeak update rate is limited to 15s per entry
+                    time.sleep(20)
 
         
         logger.info('--- Script Finished ---')
@@ -203,6 +201,7 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
     except Exception, e:
         logger.error('Update failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
+        wd_err.set()
         sys.exit()
 
 
@@ -210,8 +209,34 @@ def sync(ts_host, ts_filename, ts_channel_id, sensors, rrd_res, rrd_file):
 # MAIN
 #===============================================================================
 def main():
-    sync(s.THINGSPEAK_HOST_ADDR, s.THINGSPEAK_API_KEY_FILENAME, s.THINGSPEAK_CHANNEL_ID,
-         list(s.SENSOR_SET.keys()), s.UPDATE_RATE, s.RRDTOOL_RRD_FILE)
+
+    #-------------------------------------------------------------------
+    # Get data from config file
+    #-------------------------------------------------------------------
+    try:
+        with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
+            config = json.load(f)
+
+        ts_host_addr  = config['thingspeak']['THINGSPEAK_HOST_ADDR']
+        ts_channel_id = config['thingspeak']['THINGSPEAK_CHANNEL_ID']
+        ts_api_key    = config['thingspeak']['THINGSPEAK_API_KEY']
+        
+    except Exception, e:
+        print(e)
+        sys.exit()
+
+
+    #-------------------------------------------------------------------
+    # Sync data
+    #-------------------------------------------------------------------   
+    sync(   ts_host_addr, 
+            ts_api_key, 
+            ts_channel_id,
+            list(s.SENSOR_SET.keys()), 
+            s.UPDATE_RATE, 
+            '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                    fd2= s.DATA_FOLDER,
+                                    fl= s.RRDTOOL_RRD_FILE))
 
     
 #===============================================================================
