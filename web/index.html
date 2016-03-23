@@ -102,7 +102,7 @@
 	                <div class="modal-header">
 	                    <h4 class="modal-title" id="settings_file_modal">Settings Files</h4>
 	                </div>
-	                <div class="modal-body">
+	                <div id="settingsForm" class="modal-body">
 	                	<h5>HEATER</h5>
 	                	<div class="input-group">
 	                		<div id="checkbox">
@@ -113,49 +113,49 @@
 							<div id="on_temp" class="col-md-6">
 			                	<div class="input-group">
 									<span class="input-group-addon" id="basic-addon1">ON temperature</span>
-								  	<input id="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon1">
+								  	<input id="heater-on-temp" name="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon1">
 									<span class="input-group-addon">°C</span>
 								</div>
 							</div>
 							<div id="hyst_temp" class="col-md-6">
 								<div class="input-group">
 									<span class="input-group-addon" id="basic-addon2">Hysterisis ±</span>
-								  	<input id="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon2">
+								  	<input id="heater-on-hyst" name="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon2">
 									<span class="input-group-addon">°C</span>
 								</div>
 							</div>
 						</div> <!-- row -->
 	                	<div class="input-group">
 							<span class="input-group-addon" id="basic-addon3">Miplug Sensor Id</span>
-						  	<input id="miplug-id" type="text" class="form-control" aria-describedby="basic-addon3">
+						  	<input id="miplug-id" name="miplug-id" type="text" class="form-control" aria-describedby="basic-addon3">
 						</div>
 						<h5>RAIN GAUGE</h5>
 						<div class="input-group">
 							<span class="input-group-addon" id="basic-addon4">Tick Measurement</span>
-						  	<input id="rain-gauge" type="text" class="form-control" aria-describedby="basic-addon4">
+						  	<input id="rain-gauge" name="rain-gauge" type="text" class="form-control" aria-describedby="basic-addon4">
 						  	<span class="input-group-addon">mm per tick</span>
 						</div>
 						<h5>THINGSPEAK</h5>
 						<div class="input-group">
 							<span class="input-group-addon" id="basic-addon5">Host Address</span>
-						  	<input id="ts-host-addr" type="text" class="form-control" aria-describedby="basic-addon5">
+						  	<input id="ts-host-addr" name="ts-host-addr" name="ts-host-addr" type="text" class="form-control" aria-describedby="basic-addon5">
 						</div>
 						<div class="input-group">
 							<span class="input-group-addon" id="basic-addon6">API Key</span>
-						  	<input id="ts-api-key" type="text" class="form-control" aria-describedby="basic-addon6">
+						  	<input id="ts-api-key" name="ts-api-key" type="text" class="form-control" aria-describedby="basic-addon6">
 						</div>
 						<div class="input-group">
 							<span class="input-group-addon" id="basic-addon7">Channel ID</span>
-						  	<input id="ts-ch-id" type="text" class="form-control" aria-describedby="basic-addon7">
+						  	<input id="ts-ch-id" name="ts-ch-id" type="text" class="form-control" aria-describedby="basic-addon7">
 						</div>
 						<h5>MAKER CHANNEL</h5>
 						<div class="input-group">
 							<span class="input-group-addon" id="basic-addon8">POST Address</span>
-						  	<input id="mk-addr" type="text" class="form-control" aria-describedby="basic-addon8">
+						  	<input id="mk-addr" name="mk-addr" type="text" class="form-control" aria-describedby="basic-addon8">
 						</div>
 						<div class="input-group">
 							<span class="input-group-addon" id="basic-addon9">Key</span>
-						  	<input id="mk-key" type="text" class="form-control" aria-describedby="basic-addon9">
+						  	<input id="mk-key" name="mk-key" type="text" class="form-control" aria-describedby="basic-addon9">
 						</div>
 	                </div> <!-- modal-body -->
 	                <div class="modal-footer">

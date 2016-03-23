@@ -1,4 +1,7 @@
-$decoded = base64_decode($_POST['json'])
-$jsonFile = fopen('config.json','w+');
-fwrite($jsonFile,$decoded);
-fclose($jsonFile);
+<?php
+	$decoded = base64_decode($_POST['json']);
+	$jsonFile = fopen('weather_data/config.json','w+');
+	fwrite($jsonFile,$decoded);
+	fclose($jsonFile);
+	echo $decoded;
+?>

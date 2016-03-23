@@ -29,18 +29,18 @@ function updateSettingsModal(json) {
 		$('#miplug-id').prop('disabled', true);	
 	}
 
-	$('#heater-on-temp').attr('placeholder', config_data.heater.TEMP_HEATER_ON);
-	$('#heater-on-hyst').attr('placeholder', config_data.heater.TEMP_HYSTERISIS);
-	$('#miplug-id').attr('placeholder', config_data.heater.MIPLUG_SENSOR_ID);
+	$('#heater-on-temp').attr('value', config_data.heater.TEMP_HEATER_ON);
+	$('#heater-on-hyst').attr('value', config_data.heater.TEMP_HYSTERISIS);
+	$('#miplug-id').attr('value', config_data.heater.MIPLUG_SENSOR_ID);
 
-	$('#rain-gauge').attr('placeholder', config_data.rain_gauge.PRECIP_TICK_MEASURE);
+	$('#rain-gauge').attr('value', config_data.rain_gauge.PRECIP_TICK_MEASURE);
 
-	$('#ts-host-addr').attr('placeholder', config_data.thingspeak.THINGSPEAK_HOST_ADDR);
-	$('#ts-api-key').attr('placeholder', config_data.thingspeak.THINGSPEAK_API_KEY);
-	$('#ts-ch-id').attr('placeholder', config_data.thingspeak.THINGSPEAK_CHANNEL_ID);
+	$('#ts-host-addr').attr('value', config_data.thingspeak.THINGSPEAK_HOST_ADDR);
+	$('#ts-api-key').attr('value', config_data.thingspeak.THINGSPEAK_API_KEY);
+	$('#ts-ch-id').attr('value', config_data.thingspeak.THINGSPEAK_CHANNEL_ID);
 
-	$('#mk-addr').attr('placeholder', config_data.maker_channel.MAKER_CH_ADDR);
-	$('#mk-key').attr('placeholder', config_data.maker_channel.MAKER_CH_KEY);
+	$('#mk-addr').attr('value', config_data.maker_channel.MAKER_CH_ADDR);
+	$('#mk-key').attr('value', config_data.maker_channel.MAKER_CH_KEY);
 
     $(function(){
         $('#checkbox input:checkbox').on('change', function(){
@@ -66,13 +66,40 @@ function updateSettingsModal(json) {
 //-------------------------------------------------------------------------------
 function saveSettings() {
 
-    var json = JSON.stringify(config_data);
+    //Collect our form data.
+    var form_data = {
+	   "heater":{
+	      "HEATER_ENABLE": 		$('#settingsForm').find('[name="heater-enable"]').val(),
+	      "HEATER_FORCE_ON": 	0,
+	      "TEMP_HEATER_ON": 	Number($('#settingsForm').find('[name="heater-on-temp"]').val()),
+	      "TEMP_HYSTERISIS":	Number($('#settingsForm').find('[name="heater-on-hyst"]').val()),
+	      "MIPLUG_SENSOR_ID":	Number($('#settingsForm').find('[name="miplug-id"]').val())
+	   },
+	   "rain_gauge":{
+	      "PRECIP_TICK_MEASURE": Number($('#settingsForm').find('[name="rain-gauge"]').val())
+	   },
+	   "thingspeak":{
+	      "THINGSPEAK_HOST_ADDR": 	$('#settingsForm').find('[name="ts-host-addr"]').val(),
+	      "THINGSPEAK_API_KEY": 	$('#settingsForm').find('[name="ts-api-key"]').val(),
+	      "THINGSPEAK_CHANNEL_ID": 	Number($('#settingsForm').find('[name="ts-ch-id"]').val())
+	   },
+	   "maker_channel":{
+	      "MAKER_CH_ADDR": 	$('#settingsForm').find('[name="mk-addr"]').val(),
+	      "MAKER_CH_KEY": 	$('#settingsForm').find('[name="mk-key"]').val()
+	   }
+	};
+
+    var json = JSON.stringify(form_data);
     var encoded = btoa(json);
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST','weather_data/save_settings.php',true);
-    xhr.setRequestHeader('Content-type','application/x-www-form-urlencoded');
-    xhr.send('json=' + encoded);
+	$.ajax({
+		url: 'php/save_settings.php',
+		type: "post",
+		data: 'json=' + encoded,
+		success: function(data) {
+			console.log(data);
+	  }
+	});
 
 }
 
