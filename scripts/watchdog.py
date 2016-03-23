@@ -235,6 +235,7 @@ def main():
         #Check and action passed arguments
         if len(sys.argv) > 1:
             if '--clear' in sys.argv:
+                logger.info('User requested CLEAR ERROR command.')
                 wd = AllErrors(filename)
                 wd.clear()
 
