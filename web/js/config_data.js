@@ -66,10 +66,15 @@ function updateSettingsModal(json) {
 //-------------------------------------------------------------------------------
 function saveSettings() {
 
-    //Collect our form data.
+    var heaterEnabled = 0;
+    if ($('#heater-enable').is(":checked"))
+	{
+	  	heaterEnabled = 1;
+	}
+
     var form_data = {
 	   "heater":{
-	      "HEATER_ENABLE": 		$('#settingsForm').find('[name="heater-enable"]').val(),
+	      "HEATER_ENABLE": 		heaterEnabled,
 	      "HEATER_FORCE_ON": 	0,
 	      "TEMP_HEATER_ON": 	Number($('#settingsForm').find('[name="heater-on-temp"]').val()),
 	      "TEMP_HYSTERISIS":	Number($('#settingsForm').find('[name="heater-on-hyst"]').val()),
@@ -96,8 +101,8 @@ function saveSettings() {
 		url: 'php/save_settings.php',
 		type: "post",
 		data: 'json=' + encoded,
-		success: function(data) {
-			console.log(data);
+		success: function(rxData) {
+			alert(rxData);
 	  }
 	});
 

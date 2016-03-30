@@ -29,6 +29,18 @@ function grabErrorData(functionCall){
 
 
 //-------------------------------------------------------------------------------
+// Grab error.json data
+//-------------------------------------------------------------------------------
+function clearErrors(){
+
+	$.get('php/clear_errors.php', function(data) {
+	  	alert(data);
+	});
+
+}
+
+
+//-------------------------------------------------------------------------------
 // Manages error messages depending on passed error code
 //-------------------------------------------------------------------------------
 function displayErrorMessage(error_data) {
