@@ -21,11 +21,18 @@ function displayTime(timeSinceEpoch) {
 
 	//Convert time since epoch to human dates (time needs to be in milliseconds)
 	var datetime = new Date(timeSinceEpoch);
-	datetime = datetime.toUTCString();
+	// datetime = datetime.toString();
+	// datetime = datetime.toUTCString();
+
+	var time = datetime.toLocaleTimeString();
+
+	if(datetime.getTimezoneOffset() == "-60") {
+		time = time.concat(" &#x263C;");
+	}
 
 	//Display time and date
-	$('#update_time').append(HTMLupdateTime.replace("%time%", datetime.slice(17)));	
-	$('#update_time').append(HTMLupdateDate.replace("%date%", datetime.slice(0, 17)));
+	$('#update_time').append(HTMLupdateTime.replace("%time%", time));	
+	$('#update_time').append(HTMLupdateDate.replace("%date%", datetime.toUTCString().slice(0, 17)));
 }
 
 
@@ -398,6 +405,7 @@ var dir = 'weather',
 					opposite: false,
 					marker: {
 						enable: true,
+						radius: 1,
 						symbol: 'circle'
 					},
 					lineWidth: 2,
@@ -415,6 +423,7 @@ var dir = 'weather',
 					opposite: false,
 					marker: {
 						enable: true,
+						radius: 1,
 						symbol: 'circle'
 					},
 					lineWidth: 2,
@@ -432,6 +441,7 @@ var dir = 'weather',
 					opposite: false,
 					marker: {
 						enable: true,
+						radius: 1,
 						symbol: 'circle'
 					},
 					lineWidth: 2,
@@ -449,6 +459,7 @@ var dir = 'weather',
 					opposite: false,
 					marker: {
 						enable: true,
+						radius: 1,
 						symbol: 'circle'
 					},
 					lineWidth: 2,
@@ -466,6 +477,7 @@ var dir = 'weather',
 					opposite: false,
 					marker: {
 						enable: true,
+						radius: 1,
 						symbol: 'circle'
 					},
 					lineWidth: 2,
@@ -483,6 +495,7 @@ var dir = 'weather',
 					opposite: false,
 					marker: {
 						enable: true,
+						radius: 1,
 						symbol: 'circle'
 					},
 					lineWidth: 2,
@@ -500,6 +513,7 @@ var dir = 'weather',
 					opposite: true,
 					marker: {
 						enable: true,
+						radius: 1,
 						symbol: 'circle'
 					},
 					lineWidth: 2,
@@ -517,6 +531,7 @@ var dir = 'weather',
 					opposite: false,
 					marker: {
 						enable: true,
+						radius: 1,
 						symbol: 'circle'
 					},
 					lineWidth: 2,
