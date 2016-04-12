@@ -163,6 +163,24 @@ function drawCharts(chart_names, sensors) {
         }
     }
 
+    var dayNightSeries = [];
+    for(var i= 31; i >= 0; i--){
+    	var d = new Date();
+    	d.setHours(0, 0, 0, 0);
+    	d.setDate(d.getDate() - i);
+    	// var sunrise = d.getTime();
+    	var sunrise = d.setHours(6, 0, 0, 0);
+    	console.log(sunrise);
+    	var sunset  = d.setHours(18, 0, 0, 0);
+    	// var sunset  = d.getTime()+ 5;
+    	dayNightSeries.push({
+                color: '#FCFFC5',
+                from: sunrise,
+                to: sunset
+            });
+    }
+	console.log(dayNightSeries);
+
 	highchartOptions = {
         chart: {
             marginLeft: 60, // Keep all charts left aligned
@@ -176,23 +194,24 @@ function drawCharts(chart_names, sensors) {
             margin: 0,
             x: 30
         },
+        xAxis: {
+            events: {
+                setExtremes: syncExtremes
+            },
+        	type: 'datetime',
+        	plotBands: dayNightSeries
+        },
         credits: {
             enabled: false
         },
         legend: {
             enabled: false
         },
-        xAxis: {
-            events: {
-                setExtremes: syncExtremes
-            },
-        	type: 'datetime'
-        },
         tooltip: {
             shared: true,
             useHTML: true,
             crosshairs: true
-        },
+        }
     }
 
     //Create a chart per unit type
@@ -263,6 +282,8 @@ function drawCharts(chart_names, sensors) {
 
 		// Add data values
 		highchartOptions.series = valueSeries;
+
+		console.log(highchartOptions);
 
 		// Create chart
     	$('<div class="chart" style="height:180px">').appendTo('#graph-container').highcharts(highchartOptions);
