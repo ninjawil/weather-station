@@ -122,6 +122,8 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 				args.push(output_data);
 			}
 
+			//args.push(true); // Display day and night color
+
 			functionCall.apply(this, args);
 
 	    }
@@ -137,7 +139,7 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 //-------------------------------------------------------------------------------
 // Draws charts
 //-------------------------------------------------------------------------------
-function drawCharts(chart_names, sensors) {
+function drawCharts(chart_names, drawDayNight, sensors) {
 
 	// Clear chart area
 	$('#graph-container').empty();
@@ -163,23 +165,18 @@ function drawCharts(chart_names, sensors) {
         }
     }
 
-    var dayNightSeries = [];
-    for(var i= 31; i >= 0; i--){
-    	var d = new Date();
-    	d.setHours(0, 0, 0, 0);
-    	d.setDate(d.getDate() - i);
-    	// var sunrise = d.getTime();
-    	var sunrise = d.setHours(6, 0, 0, 0);
-    	console.log(sunrise);
-    	var sunset  = d.setHours(18, 0, 0, 0);
-    	// var sunset  = d.getTime()+ 5;
-    	dayNightSeries.push({
-                color: '#FCFFC5',
-                from: sunrise,
-                to: sunset
-            });
+    var dayNightSeries = [];	
+    if(drawDayNight == true){
+		for(var i= 31; i >= 0; i--){
+	    	var d = new Date();
+	    	var times = SunCalc.getTimes(d.setDate(d.getDate() - i), 53.0128,-1.7325);
+	    	dayNightSeries.push({
+	                color: '#FCFFC5',
+	                from: times.sunrise,
+	                to: times.sunset
+	            });
+	    }
     }
-	console.log(dayNightSeries);
 
 	highchartOptions = {
         chart: {
@@ -283,7 +280,7 @@ function drawCharts(chart_names, sensors) {
 		// Add data values
 		highchartOptions.series = valueSeries;
 
-		console.log(highchartOptions);
+		//console.log(highchartOptions);
 
 		// Create chart
     	$('<div class="chart" style="height:180px">').appendTo('#graph-container').highcharts(highchartOptions);
@@ -344,7 +341,7 @@ function prepareYearCharts(chart_names, values) {
 	sensors['precip_rate'].readings = values['precip_rate_max'];
 	sensors['precip_acc'].readings = values['precip_acc_max'];
 
-	drawCharts(chart_names, sensors);
+	drawCharts(chart_names, false, sensors);
 }
 
 //-------------------------------------------------------------------------------
@@ -353,6 +350,15 @@ function prepareYearCharts(chart_names, values) {
 function displayCharts(file_ref) {
 
 	var chart_names;
+
+	var dayNightList = ['1d', '2d', '1w', '1m'];
+
+
+	var displayDayNight = (dayNightList.indexOf(file_ref) !== -1) ? true : false;
+
+    console.log(file_ref);
+    console.log(displayDayNight);
+
 
 	// Highlights correct navbar location
 	$('li').removeClass('active');
@@ -366,7 +372,7 @@ function displayCharts(file_ref) {
 		xmlGetData(dir + '_data/' + dataFiles[file_ref], '', prepareYearCharts, [chart_names]);
 	} else {
 		chart_names = ['Temperature (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Heater Status', 'Door Open'];
-		xmlGetData(dir + '_data/' + dataFiles[file_ref], sensor_setup, drawCharts, [chart_names]);
+		xmlGetData(dir + '_data/' + dataFiles[file_ref], sensor_setup, drawCharts, [chart_names, displayDayNight]);
 	}
 }
 
