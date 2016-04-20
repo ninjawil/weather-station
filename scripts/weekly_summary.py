@@ -102,7 +102,7 @@ def main():
       
        
         #-----------------------------------------------------------------------
-        # Fetch values from rrd
+        # Fetch MIN values from rrd
         #-----------------------------------------------------------------------
         rrd_entry = rrd.fetch(cf= 'MIN', start='e-6d', end='-2d')
         
@@ -117,6 +117,9 @@ def main():
         print(min(temp_list))
 
         
+        #-----------------------------------------------------------------------
+        # Fetch MAX values from rrd
+        #-----------------------------------------------------------------------
         rrd_entry = rrd.fetch(cf= 'MAX', start='e-6d', end='-2d')
         
         rt = collections.namedtuple( 'rt', 'start end step ds value')
@@ -135,8 +138,37 @@ def main():
         # print(sum(temp_list)/data_length)
 
 
+        # rrdtool graph x -s -7d DEF:v=weather_data.rrd:outside_temp:MIN VDEF:vm=v,MINIMUM PRINT:vm:%lf
+        
+        start = '-2d'
+        end = 'e-6d'
 
-    
+
+        exp_cmd = [ 'rrdtool','graph',
+                    '-s', '{start_t}'.format(start_t=start),
+                    '-e', '{end_t}'.format(end_t=end),
+                    'DEF:v={rrd_file}:{ds_name}:{cons}'.format(
+                                rrd_file='{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                                                fd2= s.DATA_FOLDER,
+                                                                fl= s.RRDTOOL_RRD_FILE),
+                                ds_name= 'outside_temp',
+                                cons= 'MAX'),
+                    'VDEF:vm=v,MAXIMUM PRINT:vm:%lf']
+
+
+        # !!!!!!!!!!!!!!!!
+        # No binding for xport on python-rrdtool 1.4.7
+        # exp_cmd has 'rrdtool','xport' added to run it from subprocess
+        # rrdtool.xport(exp_cmd)
+        # !!!!!!!!!!!!!!!!
+
+        self.logger.debug(' '.join(exp_cmd))
+        fileout = open(output_file,"w")
+        subprocess.Popen(exp_cmd, stdout=fileout)
+        fileout.close()
+  
+        logger.info('--- Script Finished ---')
+
         logger.info('--- Script Finished ---')
 
 
