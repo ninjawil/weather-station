@@ -127,7 +127,7 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
 
         #Thingspeak returns a -1 if there are no records
         if last_ts_feed == '-1':
-            last_ts_feed = last_rrd_feed
+            last_ts_feed = rrd_res
         else:
             last_ts_feed = datetime.datetime.strptime(last_ts_feed['created_at'], '%Y-%m-%dT%H:%M:%SZ')
             last_ts_feed = int(time.mktime(last_ts_feed.utctimetuple()))
@@ -171,7 +171,7 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
                     tx_data[sensor_to_field[sensor]] = str(value)
 
             # Ignore entries without field entries
-            if len(tx_data) == 2:
+            if len(tx_data) > 2:
                 logger.info(tx_data)
                 response = ts_acc.update_channel(tx_data)
                 logger.info('Thingspeak update: {reason}'.format(reason= response.reason))
