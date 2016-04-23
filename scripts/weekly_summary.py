@@ -53,8 +53,8 @@ def main():
         other_script_found = check_process.is_running(script_name)
 
         if other_script_found:
-            logger.critical('Script already runnning. Exiting...')
-            logger.error(other_script_found)
+            logger.info('Script already runnning. Exiting...')
+            logger.info(other_script_found)
             sys.exit()
 
     except Exception, e:
