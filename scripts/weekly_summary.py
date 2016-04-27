@@ -14,11 +14,33 @@ import json
 # Third party modules
 
 # Application modules
-import thingspeak.thingspeak as thingspeak
 import rrd_tools
+import maker_ch
 import settings as s
 import log
 import check_process
+
+#===============================================================================
+# MAIN
+#===============================================================================
+def get_list(rrd_file, consolidation, data):
+    '''
+    Fetches previous 7 days values from rrd and returns it as a list.
+
+    Any NaN values are ignored and not included in the list.
+    '''
+
+    rrd_entry = rrd_file.fetch(cf= consolidation, start='e-6d', end='-1d', res='86400')
+        
+    rt = collections.namedtuple( 'rt', 'start end step ds value')
+    rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
+                        rrd_entry[1], rrd_entry[2]) 
+
+    data_length = len(rrd_entry.value)
+
+    return [rrd_entry.value[i][rrd_entry.ds.index(data)] 
+                    for i in range(0,data_length) if rrd_entry.value[i][rrd_entry.ds.index(data)] is not None]
+
 
 
 #===============================================================================
@@ -53,8 +75,8 @@ def main():
         other_script_found = check_process.is_running(script_name)
 
         if other_script_found:
-            logger.critical('Script already runnning. Exiting...')
-            logger.error(other_script_found)
+            logger.info('Script already runnning. Exiting...')
+            logger.info(other_script_found)
             sys.exit()
 
     except Exception, e:
@@ -99,44 +121,32 @@ def main():
         else:
             logger.info('RRD fetch successful.')
 
-      
-       
+  
         #-----------------------------------------------------------------------
-        # Fetch values from rrd
+        # GET VALUES
+        #-----------------------------------------------------------------------         
+        # Fetch MIN values from rrd
+        outside_min = min(get_list(rrd, 'MIN', 'outside_temp'))
+        logger.info('Outside MIN temp = {value}'.format(value= outside_min))
+        
+        # Fetch AVG values from rrd
+        temp_list = get_list(rrd, 'AVERAGE', 'outside_temp')        
+        outside_avg = sum(temp_list) / float(len(temp_list))
+        logger.info('Outside AVG temp = {value}'.format(value= outside_avg))
+
+        # Grab precip acc data
+        precip_tot = sum(get_list(rrd, 'MAX', 'precip_acc'))
+        logger.info('Precip TOTAL temp = {value}'.format(value= precip_tot))
+
+
         #-----------------------------------------------------------------------
-        rrd_entry = rrd.fetch(cf= 'MIN', start='e-6d', end='-2d')
-        
-        rt = collections.namedtuple( 'rt', 'start end step ds value')
-        rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
-                        rrd_entry[1], rrd_entry[2]) 
+        # SEND VALUES VIA MAKER CHANNEL
+        #-----------------------------------------------------------------------
+        mc = maker_ch.MakerChannel(maker_ch_addr, maker_ch_key, 'WS_weekly_report')
+        mc.trigger_an_event(value1= '{0:.2f}'.format(outside_avg), 
+                            value2= '{0:.2f}'.format(outside_min), 
+                            value3= '{0:.2f}'.format(precip_tot))
 
-        #Grab outside_temp data 
-        data_length = len(rrd_entry.value)
-        temp_list = [rrd_entry.value[i][rrd_entry.ds.index('outside_temp')] 
-                                        for i in range(0,data_length)]
-        print(min(temp_list))
-
-        
-        rrd_entry = rrd.fetch(cf= 'MAX', start='e-6d', end='-2d')
-        
-        rt = collections.namedtuple( 'rt', 'start end step ds value')
-        rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
-                        rrd_entry[1], rrd_entry[2]) 
-
-        data_length = len(rrd_entry.value)
-
-        #Grab precip acc data
-        precip_list = [rrd_entry.value[i][rrd_entry.ds.index('precip_acc')] 
-                                        for i in range(0,data_length)]
-        # temp_list = [rrd_entry.value[i][rrd_entry.ds.index('outside_temp')] 
-        #                                 for i in range(0,data_length)]
-
-        print(sum(precip_list))
-        # print(sum(temp_list)/data_length)
-
-
-
-    
         logger.info('--- Script Finished ---')
 
 

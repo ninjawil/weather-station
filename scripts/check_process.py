@@ -44,8 +44,8 @@ def is_running(script_name):
         other_script_found = cmd5.communicate()[0]
 
         if other_script_found:
-            logger.error('Script already runnning. Exiting...')
-            logger.error(other_script_found)
+            logger.info('Script already runnning. Exiting...')
+            logger.info(other_script_found)
             return True
 
         return False
