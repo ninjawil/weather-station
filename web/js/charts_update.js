@@ -135,6 +135,54 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 }
 
 
+//-------------------------------------------------------------------------------
+// Display heat map
+//-------------------------------------------------------------------------------
+function displayHeatMap() {
+	// Highlights correct navbar location
+	$('li').removeClass('active');
+	$('#all').parent().addClass('active');
+
+	// Clear chart area
+	$('#graph-container').empty();
+
+	xmlGetData(dir + '_data/' + dataFiles['1y'], '', drawHeatMap, ['outside_temp', '°C']);
+    
+}
+
+
+//-------------------------------------------------------------------------------
+// Draw heat map
+//-------------------------------------------------------------------------------
+function drawHeatMap(sensor_name, unit, value_array) {
+
+	// Create chart
+    $('<div class="row"><h1>outside_temp</h1></div><div id="cal-heatmap"></div>').appendTo('#graph-container');
+    //$('<div id="cal-heatmap"></div>').appendTo('#graph-container');
+
+    var parser = function(data) {
+		var stats = {};
+		for (var d in data) {
+			stats[data[d][0]/1000] = data[d][1];
+		}
+		return stats;
+	};
+
+	var calendar = new CalHeatMap();
+	calendar.init({
+		data: value_array[sensor_name],
+		afterLoadData: parser,
+		itemName: [unit, unit],
+		start: new Date(2016, 0),
+		domain : "month",			// Group data by month
+		subDomain : "day",			// Split each month by days
+		cellsize: 20,
+		cellpadding: 3,
+		cellradius: 5,
+		scale: [10, 20, 30, 50]
+	});
+}
+
 
 //-------------------------------------------------------------------------------
 // Draws charts
@@ -350,15 +398,8 @@ function prepareYearCharts(chart_names, values) {
 function displayCharts(file_ref) {
 
 	var chart_names;
-
 	var dayNightList = ['1d', '2d', '1w', '1m'];
-
-
 	var displayDayNight = (dayNightList.indexOf(file_ref) !== -1) ? true : false;
-
-    console.log(file_ref);
-    console.log(displayDayNight);
-
 
 	// Highlights correct navbar location
 	$('li').removeClass('active');
