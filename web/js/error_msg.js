@@ -75,7 +75,7 @@ function parseErrorMsgTable(error_data) {
 	for (var error in error_data) {
 		if(error_data[error].time != 0) {
 
-			var datetime = new Date(error_data[error].time);
+			var datetime = new Date(error_data[error].time * 1000);
 			datetime = datetime.toUTCString();
 
 			var formattedError 	= HTMLerrorTable.replace("%date%", datetime);
