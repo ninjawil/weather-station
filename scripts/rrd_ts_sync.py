@@ -75,7 +75,6 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
     # CHECK SCRIPT IS NOT ALREADY RUNNING
     #---------------------------------------------------------------------------    
     if check_process.is_running(script_name):
-        wd_err.set()
         sys.exit()
   
     
