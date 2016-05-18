@@ -72,8 +72,12 @@ function displayErrorMessage(error_data) {
 //-------------------------------------------------------------------------------
 function parseErrorMsgTable(error_data) {
 
-	for (var error in error_data) {
-		if(error_data[error].time != 0) {
+
+	// Sort by error date
+	keysSorted = Object.keys(error_data).sort(function(a,b){return a.time-b.time});
+
+	for (var i=0,  tot=keysSorted.length; i < tot; i++) {
+		if(error_data[keysSorted[i]].time != 0) {
 
 			var datetime = new Date(error_data[error].time * 1000);
 			datetime = datetime.toUTCString();
