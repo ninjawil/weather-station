@@ -352,13 +352,7 @@ function displayCharts(file_ref) {
 	var chart_names;
 
 	var dayNightList = ['1d', '2d', '1w', '1m'];
-
-
 	var displayDayNight = (dayNightList.indexOf(file_ref) !== -1) ? true : false;
-
-    console.log(file_ref);
-    console.log(displayDayNight);
-
 
 	// Highlights correct navbar location
 	$('li').removeClass('active');
