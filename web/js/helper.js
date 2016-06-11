@@ -22,3 +22,5 @@ var HTMLlogBox = '<h4>%logFileName%</h4><pre id="%logName%" class="log-display">
 
 var HTMLerrorTable = '<tr><td>%date%</td><td>%errornumber%</td><td>%message%</td><td>%notified%</td><td>%count%</td></tr>';
 
+var HTMLallDropdown = '<li><a href="#" onclick="displayHeatMap(%id%)">%name%</a></li>';
+

@@ -83,6 +83,25 @@ function sidebarData(sensors) {
 
 
 //-------------------------------------------------------------------------------
+// Displays last updated values on web page
+//-------------------------------------------------------------------------------
+function formatAllDropdown(sensors) {
+
+	var formattedDropdown;
+
+	for(var sensor in sensors) {
+
+		formattedDropdown = HTMLallDropdown.replace("%id%", "'" + sensor + "'");
+		formattedDropdown = formattedDropdown.replace("%name%", sensors[sensor].description);
+
+		//Display data		
+		$('#allDropdown').append(formattedDropdown);
+	}
+}
+
+
+
+//-------------------------------------------------------------------------------
 // Gets data from XML file
 //-------------------------------------------------------------------------------
 function xmlGetData(filename, sensors_array, functionCall, args) {
@@ -134,6 +153,67 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 
 }
 
+
+//-------------------------------------------------------------------------------
+// Display heat map
+//-------------------------------------------------------------------------------
+function displayHeatMap(sensor_id) {
+	// Highlights correct navbar location
+	$('li').removeClass('active');
+	$('#all').parent().addClass('active');
+
+	// Clear chart area
+	$('#graph-container').empty();
+
+	xmlGetData(dir + '_data/' + dataFiles['1y'], '', drawHeatMap, [sensor_id]);
+    
+}
+
+
+//-------------------------------------------------------------------------------
+// Draw heat map
+//-------------------------------------------------------------------------------
+function drawHeatMap(sensor_name, value_array) {
+
+	// Create chart
+	var title = '<div class="row"><h1>%name%</h1></div><div id="cal-heatmap"></div>';
+    $(title.replace("%name%", sensor_setup[sensor_name].description)).appendTo('#graph-container');
+
+    var parser = function(data) {
+		var stats = {};
+		for (var d in data) {
+			stats[data[d][0]/1000] = data[d][1];
+		}
+		return stats;
+	};
+
+	var data_array = [];
+	for(var i = 0; i<value_array[sensor_name].length; i++){
+	    data_array[i] = value_array[sensor_name][i][1];
+	}
+	var max_of_array = Math.max.apply(Math, data_array);
+	var min_of_array = Math.min.apply(Math, data_array);
+	var legend_range = [];
+
+	for(var i = 0; i < 4; i++) {
+		legend_range[i] = ((i+2)* (max_of_array - min_of_array))/5;
+	}
+
+	var calendar = new CalHeatMap();
+	calendar.init({
+		data: value_array[sensor_name],
+		afterLoadData: parser,
+		itemName: [sensor_setup[sensor_name].unit, sensor_setup[sensor_name].unit],
+		start: new Date(2016, 0),
+		domain : "month",			// Group data by month
+		subDomain : "day",			// Split each month by days
+		cellsize: 20,
+		cellpadding: 3,
+		cellradius: 5,
+		legend: legend_range,
+		legendColors: [sensor_setup[sensor_name].color.replace(/\%,.*\%\)/gi, '%, 95%)'), sensor_setup[sensor_name].color]
+	});
+}
 
 
 //-------------------------------------------------------------------------------
@@ -350,7 +430,6 @@ function prepareYearCharts(chart_names, values) {
 function displayCharts(file_ref) {
 
 	var chart_names;
-
 	var dayNightList = ['1d', '2d', '1w', '1m'];
 	var displayDayNight = (dayNightList.indexOf(file_ref) !== -1) ? true : false;
 
@@ -376,6 +455,8 @@ function displayCharts(file_ref) {
 //-------------------------------------------------------------------------------
 function main() {
 
+	formatAllDropdown(sensor_setup);
+
 	xmlGetData(dir + '_data/' + dataFiles['1d'], sensor_setup, sidebarData, []);
 
 	displayCharts('1d');
@@ -387,20 +468,20 @@ function main() {
 //===============================================================================
 // Constants
 //===============================================================================
-var 	COLOR_BLUE		= '#058DC7',
- 		COLOR_L_BLUE	= '#24CBE5',
-		COLOR_GREEN 	= '#50B432',
-		COLOR_L_GREEN 	= '#64E572',
-		COLOR_D_GREEN	= '#006600',
-		COLOR_ORANGE	= '#FF9655',
-		COLOR_PURPLE	= '#9900cc',
-		COLOR_PINK		= '#ff6699',
-		COLOR_YELLOW	= '#DDDF00',
-		COLOR_RED		= '#ED561B',
-		COLOR_ACQUA		= '#6AF9C4'
-		COLOR_BLACK		= '#000000',
-		COLOR_L_GREY	= '#b3b3b3',
-		COLOR_D_GREY	= '#4d4d4d';
+var 	COLOR_BLUE		= 'hsl(198, 95%, 40%)', 	//'#058DC7',
+ 		COLOR_L_BLUE	= 'hsl(188, 79%, 52%)',		//'#24CBE5',
+		COLOR_GREEN 	= 'hsl(106, 57%, 45%)',		//'#50B432',
+		COLOR_L_GREEN 	= 'hsl(127, 71%, 65%)',		//'#64E572',
+		COLOR_D_GREEN	= 'hsl(120, 100%, 20%)',	//'#006600',
+		COLOR_ORANGE	= 'hsl(23, 100%, 67%)',		//'#FF9655',
+		COLOR_PURPLE	= 'hsl(285, 100%, 40%)',	//'#9900cc',
+		COLOR_PINK		= 'hsl(340, 100%, 70%)',	//'#ff6699',
+		COLOR_YELLOW	= 'hsl(61, 100%, 44%)',		//'#DDDF00',
+		COLOR_RED		= 'hsl(17, 85%, 52%)',		//'#ED561B',
+		COLOR_ACQUA		= 'hsl(158, 92%, 70%)',		//'#6AF9C4',
+		COLOR_BLACK		= 'hsl(0, 0%, 0%)',			//'#000000',
+		COLOR_L_GREY	= 'hsl(0, 0%, 70%)',		//'#b3b3b3',
+		COLOR_D_GREY	= 'hsl(0, 0%, 30%)';		//'#4d4d4d';
 
 
 
