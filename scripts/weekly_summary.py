@@ -53,74 +53,59 @@ def main():
     temperature and total precipitation then sends it via maker channel.
     '''
    
-   
     script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts', '')
 
 
     #---------------------------------------------------------------------------
-    # SET UP LOGGER
+    # Set up logger
     #---------------------------------------------------------------------------
     logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
+                                                    folder= folder_loc,
                                                     script= script_name[:-3]))
 
     logger.info('')
-    logger.info('--- Script {script} Started ---'.format(script= script_name))  
+    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
 
 
     #---------------------------------------------------------------------------
     # CHECK SCRIPT IS NOT ALREADY RUNNING
-    #---------------------------------------------------------------------------    
+    #--------------------------------------------------------------------------- 
+    if check_process.is_running(script_name):
+        logger.info('Script already runnning. Exiting...')
+        logger.info(other_script_found)
+        sys.exit()  
+
+
+    #---------------------------------------------------------------------------
+    # Check RRD File
+    #---------------------------------------------------------------------------
+    rrd = rrd_tools.RrdFile('{fd1}/data/{fl}'.format(fd1= folder_loc,
+                                                    fl= s.RRDTOOL_RRD_FILE))
+        
+    if not rrd.check_ds_list_match(list(s.SENSOR_SET.keys())):
+        logger.error('Data sources in RRD file does not match set up.')
+        logger.error('Exiting...')
+        sys.exit()
+
+    #-------------------------------------------------------------------
+    # Get data from config file
+    #-------------------------------------------------------------------
     try:
-        other_script_found = check_process.is_running(script_name)
+        with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
+            config = json.load(f)
 
-        if other_script_found:
-            logger.info('Script already runnning. Exiting...')
-            logger.info(other_script_found)
-            sys.exit()
-
+        maker_ch_addr  = config['maker_channel']['MAKER_CH_ADDR']
+        maker_ch_key   = config['maker_channel']['MAKER_CH_KEY']
+        
     except Exception, e:
-        logger.error('System check failed ({error_v}). Exiting...'.format(
-            error_v=e))
+        logger.error('Failed to load config data ({error_v}). Exiting...'.format(
+        error_v=e))
         sys.exit()
 
     
     try:
-
-        #-------------------------------------------------------------------
-        # Get data from config file
-        #-------------------------------------------------------------------
-        try:
-            with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
-                config = json.load(f)
-
-            maker_ch_addr  = config['maker_channel']['MAKER_CH_ADDR']
-            maker_ch_key   = config['maker_channel']['MAKER_CH_KEY']
-            
-        except Exception, e:
-            logger.error('Failed to load config data ({error_v}). Exiting...'.format(
-            error_v=e))
-            sys.exit()
-
-
-        #-----------------------------------------------------------------------
-        # CHECK RRD FILE
-        #-----------------------------------------------------------------------
-        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                        fd2= s.DATA_FOLDER,
-                                                        fl= s.RRDTOOL_RRD_FILE))
-        
-        sensors = list(s.SENSOR_SET.keys())
-
-        if sorted(rrd.ds_list()) != sorted(sensors):
-            logger.error('Data sources in RRD file does not match set up.')
-            logger.error(rrd.ds_list())
-            logger.error(sensors)
-            logger.error('Exiting...')
-            sys.exit()
-        else:
-            logger.info('RRD fetch successful.')
-
   
         #-----------------------------------------------------------------------
         # GET VALUES

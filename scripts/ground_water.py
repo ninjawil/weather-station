@@ -67,92 +67,142 @@ def main():
     for the amount of ground water.
     '''
    
-   
     script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts', '')
 
 
     #---------------------------------------------------------------------------
-    # SET UP LOGGER
+    # Set up logger
     #---------------------------------------------------------------------------
     logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= s.SYS_FOLDER,
+                                                    folder= folder_loc,
                                                     script= script_name[:-3]))
 
     logger.info('')
-    logger.info('--- Script {script} Started ---'.format(script= script_name))  
-
+    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
+    
 
     #---------------------------------------------------------------------------
     # CHECK SCRIPT IS NOT ALREADY RUNNING
-    #---------------------------------------------------------------------------    
-    try:
-        other_script_found = check_process.is_running(script_name)
-
-        if other_script_found:
-            logger.info('Script already runnning. Exiting...')
-            logger.info(other_script_found)
-            sys.exit()
-
-    except Exception, e:
-        logger.error('System check failed ({error_v}). Exiting...'.format(
-            error_v=e))
+    #--------------------------------------------------------------------------- 
+    if check_process.is_running(script_name):
+        logger.error('Script already runnning. Exiting...')
+        logger.error(other_script_found)
         sys.exit()
 
-    
+
+    #---------------------------------------------------------------------------
+    # Check RRD File
+    #---------------------------------------------------------------------------
+    rrd = rrd_tools.RrdFile('{fd1}/data/{fl}'.format(fd1= folder_loc,
+                                                    fl= s.RRDTOOL_RRD_FILE))
+        
+    if not rrd.check_ds_list_match(list(s.SENSOR_SET.keys())):
+        logger.error('Data sources in RRD file does not match set up.')
+        logger.error('Exiting...')
+        sys.exit()
+
+
+    #-------------------------------------------------------------------
+    # Get data from config file
+    #-------------------------------------------------------------------
+    try:
+        with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
+            config = json.load(f)
+
+        recommended_watering    = config['water_level']['RECOMMENDED_WATERING']
+        days                    = config['water_level']['RECOMMENDED_WATERING_DAYS']
+        ground_water_saturation = config['water_level']['GRND_WATER_SATURATION']
+        
+        dry_rate = [0,0,0,0]
+        dry_rate[0]             = config['water_level']['DRY_RATE_0_9']
+        dry_rate[1]             = config['water_level']['DRY_RATE_10_19']
+        dry_rate[2]             = config['water_level']['DRY_RATE_20_29']
+        dry_rate[3]             = config['water_level']['DRY_RATE_30_UP']
+        
+        # Calculate matrix how quickly ground dries depending on temp
+        dry_rate[:] = [x*recommended_watering for x in dry_rate]
+        
+    except Exception, e:
+        logger.error('Unable to load config data. Exiting...')
+        sys.exit()
+
+
     try:
 
         #-----------------------------------------------------------------------
-        # CHECK RRD FILE
-        #-----------------------------------------------------------------------
-        rrd = rrd_tools.RrdFile('{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                                        fd2= s.DATA_FOLDER,
-                                                        fl= s.RRDTOOL_RRD_FILE))
-        
-        sensors = list(s.SENSOR_SET.keys())
-
-        if sorted(rrd.ds_list()) != sorted(sensors):
-            logger.error('Data sources in RRD file does not match set up.')
-            logger.error(rrd.ds_list())
-            logger.error(sensors)
-            logger.error('Exiting...')
-            sys.exit()
-        else:
-            logger.info('RRD fetch successful.')
-
-
-
-        #-----------------------------------------------------------------------
-        # GET VALUES
-        #-----------------------------------------------------------------------         
+        # Calculate current ground water level if no gw_level file
+        #----------------------------------------------------------------------- 
         # Fetch MIN values from rrd
         outside_max = get_list(rrd, 'MAX', 'outside_temp')
-        logger.info('Out temp = {value}'.format(value= outside_max))        
         
         # Grab precip acc data
         precip = get_list(rrd, 'MAX', 'precip_acc')
-        logger.info('Precip = {value}'.format(value= precip))
 
+        ground_water_level = 0 #l/m^2 
+ 
+        for i in range(0, len(outside_max)):
+            if outside_max[i] < 9:
+                rate = dry_rate[0]
+            elif outside_max[i] < 19:
+                rate = dry_rate[1]
+            elif outside_max[i] < 29:
+                rate = dry_rate[2]
+            else:
+                rate = dry_rate[3]
+
+            ground_water_level =  ground_water_level + precip[i] - rate
+
+        if ground_water_level > ground_water_saturation:
+            ground_water_level = ground_water_saturation
+    
+        logger.info('Out temp = {value}'.format(value= outside_max))        
+        logger.info('Precip = {value}'.format(value= precip)) 
+        logger.info('GW level = {value}'.format(value= ground_water_level)) 
+
+
+        #-----------------------------------------------------------------------
+        # Grab weather prediction data from online
+        #----------------------------------------------------------------------- 
         # forecast = get_forecast()
         # forecast_high_temp  = [int(forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
         #                             for i in range(0, len(forecast['forecast']['simpleforecast']['forecastday'])) ]
         # forecast_precip     = [int(forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm'])
         #                             for i in range(0, len(forecast['forecast']['simpleforecast']['forecastday'])) ]
 
-        forecast_high_temp  = [20, 19, 19, 19, 19, 17, 16, 19, 19. 20]
-        forecast_precip     = [3, 6, 5, 5, 6, 14, 1, 0, 6, 5]
+        forecast_high_temp  = [20, 19, 19, 19, 19, 17, 16, 19, 19, 20]
+        forecast_precip     = [0, 6, 5, 5, 6, 14, 1, 0, 6, 5]
 
-        current_gw = 24
+        watering            = 0
 
-        drop_rate = {
-            '0':    0,
-            '10':   0.14,
-            '20':   0.5,
-            '30':   1}
 
-        
+        #-----------------------------------------------------------------------
+        # Calculate predicted ground water level for next few days
+        #----------------------------------------------------------------------- 
+        # Set up ground water level list for the mnext seven days
+        # beginning with today's starting water level plus the amount of yesterday's watering
+        gw_prediction = [ground_water_level + watering, 0, 0, 0, 0, 0, 0]
+
+        for i in range(0, days-1):
+            if forecast_high_temp[i] < 9:
+                rate = dry_rate[0]
+            elif forecast_high_temp[i] < 19:
+                rate = dry_rate[1]
+            elif forecast_high_temp[i] < 29:
+                rate = dry_rate[2]
+            else:
+                rate = dry_rate[3]
+
+            gw_prediction[i+1] =  gw_prediction[i] + forecast_precip[i] - rate
+            if gw_prediction[i+1] > ground_water_saturation:
+                gw_prediction[i+1] = ground_water_saturation
+
+
 
         logger.info('Forecast high temp = {value}'.format(value= forecast_high_temp))
         logger.info('Forecast precip = {value}'.format(value= forecast_precip))
+        logger.info('Forecast gw = {value}'.format(value= gw_prediction))
 
 
 
