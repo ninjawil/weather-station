@@ -166,6 +166,51 @@
 							<span class="input-group-addon" id="basic-addon9">Key</span>
 						  	<input id="mk-key" name="mk-key" type="text" class="form-control" aria-describedby="basic-addon9">
 						</div>
+
+						<h5>WATER LEVEL PREDICTION</h5>
+	                	<div class="row">
+							<div id="on_temp" class="col-md-6">
+								<div class="input-group">
+			                		<div id="checkbox">
+										<input id="gw-enable" type="checkbox"> Enable Water Level Alarm
+									</div>
+								</div>	
+			                	<div class="input-group">
+									<span class="input-group-addon" id="basic-addon10">Rec. Watering Vol </span>
+								  	<input id="gw_rec_water_vol" name="gw_rec_water_vol" type="text" class="form-control" aria-describedby="basic-addon10">
+									<span class="input-group-addon">l/m²</span>
+								</div>
+			                	<div class="input-group">
+									<span class="input-group-addon" id="basic-addon11">Rec. Watering Days </span>
+								  	<input id="gw_rec_water_days" name="gw_rec_water_days" type="text" class="form-control" aria-describedby="basic-addon11">
+									<span class="input-group-addon">days</span>
+								</div>
+			                	<div class="input-group">
+									<span class="input-group-addon" id="basic-addon12">Saturation Level </span>
+								  	<input id="gw_water_sat" name="gw_water_sat" type="text" class="form-control" aria-describedby="basic-addon12">
+									<span class="input-group-addon">l/m²</span>
+								</div>
+							</div>
+							<div id="hyst_temp" class="col-md-6">
+								Dry Rates
+								<div class="input-group">
+									<span class="input-group-addon" id="basic-addon13">Less than 9°C </span>
+								  	<input id="gw_dry_rate_0" name="gw_dry_rate_0" type="text" class="form-control" aria-describedby="basic-addon13">
+								</div>
+								<div class="input-group">
+									<span class="input-group-addon" id="basic-addon14">10°C to 19°C </span>
+								  	<input id="gw_dry_rate_1" name="gw_dry_rate_1" type="text" class="form-control" aria-describedby="basic-addon14">
+								</div>
+								<div class="input-group">
+									<span class="input-group-addon" id="basic-addon15">20°C to 29°C </span>
+								  	<input id="gw_dry_rate_2" name="gw_dry_rate_2" type="text" class="form-control" aria-describedby="basic-addon15">
+								</div>
+								<div class="input-group">
+									<span class="input-group-addon" id="basic-addon16">30°C and above </span>
+								  	<input id="gw_dry_rate_3" name="gw_dry_rate_3" type="text" class="form-control" aria-describedby="basic-addon16">
+								</div>
+							</div>
+						</div> <!-- row -->
 	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
 	                    <button type="button" class="btn btn-default" onclick="saveSettings()">Save</button>

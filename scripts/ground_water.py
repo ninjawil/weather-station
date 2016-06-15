@@ -111,6 +111,7 @@ def main():
         with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
 
+        water_level_alarm       = config['water_level']['ALARM_ENABLE']
         recommended_watering    = config['water_level']['RECOMMENDED_WATERING']
         days                    = config['water_level']['RECOMMENDED_WATERING_DAYS']
         ground_water_saturation = config['water_level']['GRND_WATER_SATURATION']

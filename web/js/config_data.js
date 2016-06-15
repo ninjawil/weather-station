@@ -42,6 +42,22 @@ function updateSettingsModal(json) {
 	$('#mk-addr').attr('value', config_data.maker_channel.MAKER_CH_ADDR);
 	$('#mk-key').attr('value', config_data.maker_channel.MAKER_CH_KEY);
 
+	
+	if(config_data.water_level.ALARM_ENABLE == 1){
+		$('#gw-enable').prop('checked', true);
+	} else {
+		$('#gw-enable').prop('checked', false);
+	}
+
+	$('#gw_rec_water_vol').attr('value', config_data.water_level.RECOMMENDED_WATERING);
+	$('#gw_rec_water_days').attr('value', config_data.water_level.RECOMMENDED_WATERING_DAYS);
+	$('#gw_water_sat').attr('value', config_data.water_level.GRND_WATER_SATURATION);
+	$('#gw_dry_rate_0').attr('value', config_data.water_level.DRY_RATE_0_9);
+	$('#gw_dry_rate_1').attr('value', config_data.water_level.DRY_RATE_10_19);
+	$('#gw_dry_rate_2').attr('value', config_data.water_level.DRY_RATE_20_29);
+	$('#gw_dry_rate_3').attr('value', config_data.water_level.DRY_RATE_30_UP);
+
+
     $(function(){
         $('#checkbox input:checkbox').on('change', function(){
             if($(this).is(':checked')) {
@@ -72,6 +88,12 @@ function saveSettings() {
 	  	heaterEnabled = 1;
 	}
 
+    var gwAlarm = 0;
+    if ($('#gw-enable').is(":checked"))
+	{
+	  	gwAlarm = 1;
+	}
+
     var form_data = {
 	   "heater":{
 	      "HEATER_ENABLE": 		heaterEnabled,
@@ -91,6 +113,16 @@ function saveSettings() {
 	   "maker_channel":{
 	      "MAKER_CH_ADDR": 	$('#settingsForm').find('[name="mk-addr"]').val(),
 	      "MAKER_CH_KEY": 	$('#settingsForm').find('[name="mk-key"]').val()
+	   },
+	   "water_level":{
+	   	  "ALARM_ENABLE": 				gwAlarm,
+	      "RECOMMENDED_WATERING": 		Number($('#settingsForm').find('[name="gw_rec_water_vol"]').val()),
+	      "RECOMMENDED_WATERING_DAYS": 	Number($('#settingsForm').find('[name="gw_rec_water_days"]').val()),
+	      "GRND_WATER_SATURATION": 		Number($('#settingsForm').find('[name="gw_water_sat"]').val()),
+	      "DRY_RATE_0_9": 				Number($('#settingsForm').find('[name="gw_dry_rate_0"]').val()),
+	      "DRY_RATE_10_19": 			Number($('#settingsForm').find('[name="gw_dry_rate_1"]').val()),
+	      "DRY_RATE_20_29": 			Number($('#settingsForm').find('[name="gw_dry_rate_2"]').val()),
+	      "DRY_RATE_30_UP": 			Number($('#settingsForm').find('[name="gw_dry_rate_3"]').val())
 	   }
 	};
 
