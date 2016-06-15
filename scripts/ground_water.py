@@ -21,7 +21,6 @@ import settings as s
 import log
 import check_process
 
-WATERING_REC    = 24 # l/m^2
 
 #===============================================================================
 # GET LIST
@@ -135,76 +134,107 @@ def main():
         #-----------------------------------------------------------------------
         # Calculate current ground water level if no gw_level file
         #----------------------------------------------------------------------- 
-        # Fetch MIN values from rrd
-        outside_max = get_list(rrd, 'MAX', 'outside_temp')
-        
-        # Grab precip acc data
-        precip = get_list(rrd, 'MAX', 'precip_acc')
+        try:
+            with open('{fl}/data/gw_level.json'.format(fl= folder_loc), 'r') as f:
+                gw_data = json.load(f)
 
-        ground_water_level = 0 #l/m^2 
+            ground_water_level = gw_data['gw_prediction'][0]
+
+            logger.info('Water level file found. Getting starting')
+            logger.info('GW level = {value}'.format(value= ground_water_level)) 
+
+            # Fetch MIN values from rrd
+            outside_max = get_list(rrd, 'MAX', 'outside_temp')
+            
+            # Grab precip acc data
+            precip = get_list(rrd, 'MAX', 'precip_acc')
+
+
+            
+        except Exception, e:
+            logger.info('Water level file not found.')
+            logger.info('Using 24 l/m^2 as a starting value.')
+            ground_water_level = 24
+
+
+
  
-        for i in range(0, len(outside_max)):
-            if outside_max[i] < 9:
-                rate = dry_rate[0]
-            elif outside_max[i] < 19:
-                rate = dry_rate[1]
-            elif outside_max[i] < 29:
-                rate = dry_rate[2]
-            else:
-                rate = dry_rate[3]
+        # for i in range(0, len(outside_max)):
+        #     if outside_max[i] < 9:
+        #         rate = dry_rate[0]
+        #     elif outside_max[i] < 19:
+        #         rate = dry_rate[1]
+        #     elif outside_max[i] < 29:
+        #         rate = dry_rate[2]
+        #     else:
+        #         rate = dry_rate[3]
 
-            ground_water_level =  ground_water_level + precip[i] - rate
+        #     ground_water_level =  ground_water_level + precip[i] - rate
 
-        if ground_water_level > ground_water_saturation:
-            ground_water_level = ground_water_saturation
+        # if ground_water_level > ground_water_saturation:
+        #     ground_water_level = ground_water_saturation
     
-        logger.info('Out temp = {value}'.format(value= outside_max))        
-        logger.info('Precip = {value}'.format(value= precip)) 
-        logger.info('GW level = {value}'.format(value= ground_water_level)) 
+        logger.info('Out temp = {value}'.format(value= outside_max[-1]))        
+        logger.info('Precip = {value}'.format(value= precip[-1])) 
 
 
         #-----------------------------------------------------------------------
         # Grab weather prediction data from online
         #----------------------------------------------------------------------- 
-        # forecast = get_forecast()
-        # forecast_high_temp  = [int(forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
-        #                             for i in range(0, len(forecast['forecast']['simpleforecast']['forecastday'])) ]
-        # forecast_precip     = [int(forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm'])
-        #                             for i in range(0, len(forecast['forecast']['simpleforecast']['forecastday'])) ]
+        forecast = {}
+        # web_forecast = get_forecast()
+        # forecast['high_temp']  = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
+        #                             for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
+        # forecast['precip']     = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm'])
+        #                             for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
+        
+        watering = 0
 
-        forecast_high_temp  = [20, 19, 19, 19, 19, 17, 16, 19, 19, 20]
-        forecast_precip     = [0, 6, 5, 5, 6, 14, 1, 0, 6, 5]
+        forecast =  {
+                        'high_temp':        [20, 19, 19, 19, 19, 17, 16, 19, 19, 20],
+                        'precip':           [0, 6, 5, 5, 6, 14, 1, 0, 6, 5],
+                        'precip_chance':    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+                    }
 
-        watering            = 0
+
+        # Calculate possible precipitation
+        forecast['precip'][:] = [forecast['precip'][i]*forecast['precip_chance'][i] 
+                                                for i in range(0, len(forecast['precip']))]
 
 
         #-----------------------------------------------------------------------
         # Calculate predicted ground water level for next few days
         #----------------------------------------------------------------------- 
-        # Set up ground water level list for the mnext seven days
-        # beginning with today's starting water level plus the amount of yesterday's watering
-        gw_prediction = [ground_water_level + watering, 0, 0, 0, 0, 0, 0]
+        forecast['gw_prediction'] = [0 for i in range(0, days)]           
+        forecast['gw_prediction'][0] = ground_water_level + watering  
 
         for i in range(0, days-1):
-            if forecast_high_temp[i] < 9:
+            if forecast['high_temp'][i] <= 9:
                 rate = dry_rate[0]
-            elif forecast_high_temp[i] < 19:
+            elif forecast['high_temp'][i] <= 19:
                 rate = dry_rate[1]
-            elif forecast_high_temp[i] < 29:
+            elif forecast['high_temp'][i] <= 29:
                 rate = dry_rate[2]
             else:
                 rate = dry_rate[3]
 
-            gw_prediction[i+1] =  gw_prediction[i] + forecast_precip[i] - rate
-            if gw_prediction[i+1] > ground_water_saturation:
-                gw_prediction[i+1] = ground_water_saturation
+            forecast['gw_prediction'][i+1] =  forecast['gw_prediction'][i] + forecast['precip'][i] - rate
+
+            # Limit value if saturated
+            if forecast['gw_prediction'][i+1] > ground_water_saturation:
+                forecast['gw_prediction'][i+1] = ground_water_saturation
 
 
+        logger.info('Forecast high temp = {value}'.format(value= forecast['high_temp']))
+        logger.info('Forecast precip = {value}'.format(value= forecast['precip']))
+        logger.info('Forecast gw = {value}'.format(value= forecast['gw_prediction']))
 
-        logger.info('Forecast high temp = {value}'.format(value= forecast_high_temp))
-        logger.info('Forecast precip = {value}'.format(value= forecast_precip))
-        logger.info('Forecast gw = {value}'.format(value= gw_prediction))
 
+        #-----------------------------------------------------------------------
+        # Write water level data file
+        #----------------------------------------------------------------------- 
+        with open('{fl}/data/gw_level.json'.format(fl= folder_loc), 'w') as f:
+            json.dump(forecast, f)
 
 
 
