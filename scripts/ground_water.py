@@ -11,6 +11,7 @@ import time
 import collections
 import urllib2
 import json
+import math
 
 # Third party modules
 
@@ -25,7 +26,7 @@ import check_process
 #===============================================================================
 # GET LIST
 #===============================================================================
-def get_list(rrd_file, consolidation, data):
+def get_historical_values(rrd_file, consolidation, data):
     '''
     Fetches previous 7 days values from rrd and returns it as a list.
 
@@ -41,11 +42,11 @@ def get_list(rrd_file, consolidation, data):
     data_length = len(rrd_entry.value)
 
     return [rrd_entry.value[i][rrd_entry.ds.index(data)] 
-                    for i in range(0,data_length) if rrd_entry.value[i][rrd_entry.ds.index(data)] is not None]
+                for i in range(0,data_length) if rrd_entry.value[i][rrd_entry.ds.index(data)] is not None]
 
 
 #===============================================================================
-# GET LIST
+# GET WEATHER FORECAST
 #===============================================================================
 def get_forecast():
     f = urllib2.urlopen('http://api.wunderground.com/api/2bcf7f53ba4a77f5/forecast10day/q/pws:IASHBOUR2.json')  
@@ -53,6 +54,107 @@ def get_forecast():
     f.close()
     return json.loads(json_string)  
 
+
+
+#===============================================================================
+# Calculate extraterrestrial radiation for daily periods (Ra)
+#===============================================================================
+def ra_calc(j, lat_rad):
+
+   ''' 
+   Calculating the Extraterrestrial radiation for daily periods in MJ/m^2/day
+
+   Inputs are 
+        j           - number of the day in the year between 1 (1 January) and 365 
+                    or 366 (31 December)
+        lat_rad     - latitude of location in radians
+   '''
+
+    #-----------------------------------------------------------------------
+    # Calculate Extraterrestrial radiation for daily periods (Ra)
+    #----------------------------------------------------------------------- 
+    # Solar declination (sigma) [rad]
+    sigma =0.409 * math.sin(0.0172 * j - 1.39)
+
+    # Sunset hour angle (ws) [rad]
+    ws = math.acos(-math.tan(lat_rad) * math.tan(sigma))
+
+    # Inverse relative distance Earth-Sun (dr)
+    dr = =1 + 0.033 * math.cos(0.0172 * j)
+
+    # Extraterrestrial radiation for daily periods (Ra) [MJ/m^2/d]
+    ra = 37.6 * dr * (ws * math.sin(lat_rad) * math.sin(sigma) + math.cos(lat_rad) * math.cos(sigma) * math.sin(ws))
+
+    # Re [J/m^2/d]
+    return ra
+
+
+
+#===============================================================================
+# Calculate reference evapotranspiration value
+#===============================================================================
+def eto_tbase_calc(re, temp_mean):
+
+   ''' 
+   Function uses temperature-based (T-based) PE formulation suggested by Oudin et al (2005).
+
+   PET in units of mm/s
+
+   Inputs are 
+        Re          - extraterrestrial radiation (J/m2/s)
+        temp_mean   - mean temperature *C
+   '''
+
+    #---------------------------------------------------------------------------
+    # Constants
+    #---------------------------------------------------------------------------
+    LATENT_HEAT_FLUX        = 2450000   # MJ/kg
+    WATER_DENSITY           = 1000      # kg/m^3
+
+    #---------------------------------------------------------------------------
+    # Calculate ETo
+    #--------------------------------------------------------------------------- 
+    # Temperature-based (T-based) PE formulation suggested by Oudin et al (2005)
+    if temp_mean + 5 > 0:
+        return (re / (LATENT_HEAT_FLUX * WATER_DENSITY)) * ((temp_mean + 5) / 100)) * 1000
+    else:
+        return 0
+
+
+#===============================================================================
+# Calculate Effective Rainfall
+#===============================================================================
+def effective_rainfall_calc(p):
+
+    ''' Effective Rainfall converted from FAO monthly values'''
+
+    if p > 0.67:
+        return (0.7432 * p) - 0.5
+    else:
+        return 0
+
+
+#===============================================================================
+# Calculate Effective Rainfall
+#===============================================================================
+def linear_regression(x_list, y_list):
+
+    '''
+    Calculate linear regression formula.
+    Returns the m and c in y=mx+c
+    '''
+
+    x_mean = sum(x_list) / len(x_list)
+    y_mean = sum(y_list) / len(y_list)
+
+    x_avgx          = [x - x_mean for x in x_list]
+    y_avgy          = [y - y_mean for y in y_list]
+
+    m = sum([x*y for x,y in zip(x_avgx, x_avgx)]) / sum([x**2 for x in x_avgx])
+
+    c = y_mean - m*x_mean
+
+    return m,c
 
 
 
@@ -63,7 +165,7 @@ def main():
 
     '''
     Grabs data from weather underground and rrd file to generate prediction
-    for the amount of ground water.
+    for the water depth
     '''
    
     script_name = os.path.basename(sys.argv[0])
@@ -72,12 +174,11 @@ def main():
 
 
     #---------------------------------------------------------------------------
-    # Set up logger
+    # SET UP LOGGER
     #---------------------------------------------------------------------------
     logger = log.setup('root', '{folder}/logs/{script}.log'.format(
                                                     folder= folder_loc,
                                                     script= script_name[:-3]))
-
     logger.info('')
     logger.info('--- Script {script} Started ---'.format(script= script_name)) 
     
@@ -92,7 +193,7 @@ def main():
 
 
     #---------------------------------------------------------------------------
-    # Check RRD File
+    # CHECK RRD FILE
     #---------------------------------------------------------------------------
     rrd = rrd_tools.RrdFile('{fd1}/data/{fl}'.format(fd1= folder_loc,
                                                     fl= s.RRDTOOL_RRD_FILE))
@@ -104,136 +205,140 @@ def main():
 
 
     #-------------------------------------------------------------------
-    # Get data from config file
+    # GET DATA FROM CONFIG FILE
     #-------------------------------------------------------------------
     try:
         with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
 
-        water_level_alarm       = config['water_level']['ALARM_ENABLE']
-        recommended_watering    = config['water_level']['RECOMMENDED_WATERING']
-        days                    = config['water_level']['RECOMMENDED_WATERING_DAYS']
-        ground_water_saturation = config['water_level']['GRND_WATER_SATURATION']
-        
-        dry_rate = [0,0,0,0]
-        dry_rate[0]             = config['water_level']['DRY_RATE_0_9']
-        dry_rate[1]             = config['water_level']['DRY_RATE_10_19']
-        dry_rate[2]             = config['water_level']['DRY_RATE_20_29']
-        dry_rate[3]             = config['water_level']['DRY_RATE_30_UP']
-        
-        # Calculate matrix how quickly ground dries depending on temp
-        dry_rate[:] = [x*recommended_watering for x in dry_rate]
+        location                = config['location']['COORDINATE']
+        water_level_alarm       = config['irrigation']['ALARM_ENABLE']
+        net_irrig_depth         = config['irrigation']['NET_IRRIGATION_DEPTH']
+        kc                      = config['irrigation']['CROP_FACTOR_KC']
+        days                    = config['irrigation']['RECOMMENDED_WATERING_DAYS']
+        saturation              = config['irrigation']['SATURATION']
         
     except Exception, e:
         logger.error('Unable to load config data. Exiting...')
         sys.exit()
 
 
+    #-----------------------------------------------------------------------
+    # CALCULATE WATER DEPTH
+    #-----------------------------------------------------------------------      
     try:
-
-        #-----------------------------------------------------------------------
-        # Calculate current ground water level if no gw_level file
-        #----------------------------------------------------------------------- 
-        try:
-            with open('{fl}/data/gw_level.json'.format(fl= folder_loc), 'r') as f:
-                gw_data = json.load(f)
-
-            ground_water_level = gw_data['gw_prediction'][0]
-
-            logger.info('Water level file found. Getting starting')
-            logger.info('GW level = {value}'.format(value= ground_water_level)) 
-
-            # Fetch MIN values from rrd
-            outside_max = get_list(rrd, 'MAX', 'outside_temp')
-            
-            # Grab precip acc data
-            precip = get_list(rrd, 'MAX', 'precip_acc')
-
-
-            
-        except Exception, e:
-            logger.info('Water level file not found.')
-            logger.info('Using 24 l/m^2 as a starting value.')
-            ground_water_level = 24
-
-
-
- 
-        # for i in range(0, len(outside_max)):
-        #     if outside_max[i] < 9:
-        #         rate = dry_rate[0]
-        #     elif outside_max[i] < 19:
-        #         rate = dry_rate[1]
-        #     elif outside_max[i] < 29:
-        #         rate = dry_rate[2]
-        #     else:
-        #         rate = dry_rate[3]
-
-        #     ground_water_level =  ground_water_level + precip[i] - rate
-
-        # if ground_water_level > ground_water_saturation:
-        #     ground_water_level = ground_water_saturation
-    
-        logger.info('Out temp = {value}'.format(value= outside_max[-1]))        
-        logger.info('Precip = {value}'.format(value= precip[-1])) 
-
 
         #-----------------------------------------------------------------------
         # Grab weather prediction data from online
         #----------------------------------------------------------------------- 
-        forecast = {}
         # web_forecast = get_forecast()
-        # forecast['high_temp']  = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
+        # temp_low   = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
         #                             for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
-        # forecast['precip']     = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm'])
+        # temp_high  = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['low']['celsius'])
+        #                             for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
+        # precip     = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm'])
         #                             for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
         
-        watering = 0
-
-        forecast =  {
-                        'high_temp':        [20, 19, 19, 19, 19, 17, 16, 19, 19, 20],
-                        'precip':           [0, 6, 5, 5, 6, 14, 1, 0, 6, 5],
-                        'precip_chance':    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-                    }
-
-
-        # Calculate possible precipitation
-        forecast['precip'][:] = [forecast['precip'][i]*forecast['precip_chance'][i] 
-                                                for i in range(0, len(forecast['precip']))]
+        web_temp_high       = [20, 19, 19, 19, 19, 17, 16, 19, 19, 20]
+        web_temp_low        = [10, 9,  9,  9,  9,  7,  6,  9,  9,  10]
+        web_precip          = [0, 6, 5, 5, 6, 14, 1, 0, 6, 5]
+        web_precip_chance   = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 
         #-----------------------------------------------------------------------
-        # Calculate predicted ground water level for next few days
+        # Prepare variables
         #----------------------------------------------------------------------- 
-        forecast['gw_prediction'] = [0 for i in range(0, days)]           
-        forecast['gw_prediction'][0] = ground_water_level + watering  
+        irrigation_amount = 0
+        forecast = {}
 
-        for i in range(0, days-1):
-            if forecast['high_temp'][i] <= 9:
-                rate = dry_rate[0]
-            elif forecast['high_temp'][i] <= 19:
-                rate = dry_rate[1]
-            elif forecast['high_temp'][i] <= 29:
-                rate = dry_rate[2]
-            else:
-                rate = dry_rate[3]
+        # Convert latitude from degrees to radians
+        # radians = degrees * (pi/180)
+        lat_rad = location(0) * 0.0174533
 
-            forecast['gw_prediction'][i+1] =  forecast['gw_prediction'][i] + forecast['precip'][i] - rate
-
-            # Limit value if saturated
-            if forecast['gw_prediction'][i+1] > ground_water_saturation:
-                forecast['gw_prediction'][i+1] = ground_water_saturation
+        # J is the number of the day in the year between 1 (1 January) and 365 or 366 (31 December)
+        j = datetime.datetime.now().timetuple().tm_yday
 
 
-        logger.info('Forecast high temp = {value}'.format(value= forecast['high_temp']))
-        logger.info('Forecast precip = {value}'.format(value= forecast['precip']))
-        logger.info('Forecast gw = {value}'.format(value= forecast['gw_prediction']))
+        #-----------------------------------------------------------------------
+        # Calculate current depth if file is present otherwise use estimate
+        #----------------------------------------------------------------------- 
+        try:
+            with open('{fl}/data/irrigation.json'.format(fl= folder_loc), 'r') as f:
+                irrig_data = json.load(f)
+
+            previous_depth = irrig_data['depth'][0]
+
+            # Fetch previous values from rrd
+            actual_temp_mean   = get_historical_values(rrd, 'AVG', 'outside_temp')
+            actual_precip      = get_historical_values(rrd, 'MAX', 'precip_acc')
+
+            # Calculate Extraterrestrial radiation for daily periods (Ra)
+            ra = ra_calc(j-1, lat_rad)
+
+            # Convert Ra [MJ/m^2/day] to Re [J/m^2/day]
+            eto  = eto_tbase_calc(ra* 1000000, temp_mean[-1])
+            etc  = eto * kc
+            pe   = effective_rainfall_calc(precip[-1])
+
+            current_depth = previous_depth - etc + pe + irrig_data['irrig_amount']
+
+            logger.info('Water level file found. Getting starting')
+            logger.info('Current depth = {value}'.format(value= current_depth)) 
+       
+        except Exception, e:
+            logger.info('Water level file not found.')
+            logger.info('Using 24 l/m^2 as a starting value.')
+            current_depth = 24
+
+
+        #-----------------------------------------------------------------------
+        # Populate predicted depth per day
+        #----------------------------------------------------------------------- 
+        # Create array for predicted depth with first value the starting depth
+        predicted_depth = [current_depth] + [0] * days-1
+
+        for day in range(0, days-1):
+            temp_mean[i]    = (web_temp_high[i] - web_temp_low[i]) / 2
+            precip[i]       = web_precip[i] * web_precip_chance[i]
+
+            # Calculate Extraterrestrial radiation for daily periods (Ra)
+            ra = ra_calc(j + day, lat_rad)
+
+            # Convert Ra [MJ/m^2/day] to Re [J/m^2/day]
+            eto     = eto_tbase_calc(ra* 1000000, temp_mean[i])
+            etc[i]  = eto * kc
+            pe[i]   = effective_rainfall_calc(precip[i])
+
+            # Estimate next day's depth
+            predicted_depth[i+1] = predicted_depth[i] - etc[i] + pe[i]
+
+        logger.info('Water depth = {value}'.format(value= predicted_depth))
+        logger.info('Effective precip = {value}'.format(value= pe))
+
+
+        #-----------------------------------------------------------------------
+        # Get linear regression for depth
+        #-----------------------------------------------------------------------
+        m,c = linear_regression([i for i in range(0,days-1)], predicted_depth)
+
+        linear_depth = [m*x+c for x in range(0, days-1)] 
+
+        logger.info('Linear depth = {value}'.format(value= linear_depth))
 
 
         #-----------------------------------------------------------------------
         # Write water level data file
         #----------------------------------------------------------------------- 
-        with open('{fl}/data/gw_level.json'.format(fl= folder_loc), 'w') as f:
+        forecast = {
+            'depth':           predicted_depth,
+            'linear':          linear_depth,
+            'precip':          pe,
+            'temp':            temp_mean,
+            'etc':             etc,
+            'irrig_amount':    0
+        }
+
+        with open('{fl}/data/irrigation.json'.format(fl= folder_loc), 'w') as f:
             json.dump(forecast, f)
 
 
