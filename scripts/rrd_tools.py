@@ -173,6 +173,31 @@ class RrdFile:
 
 
     #---------------------------------------------------------------------------
+    # FETCH LIST
+    #---------------------------------------------------------------------------
+    def fetch_list(self, consolidation, data, days=7):
+        '''
+        Fetches previous days values from rrd and returns it as a list.
+
+        Any NaN values are ignored and not included in the list.
+        '''
+
+        rrd_entry = rrdtool.fetch(  cf= consolidation, 
+                                    start='e-{t}d'.format(t=days-1), 
+                                    end='-1d', 
+                                    res='86400')
+            
+        rt = collections.namedtuple( 'rt', 'start end step ds value')
+        rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
+                            rrd_entry[1], rrd_entry[2]) 
+
+        data_length = len(rrd_entry.value)
+
+        return [rrd_entry.value[i][rrd_entry.ds.index(data)] 
+                    for i in range(0,data_length) if rrd_entry.value[i][rrd_entry.ds.index(data)] is not None]
+
+
+    #---------------------------------------------------------------------------
     # EXPORT
     #---------------------------------------------------------------------------
     def export(self, start='-1d', end='now', step='300', ds_list=None, 
