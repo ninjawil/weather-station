@@ -188,8 +188,9 @@ def main():
         with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
 
-        location                = config['location']['COORDINATE']
-        water_level_alarm       = config['irrigation']['ALARM_ENABLE']
+        location                = config['irrigation']['COORDINATE']
+        alarm_enable            = config['irrigation']['ALARM_ENABLE']
+        alarm_level             = config['irrigation']['ALARM_LEVEL']
         net_irrig_depth         = config['irrigation']['NET_IRRIGATION_DEPTH']
         kc                      = config['irrigation']['CROP_FACTOR_KC']
         days                    = config['irrigation']['RECOMMENDED_WATERING_DAYS']
@@ -318,6 +319,13 @@ def main():
         with open('{fl}/data/irrigation.json'.format(fl= folder_loc), 'w') as f:
             json.dump(forecast, f)
 
+
+        #-----------------------------------------------------------------------
+        # Trigger warning if irrigation is needed
+        #-----------------------------------------------------------------------
+        if predicted_depth(3) <= alarm_level:
+            mc = maker_ch.MakerChannel(maker_ch_addr, maker_ch_key, 'WS_water_alarm')
+            mc.trigger_an_event()
 
 
         logger.info('--- Script Finished ---')
