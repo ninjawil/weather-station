@@ -24,28 +24,6 @@ import check_process
 
 
 #===============================================================================
-# GET LIST
-#===============================================================================
-def get_historical_values(rrd_file, consolidation, data):
-    '''
-    Fetches previous 7 days values from rrd and returns it as a list.
-
-    Any NaN values are ignored and not included in the list.
-    '''
-
-    rrd_entry = rrd_file.fetch(cf= consolidation, start='e-6d', end='-1d', res='86400')
-        
-    rt = collections.namedtuple( 'rt', 'start end step ds value')
-    rrd_entry = rt(rrd_entry[0][0], rrd_entry[0][1], rrd_entry[0][2], 
-                        rrd_entry[1], rrd_entry[2]) 
-
-    data_length = len(rrd_entry.value)
-
-    return [rrd_entry.value[i][rrd_entry.ds.index(data)] 
-                for i in range(0,data_length) if rrd_entry.value[i][rrd_entry.ds.index(data)] is not None]
-
-
-#===============================================================================
 # GET WEATHER FORECAST
 #===============================================================================
 def get_forecast():
@@ -53,7 +31,6 @@ def get_forecast():
     json_string = f.read()  
     f.close()
     return json.loads(json_string)  
-
 
 
 #===============================================================================
@@ -135,7 +112,7 @@ def effective_rainfall_calc(p):
 
 
 #===============================================================================
-# Calculate Effective Rainfall
+# Linear Regression calculation
 #===============================================================================
 def linear_regression(x_list, y_list):
 
@@ -269,8 +246,8 @@ def main():
             previous_depth = irrig_data['depth'][0]
 
             # Fetch previous values from rrd
-            actual_temp_mean   = get_historical_values(rrd, 'AVG', 'outside_temp')
-            actual_precip      = get_historical_values(rrd, 'MAX', 'precip_acc')
+            actual_temp_mean   = rrd.fetch_list('AVG', 'outside_temp')
+            actual_precip      = rrd.fetch_list('MAX', 'precip_acc')
 
             # Calculate Extraterrestrial radiation for daily periods (Ra)
             ra = ra_calc(j-1, lat_rad)
