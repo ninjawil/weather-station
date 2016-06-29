@@ -43,7 +43,6 @@
 						        <li><a href="#" id="1m" onclick="displayCharts('1m')">1 month</a></li>
 						        <li><a href="#" id="3m" onclick="displayCharts('3m')">3 months</a></li>
 						        <li><a href="#" id="1y" onclick="displayCharts('1y')">1 year</a></li>
-						        <!-- <li><a href="#" id="all" onclick="displayHeatMap()">All</a></li> -->
 						        <li class="dropdown">
 						          	<a href="#" id="all" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">All <span class="caret"></span></a>
 						          	<ul id="allDropdown" class="dropdown-menu"></ul>
@@ -172,42 +171,48 @@
 							<div id="on_temp" class="col-md-6">
 								<div class="input-group">
 			                		<div id="checkbox">
-										<input id="gw-enable" type="checkbox"> Enable Water Level Alarm
+										<input id="irrig_alarm_en" type="checkbox"> Enable Water Level Alarm
 									</div>
 								</div>	
 			                	<div class="input-group">
-									<span class="input-group-addon" id="basic-addon10">Rec. Watering Vol </span>
-								  	<input id="gw_rec_water_vol" name="gw_rec_water_vol" type="text" class="form-control" aria-describedby="basic-addon10">
-									<span class="input-group-addon">l/m²</span>
+									<span class="input-group-addon" id="basic-addon10">Alarm level </span>
+								  	<input id="irrig_alarm_lvl" name="irrig_alarm_lvl" type="text" class="form-control" aria-describedby="basic-addon10">
+									<span class="input-group-addon">mm</span>
+								</div>
+								<div class="input-group">
+									<span class="input-group-addon" id="basic-addon11">Coordinates </span>
+								  	<input id="irrig_coord_n" name="irrig_coord_n" placeholder="North" type="text" class="form-control" aria-describedby="basic-addon11">
+								  	<input id="irrig_coord_s" name="irrig_coord_s" placeholder="South" type="text" class="form-control" aria-describedby="basic-addon11">
 								</div>
 			                	<div class="input-group">
-									<span class="input-group-addon" id="basic-addon11">Rec. Watering Days </span>
-								  	<input id="gw_rec_water_days" name="gw_rec_water_days" type="text" class="form-control" aria-describedby="basic-addon11">
+									<span class="input-group-addon" id="basic-addon13">Watering Days </span>
+								  	<input id="irrig_days" name="irrig_days" type="text" class="form-control" aria-describedby="basic-addon13">
 									<span class="input-group-addon">days</span>
-								</div>
-			                	<div class="input-group">
-									<span class="input-group-addon" id="basic-addon12">Saturation Level </span>
-								  	<input id="gw_water_sat" name="gw_water_sat" type="text" class="form-control" aria-describedby="basic-addon12">
-									<span class="input-group-addon">l/m²</span>
 								</div>
 							</div>
 							<div id="hyst_temp" class="col-md-6">
-								Dry Rates
+								<fieldset class="form-group">
+								    <label for="irrig_soil_type">Soil Type</label>
+								    <select class="form-control" id="irrig_soil_type" name="irrig_soil_type">
+								    	<option value="sandy">Sandy</option>
+								    	<option value="loamy sand">Loamy Sand</option>
+								    	<option value="sandy loam">Sandy Loam</option>
+								    	<option value="loam">Loam</option>
+								    	<option value="silt loam">Silt Loam</option>
+								    	<option value="silt">Silt</option>
+								    	<option value="silt clay loam">Silt Clay Loam</option>
+								    	<option value="silty loam">Silty Loam</option>
+								    	<option value="clay">Clay</option>
+								    </select>
+								</fieldset>
 								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon13">Less than 9°C </span>
-								  	<input id="gw_dry_rate_0" name="gw_dry_rate_0" type="text" class="form-control" aria-describedby="basic-addon13">
+									<span class="input-group-addon" id="basic-addon14">Crop Factor Kc </span>
+								  	<input id="irrig_crop_factor" name="irrig_crop_factor" type="text" class="form-control" aria-describedby="basic-addon14">
 								</div>
 								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon14">10°C to 19°C </span>
-								  	<input id="gw_dry_rate_1" name="gw_dry_rate_1" type="text" class="form-control" aria-describedby="basic-addon14">
-								</div>
-								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon15">20°C to 29°C </span>
-								  	<input id="gw_dry_rate_2" name="gw_dry_rate_2" type="text" class="form-control" aria-describedby="basic-addon15">
-								</div>
-								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon16">30°C and above </span>
-								  	<input id="gw_dry_rate_3" name="gw_dry_rate_3" type="text" class="form-control" aria-describedby="basic-addon16">
+									<span class="input-group-addon" id="basic-addon15">Root Depth </span>
+								  	<input id="irrig_root_depth" name="irrig_root_depth" type="text" class="form-control" aria-describedby="basic-addon15">
+									<span class="input-group-addon">metres</span>
 								</div>
 							</div>
 						</div> <!-- row -->

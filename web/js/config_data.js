@@ -43,20 +43,19 @@ function updateSettingsModal(json) {
 	$('#mk-key').attr('value', config_data.maker_channel.MAKER_CH_KEY);
 
 	
-	if(config_data.water_level.ALARM_ENABLE == 1){
-		$('#gw-enable').prop('checked', true);
+	if(config_data.irrigation.ALARM_ENABLE == 1){
+		$('#irrig_alarm_en').prop('checked', true);
 	} else {
-		$('#gw-enable').prop('checked', false);
+		$('#irrig_alarm_en').prop('checked', false);
 	}
 
-	$('#gw_rec_water_vol').attr('value', config_data.water_level.RECOMMENDED_WATERING);
-	$('#gw_rec_water_days').attr('value', config_data.water_level.RECOMMENDED_WATERING_DAYS);
-	$('#gw_water_sat').attr('value', config_data.water_level.GRND_WATER_SATURATION);
-	$('#gw_dry_rate_0').attr('value', config_data.water_level.DRY_RATE_0_9);
-	$('#gw_dry_rate_1').attr('value', config_data.water_level.DRY_RATE_10_19);
-	$('#gw_dry_rate_2').attr('value', config_data.water_level.DRY_RATE_20_29);
-	$('#gw_dry_rate_3').attr('value', config_data.water_level.DRY_RATE_30_UP);
-
+	$('#irrig_alarm_lvl').attr('value', config_data.irrigation.ALARM_LEVEL);
+	$('#irrig_coord_n').attr('value', config_data.irrigation.COORD_NORTH);
+	$('#irrig_coord_s').attr('value', config_data.irrigation.COORD_SOUTH);
+	$('#irrig_days').attr('value', config_data.irrigation.RECOMMENDED_WATERING_DAYS);
+	$('#irrig_soil_type').val(config_data.irrigation.SOIL_TYPE);
+	$('#irrig_crop_factor').attr('value', config_data.irrigation.CROP_FACTOR_KC);
+	$('#irrig_root_depth').attr('value', config_data.irrigation.ROOT_DEPTH);
 
     $(function(){
         $('#checkbox input:checkbox').on('change', function(){
@@ -89,7 +88,7 @@ function saveSettings() {
 	}
 
     var gwAlarm = 0;
-    if ($('#gw-enable').is(":checked"))
+    if ($('#irrig_alarm_en').is(":checked"))
 	{
 	  	gwAlarm = 1;
 	}
@@ -114,15 +113,15 @@ function saveSettings() {
 	      "MAKER_CH_ADDR": 	$('#settingsForm').find('[name="mk-addr"]').val(),
 	      "MAKER_CH_KEY": 	$('#settingsForm').find('[name="mk-key"]').val()
 	   },
-	   "water_level":{
+	   "irrigation":{
 	   	  "ALARM_ENABLE": 				gwAlarm,
-	      "RECOMMENDED_WATERING": 		Number($('#settingsForm').find('[name="gw_rec_water_vol"]').val()),
-	      "RECOMMENDED_WATERING_DAYS": 	Number($('#settingsForm').find('[name="gw_rec_water_days"]').val()),
-	      "GRND_WATER_SATURATION": 		Number($('#settingsForm').find('[name="gw_water_sat"]').val()),
-	      "DRY_RATE_0_9": 				Number($('#settingsForm').find('[name="gw_dry_rate_0"]').val()),
-	      "DRY_RATE_10_19": 			Number($('#settingsForm').find('[name="gw_dry_rate_1"]').val()),
-	      "DRY_RATE_20_29": 			Number($('#settingsForm').find('[name="gw_dry_rate_2"]').val()),
-	      "DRY_RATE_30_UP": 			Number($('#settingsForm').find('[name="gw_dry_rate_3"]').val())
+	      "ALARM_LEVEL": 				Number($('#settingsForm').find('[name="irrig_alarm_lvl"]').val()),
+	      "COORD_NORTH": 				Number($('#settingsForm').find('[name="irrig_coord_n"]').val()),
+	      "COORD_SOUTH": 				Number($('#settingsForm').find('[name="irrig_coord_s"]').val()),
+	      "RECOMMENDED_WATERING_DAYS": 	Number($('#settingsForm').find('[name="irrig_days"]').val()),
+	      "SOIL_TYPE": 					$('#settingsForm').find('[name="irrig_soil_type"]').val().toLowerCase(),
+	      "CROP_FACTOR_KC": 			Number($('#settingsForm').find('[name="irrig_crop_factor"]').val()),
+	      "ROOT_DEPTH": 				Number($('#settingsForm').find('[name="irrig_root_depth"]').val())
 	   }
 	};
 
