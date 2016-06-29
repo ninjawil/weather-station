@@ -112,6 +112,38 @@ def effective_rainfall_calc(p):
 
 
 #===============================================================================
+# Calculate Readily Available Water level
+#===============================================================================
+def readily_available_water_calc(soil_type, root_depth, etc, depletion_fraction= 0.5):
+
+    ''' 
+    Calculates the Total Available Water and Readily Available Water (RAW) 
+    value in mm
+
+    See http://www.fao.org/docrep/X0490E/x0490e0e.htm#chapter 8   etc under soil water stress conditions
+    '''
+
+    soils = {
+        'sand':             {'theta_fc': 0.12,   'theta_wp': 0.05 },
+        'loamy sand':       {'theta_fc': 0.15,   'theta_wp': 0.07 },
+        'sandy loam':       {'theta_fc': 0.23,   'theta_wp': 0.11 },
+        'loam':             {'theta_fc': 0.25,   'theta_wp': 0.12 },
+        'silt loam':        {'theta_fc': 0.29,   'theta_wp': 0.12 },
+        'silt':             {'theta_fc': 0.32,   'theta_wp': 0.17 },
+        'silt clay loam':   {'theta_fc': 0.34,   'theta_wp': 0.21 },
+        'silty loam':       {'theta_fc': 0.36,   'theta_wp': 0.23 },
+        'clay':             {'theta_fc': 0.36,   'theta_wp': 0.22 }
+    }
+
+    taw = 1000 * (soils[soil_type]['theta_fc']-soils[soil_type]['theta_wp']) * root_depth
+
+    raw = depletion_fraction * taw
+
+    return taw, raw
+
+
+
+#===============================================================================
 # Linear Regression calculation
 #===============================================================================
 def linear_regression(x_list, y_list):
@@ -194,7 +226,8 @@ def main():
         net_irrig_depth         = config['irrigation']['NET_IRRIGATION_DEPTH']
         kc                      = config['irrigation']['CROP_FACTOR_KC']
         days                    = config['irrigation']['RECOMMENDED_WATERING_DAYS']
-        saturation              = config['irrigation']['SATURATION']
+        soil_type               = config['irrigation']['SOIL_TYPE']
+        root_depth              = config['irrigation']['ROOT_DEPTH']
         
     except Exception, e:
         logger.error('Unable to load config data. Exiting...')
@@ -260,6 +293,13 @@ def main():
 
             current_depth = previous_depth - etc + pe + irrig_data['irrig_amount']
 
+            taw, raw = readily_available_water_calc(soil_type, root_depth, etc)
+
+            if current_depth > raw:
+                deep_perculation = current_depth - raw
+                current_depth = raw
+
+
             logger.info('Water level file found. Getting starting')
             logger.info('Current depth = {value}'.format(value= current_depth)) 
        
@@ -273,7 +313,9 @@ def main():
         # Populate predicted depth per day
         #----------------------------------------------------------------------- 
         # Create array for predicted depth with first value the starting depth
-        predicted_depth = [current_depth] + [0] * days-1
+        field_capacity = [current_depth] + [0] * days-1
+
+        raw = [0] * days
 
         for day in range(0, days-1):
             temp_mean[i]    = (web_temp_high[i] - web_temp_low[i]) / 2
@@ -288,16 +330,23 @@ def main():
             pe[i]   = effective_rainfall_calc(precip[i])
 
             # Estimate next day's depth
-            predicted_depth[i+1] = predicted_depth[i] - etc[i] + pe[i]
+            field_capacity[i+1] = field_capacity[i] - etc[i] + pe[i]
 
-        logger.info('Water depth = {value}'.format(value= predicted_depth))
+            # Calculate and limit due to deep perculation
+            taw, raw[i] = readily_available_water_calc(soil_type, root_depth, etc[i])
+
+            if field_capacity[i+1] > raw[i]:
+                field_capacity[i+1] = raw[i]
+
+
+        logger.info('Water depth = {value}'.format(value= field_capacity))
         logger.info('Effective precip = {value}'.format(value= pe))
 
 
         #-----------------------------------------------------------------------
         # Get linear regression for depth
         #-----------------------------------------------------------------------
-        m,c = linear_regression([i for i in range(0,days-1)], predicted_depth)
+        m,c = linear_regression([i for i in range(0,days-1)], field_capacity)
 
         linear_depth = [m*x+c for x in range(0, days-1)] 
 
@@ -308,12 +357,13 @@ def main():
         # Write water level data file
         #----------------------------------------------------------------------- 
         forecast = {
-            'depth':           predicted_depth,
-            'linear':          linear_depth,
-            'precip':          pe,
-            'temp':            temp_mean,
-            'etc':             etc,
-            'irrig_amount':    0
+            'depth':            field_capacity,
+            'linear':           linear_depth,
+            'precip':           pe,
+            'temp':             temp_mean,
+            'etc':              etc,
+            'raw':              raw,
+            'irrig_amount':     0
         }
 
         with open('{fl}/data/irrigation.json'.format(fl= folder_loc), 'w') as f:
@@ -323,7 +373,7 @@ def main():
         #-----------------------------------------------------------------------
         # Trigger warning if irrigation is needed
         #-----------------------------------------------------------------------
-        if predicted_depth(3) <= alarm_level:
+        if field_capacity(3) <= alarm_level:
             mc = maker_ch.MakerChannel(maker_ch_addr, maker_ch_key, 'WS_water_alarm')
             mc.trigger_an_event()
 
