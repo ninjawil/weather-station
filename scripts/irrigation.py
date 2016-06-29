@@ -220,11 +220,9 @@ def main():
         with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
 
-        location = [0,0]
-        location[0]             = config['irrigation']['COORD_NORTH']
+        location                = [config['irrigation']['COORD_NORTH'], config['irrigation']['COORD_SOUTH']]
         alarm_enable            = config['irrigation']['ALARM_ENABLE']
         alarm_level             = config['irrigation']['ALARM_LEVEL']
-        net_irrig_depth         = config['irrigation']['NET_IRRIGATION_DEPTH']
         kc                      = config['irrigation']['CROP_FACTOR_KC']
         days                    = config['irrigation']['RECOMMENDED_WATERING_DAYS']
         root_depth              = config['irrigation']['ROOT_DEPTH']
