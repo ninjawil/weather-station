@@ -38,14 +38,14 @@ def get_forecast():
 #===============================================================================
 def ra_calc(j, lat_rad):
 
-   ''' 
-   Calculating the Extraterrestrial radiation for daily periods in MJ/m^2/day
+    ''' 
+    Calculating the Extraterrestrial radiation for daily periods in MJ/m^2/day
 
-   Inputs are 
-        j           - number of the day in the year between 1 (1 January) and 365 
-                    or 366 (31 December)
-        lat_rad     - latitude of location in radians
-   '''
+    Inputs are 
+         j           - number of the day in the year between 1 (1 January) and 365 
+                     or 366 (31 December)
+         lat_rad     - latitude of location in radians
+    '''
 
     #-----------------------------------------------------------------------
     # Calculate Extraterrestrial radiation for daily periods (Ra)
@@ -57,7 +57,7 @@ def ra_calc(j, lat_rad):
     ws = math.acos(-math.tan(lat_rad) * math.tan(sigma))
 
     # Inverse relative distance Earth-Sun (dr)
-    dr = =1 + 0.033 * math.cos(0.0172 * j)
+    dr = 1 + 0.033 * math.cos(0.0172 * j)
 
     # Extraterrestrial radiation for daily periods (Ra) [MJ/m^2/d]
     ra = 37.6 * dr * (ws * math.sin(lat_rad) * math.sin(sigma) + math.cos(lat_rad) * math.cos(sigma) * math.sin(ws))
@@ -72,15 +72,15 @@ def ra_calc(j, lat_rad):
 #===============================================================================
 def eto_tbase_calc(re, temp_mean):
 
-   ''' 
-   Function uses temperature-based (T-based) PE formulation suggested by Oudin et al (2005).
+    ''' 
+    Function uses temperature-based (T-based) PE formulation suggested by Oudin et al (2005).
 
-   PET in units of mm/s
+    PET in units of mm/s
 
-   Inputs are 
-        Re          - extraterrestrial radiation (J/m2/s)
-        temp_mean   - mean temperature *C
-   '''
+    Inputs are 
+         Re          - extraterrestrial radiation (J/m2/s)
+         temp_mean   - mean temperature *C
+    '''
 
     #---------------------------------------------------------------------------
     # Constants
@@ -93,7 +93,7 @@ def eto_tbase_calc(re, temp_mean):
     #--------------------------------------------------------------------------- 
     # Temperature-based (T-based) PE formulation suggested by Oudin et al (2005)
     if temp_mean + 5 > 0:
-        return (re / (LATENT_HEAT_FLUX * WATER_DENSITY)) * ((temp_mean + 5) / 100)) * 1000
+        return (1000 * re * (temp_mean + 5)) / (100*(LATENT_HEAT_FLUX * WATER_DENSITY))
     else:
         return 0
 
@@ -220,17 +220,19 @@ def main():
         with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
 
-        location                = config['irrigation']['COORDINATE']
+        location = [0,0]
+        location[0]             = config['irrigation']['COORD_NORTH']
         alarm_enable            = config['irrigation']['ALARM_ENABLE']
         alarm_level             = config['irrigation']['ALARM_LEVEL']
         net_irrig_depth         = config['irrigation']['NET_IRRIGATION_DEPTH']
         kc                      = config['irrigation']['CROP_FACTOR_KC']
         days                    = config['irrigation']['RECOMMENDED_WATERING_DAYS']
-        soil_type               = config['irrigation']['SOIL_TYPE']
         root_depth              = config['irrigation']['ROOT_DEPTH']
+        soil_type               = config['irrigation']['SOIL_TYPE']
         
     except Exception, e:
-        logger.error('Unable to load config data. Exiting...')
+        logger.error('Unable to load config data ({error_v}). Exiting...'.format(
+            error_v=e), exc_info=True)
         sys.exit()
 
 
@@ -242,17 +244,17 @@ def main():
         #-----------------------------------------------------------------------
         # Grab weather prediction data from online
         #----------------------------------------------------------------------- 
-        # web_forecast = get_forecast()
-        # temp_low   = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
-        #                             for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
-        # temp_high  = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['low']['celsius'])
-        #                             for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
-        # precip     = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm'])
-        #                             for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
+        web_forecast = get_forecast()
+        web_temp_low   = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
+                                    for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
+        web_temp_high  = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['low']['celsius'])
+                                    for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
+        web_precip     = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm'])
+                                    for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
         
-        web_temp_high       = [20, 19, 19, 19, 19, 17, 16, 19, 19, 20]
-        web_temp_low        = [10, 9,  9,  9,  9,  7,  6,  9,  9,  10]
-        web_precip          = [0, 6, 5, 5, 6, 14, 1, 0, 6, 5]
+        # web_temp_high       = [20, 19, 19, 19, 19, 17, 16, 19, 19, 20]
+        # web_temp_low        = [10, 9,  9,  9,  9,  7,  6,  9,  9,  10]
+        # web_precip          = [0, 6, 5, 5, 6, 14, 1, 0, 6, 5]
         web_precip_chance   = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 
@@ -264,7 +266,7 @@ def main():
 
         # Convert latitude from degrees to radians
         # radians = degrees * (pi/180)
-        lat_rad = location(0) * 0.0174533
+        lat_rad = location[0] * 0.0174533
 
         # J is the number of the day in the year between 1 (1 January) and 365 or 366 (31 December)
         j = datetime.datetime.now().timetuple().tm_yday
@@ -313,30 +315,34 @@ def main():
         # Populate predicted depth per day
         #----------------------------------------------------------------------- 
         # Create array for predicted depth with first value the starting depth
-        field_capacity = [current_depth] + [0] * days-1
-
-        raw = [0] * days
+        field_capacity  = [current_depth] + [0] * (days-1)
+        precip          = [0] * days   
+        linear_depth    = [0] * days   
+        pe              = [0] * days
+        temp_mean       = [0] * days     
+        etc             = [0] * days
+        raw             = [0] * days
 
         for day in range(0, days-1):
-            temp_mean[i]    = (web_temp_high[i] - web_temp_low[i]) / 2
-            precip[i]       = web_precip[i] * web_precip_chance[i]
+            temp_mean[day]    = (web_temp_high[day] - web_temp_low[day]) / 2
+            precip[day]       = web_precip[day] * web_precip_chance[day]
 
             # Calculate Extraterrestrial radiation for daily periods (Ra)
             ra = ra_calc(j + day, lat_rad)
 
             # Convert Ra [MJ/m^2/day] to Re [J/m^2/day]
-            eto     = eto_tbase_calc(ra* 1000000, temp_mean[i])
-            etc[i]  = eto * kc
-            pe[i]   = effective_rainfall_calc(precip[i])
+            eto     = eto_tbase_calc(ra* 1000000, temp_mean[day])
+            etc[day]  = eto * kc
+            pe[day]   = effective_rainfall_calc(precip[day])
 
             # Estimate next day's depth
-            field_capacity[i+1] = field_capacity[i] - etc[i] + pe[i]
+            field_capacity[day+1] = field_capacity[day] - etc[day] + pe[day]
 
             # Calculate and limit due to deep perculation
-            taw, raw[i] = readily_available_water_calc(soil_type, root_depth, etc[i])
+            taw, raw[day] = readily_available_water_calc(soil_type, root_depth, etc[day])
 
-            if field_capacity[i+1] > raw[i]:
-                field_capacity[i+1] = raw[i]
+            if field_capacity[day+1] > raw[day]:
+                field_capacity[day+1] = raw[day]
 
 
         logger.info('Water depth = {value}'.format(value= field_capacity))
@@ -373,7 +379,7 @@ def main():
         #-----------------------------------------------------------------------
         # Trigger warning if irrigation is needed
         #-----------------------------------------------------------------------
-        if field_capacity(3) <= alarm_level:
+        if field_capacity[3] <= alarm_level:
             mc = maker_ch.MakerChannel(maker_ch_addr, maker_ch_key, 'WS_water_alarm')
             mc.trigger_an_event()
 
@@ -382,7 +388,7 @@ def main():
 
 
     except Exception, e:
-        logger.error('Update failed ({error_v}). Exiting...'.format(
+        logger.error('Error ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
         sys.exit()
 
