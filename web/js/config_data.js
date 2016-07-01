@@ -1,3 +1,13 @@
+//
+// config_data.js
+// Will De Freitas
+//
+// Reads and writes weather station configuration data
+//
+// 
+
+
+
 //-------------------------------------------------------------------------------
 // Grab config.json data
 //-------------------------------------------------------------------------------

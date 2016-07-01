@@ -158,6 +158,11 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 // Display heat map
 //-------------------------------------------------------------------------------
 function displayHeatMap(sensor_id) {
+
+	// Called from index.html
+	// Highlights the appropriate button and clears working screen area
+	// 
+
 	// Highlights correct navbar location
 	$('li').removeClass('active');
 	$('#all').parent().addClass('active');
