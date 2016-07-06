@@ -72,24 +72,24 @@ function displayErrorMessage(error_data) {
 //-------------------------------------------------------------------------------
 function parseErrorMsgTable(error_data) {
 
-
 	// Sort by error date
 	keysSorted = Object.keys(error_data).sort(function(a,b){return a.time-b.time});
+
 
 	for (var i=0,  tot=keysSorted.length; i < tot; i++) {
 		if(error_data[keysSorted[i]].time != 0) {
 
-			var datetime = new Date(error_data[error].time * 1000);
+			var datetime = new Date(error_data[keysSorted[i]].time * 1000);
 			datetime = datetime.toUTCString();
 
 			var formattedError 	= HTMLerrorTable.replace("%date%", datetime);
-			formattedError 		= formattedError.replace("%errornumber%", error);
-			formattedError 		= formattedError.replace("%message%", error_data[error].msg);
-			formattedError 		= formattedError.replace("%count%", error_data[error].count);
+			formattedError 		= formattedError.replace("%errornumber%", keysSorted[i]);
+			formattedError 		= formattedError.replace("%message%", error_data[keysSorted[i]].msg);
+			formattedError 		= formattedError.replace("%count%", error_data[keysSorted[i]].count);
 
 			var notified = 'No';
 			
-			if(error_data[error].notified === '1') { notified = 'YES' }
+			if(error_data[keysSorted[i]].notified === '1') { notified = 'YES' }
 			formattedError 		= formattedError.replace("%notified%", notified);
 
 			$('#error_table').append(formattedError);
