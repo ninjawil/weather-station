@@ -243,13 +243,15 @@ def main():
         # Grab weather prediction data from online
         #----------------------------------------------------------------------- 
         web_forecast = get_forecast()
-        web_temp_low   = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
+        web_temp_low   = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['low']['celsius'])
                                     for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
-        web_temp_high  = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['low']['celsius'])
+        web_temp_high  = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
                                     for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
         web_precip     = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm'])
                                     for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
         
+        logger.info('High temp {temps}'.format(temps=web_temp_high))
+        logger.info('Low temp  {temps}'.format(temps=web_temp_low))
         # web_temp_high       = [20, 19, 19, 19, 19, 17, 16, 19, 19, 20]
         # web_temp_low        = [10, 9,  9,  9,  9,  7,  6,  9,  9,  10]
         # web_precip          = [0, 6, 5, 5, 6, 14, 1, 0, 6, 5]
@@ -321,8 +323,8 @@ def main():
         etc             = [0] * days
         raw             = [0] * days
 
-        for day in range(0, days-1):
-            temp_mean[day]    = (web_temp_high[day] - web_temp_low[day]) / 2
+        for day in range(0, days):
+            temp_mean[day]    = (web_temp_high[day] + web_temp_low[day]) / 2
             precip[day]       = web_precip[day] * web_precip_chance[day]
 
             # Calculate Extraterrestrial radiation for daily periods (Ra)
@@ -333,14 +335,15 @@ def main():
             etc[day]  = eto * kc
             pe[day]   = effective_rainfall_calc(precip[day])
 
-            # Estimate next day's depth
-            field_capacity[day+1] = field_capacity[day] - etc[day] + pe[day]
-
             # Calculate and limit due to deep perculation
             taw, raw[day] = readily_available_water_calc(soil_type, root_depth, etc[day])
+            
+            # Estimate next day's depth
+            if day + 1 < days:
+                field_capacity[day+1] = field_capacity[day] - etc[day] + pe[day]
 
-            if field_capacity[day+1] > raw[day]:
-                field_capacity[day+1] = raw[day]
+                if field_capacity[day+1] > raw[day]:
+                    field_capacity[day+1] = raw[day]
 
 
         logger.info('Water depth = {value}'.format(value= field_capacity))
@@ -350,9 +353,9 @@ def main():
         #-----------------------------------------------------------------------
         # Get linear regression for depth
         #-----------------------------------------------------------------------
-        m,c = linear_regression([i for i in range(0,days-1)], field_capacity)
+        m,c = linear_regression([i for i in range(0,days)], field_capacity)
 
-        linear_depth = [m*x+c for x in range(0, days-1)] 
+        linear_depth = [m*x+c for x in range(0, days)] 
 
         logger.info('Linear depth = {value}'.format(value= linear_depth))
 
