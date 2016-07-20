@@ -18,9 +18,18 @@ function displayIrrigation() {
 	// Clear chart area
 	$('#graph-container').empty();
 
-	$.getJSON('weather_data/irrigation.json', function(json) {
-	    drawIrrigation(json);
-	});
+	// $.getJSON('weather_data/irrigation.json', function(json) {
+	//     drawIrrigation(json);
+	// });
+
+    $.ajax({
+        cache: false,
+        url: 'weather_data/irrigation.json',
+        dataType: "json",
+        success: function(data) {
+            drawIrrigation(data);
+        }
+    });
     
 }
 
@@ -125,27 +134,54 @@ function drawIrrigation(chart_data) {
             enabled: false
         },
         tooltip: {
-            shared: true,
+            shared: false,
             useHTML: true,
+            valueDecimals: 2,
             crosshairs: true
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    radius: 2
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
         },
         series: [
 	        {
 	            name: 'Depth',
-	            type: 'spline',
+	            type: 'area',
 	            data: chart_data.depth,
 	            fillOpacity: 0.3,
 	            lineWidth: 4,
 	            color: COLOR_BLUE,
-	            tooltip: {
-	                valueSuffix: 'mm'
-	        	}
-	        },{
-	            name: 'Depth Linear',
-	            type: 'spline',
-	            data: chart_data.linear,
-	            //fillOpacity: 0.3,
-	            marker: {
+                tooltip: {
+                    valueSuffix: 'mm'
+                }
+            },{
+                name: 'Depth Linear',
+                type: 'spline',
+                data: chart_data.linear,
+                //fillOpacity: 0.3,
+                marker: {
                     enabled: false
                 },
                 color: COLOR_L_GREY,
@@ -173,11 +209,24 @@ function drawIrrigation(chart_data) {
 	                valueSuffix: 'mm'
 	        	}
 	        },{
-	            name: 'Irrigation Amount',
-	            type: 'column',
-	            data: chart_data.irrig_amount,
-	            color: COLOR_BLUE,
+                name: 'Irrigation Amount',
+                type: 'column',
+                data: chart_data.irrig_amount,
+                color: COLOR_BLUE,
+                fillOpacity: 0.3,
+                tooltip: {
+                    valueSuffix: 'mm'
+                }
+            },{
+	            name: 'Alarm Level',
+	            type: 'line',
+	            data: chart_data.alarm_level,
+	            color: COLOR_RED,
+                dashstyle: 'dash',
 	            fillOpacity: 0.3,
+                marker: {
+                    enabled: false
+                },
 	            tooltip: {
 	                valueSuffix: 'mm'
 	        	}
