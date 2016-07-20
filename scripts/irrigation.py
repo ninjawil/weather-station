@@ -281,17 +281,22 @@ def main():
 
             previous_depth = irrig_data['depth'][0]
 
+            logger.info('previous_depth = {value}'.format(value= previous_depth))
+            
             # Fetch previous values from rrd
-            actual_temp_mean   = rrd.fetch_list('AVG', 'outside_temp')
-            actual_precip      = rrd.fetch_list('MAX', 'precip_acc')
+            actual_temp_mean   = rrd.fetch_list('AVERAGE', 'outside_temp', days= 2)
+            actual_precip      = rrd.fetch_list('MAX', 'precip_acc', days= 2)
+
+            logger.info('actual_temp_mean = {value}'.format(value= actual_temp_mean))
+            logger.info('actual_precip = {value}'.format(value= actual_precip))
 
             # Calculate Extraterrestrial radiation for daily periods (Ra)
             ra = ra_calc(j-1, lat_rad)
 
             # Convert Ra [MJ/m^2/day] to Re [J/m^2/day]
-            eto  = eto_tbase_calc(ra* 1000000, temp_mean[-1])
+            eto  = eto_tbase_calc(ra* 1000000, actual_temp_mean[-1])
             etc  = eto * kc
-            pe   = effective_rainfall_calc(precip[-1])
+            pe   = effective_rainfall_calc(actual_precip[-1])
 
             current_depth = previous_depth - etc + pe + irrig_data['irrig_amount']
 
@@ -302,10 +307,12 @@ def main():
                 current_depth = raw
 
 
-            logger.info('Water level file found. Getting starting')
+            logger.info('Water level file found.')
             logger.info('Current depth = {value}'.format(value= current_depth)) 
        
         except Exception, e:
+            logger.error('Unable to load config data ({error_v}). Exiting...'.format(
+                error_v=e), exc_info=True)
             logger.info('Water level file not found.')
             logger.info('Using 24 l/m^2 as a starting value.')
             current_depth = 24
@@ -322,6 +329,7 @@ def main():
         temp_mean       = [0] * days     
         etc             = [0] * days
         raw             = [0] * days
+        alarm_levels    = [alarm_level] * days
 
         for day in range(0, days):
             temp_mean[day]    = (web_temp_high[day] + web_temp_low[day]) / 2
@@ -370,6 +378,7 @@ def main():
             'temp':             temp_mean,
             'etc':              etc,
             'raw':              raw,
+            'alarm_level':      alarm_levels,
             'irrig_amount':     0
         }
 
