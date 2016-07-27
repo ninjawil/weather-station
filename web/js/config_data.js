@@ -66,6 +66,8 @@ function updateSettingsModal(json) {
 	$('#irrig_soil_type').val(config_data.irrigation.SOIL_TYPE);
 	$('#irrig_crop_factor').attr('value', config_data.irrigation.CROP_FACTOR_KC);
 	$('#irrig_root_depth').attr('value', config_data.irrigation.ROOT_DEPTH);
+	$('#irrig_full').attr('value', config_data.irrigation.IRRIG_FULL);
+	$('#irrig_partial').attr('value', config_data.irrigation.IRRIG_PARTIAL);
 
     $(function(){
         $('#checkbox input:checkbox').on('change', function(){
@@ -131,7 +133,9 @@ function saveSettings() {
 	      "RECOMMENDED_WATERING_DAYS": 	Number($('#settingsForm').find('[name="irrig_days"]').val()),
 	      "SOIL_TYPE": 					$('#settingsForm').find('[name="irrig_soil_type"]').val().toLowerCase(),
 	      "CROP_FACTOR_KC": 			Number($('#settingsForm').find('[name="irrig_crop_factor"]').val()),
-	      "ROOT_DEPTH": 				Number($('#settingsForm').find('[name="irrig_root_depth"]').val())
+	      "ROOT_DEPTH": 				Number($('#settingsForm').find('[name="irrig_root_depth"]').val()),
+	      "IRRIG_FULL": 				Number($('#settingsForm').find('[name="irrig_full"]').val()),
+	      "IRRIG_PARTIAL": 				Number($('#settingsForm').find('[name="irrig_partial"]').val())
 	   }
 	};
 

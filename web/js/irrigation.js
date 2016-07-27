@@ -48,6 +48,7 @@ function drawIrrigation(chart_data) {
 	// Clear chart area
 	$('#graph-container').empty();
 
+
     // Override the reset function, we don't need to hide the tooltips and crosshairs.
     Highcharts.Pointer.prototype.reset = function () {
         return undefined;
@@ -70,12 +71,17 @@ function drawIrrigation(chart_data) {
     }
 
     dates = [];
-
+    irrig_amount = [];
 
     // Create x axis values
-    for(var i= 0; i < chart_data.depth.lenght; i++){ 
+    for(var i= 0; i < chart_data.depth.length; i++){ 
     	dates[i] = i;
+        irrig_amount[i] = 0;
     }
+
+    irrig_amount[0] = chart_data.irrig_amount;
+
+
 
 
     // Set up chart
@@ -176,19 +182,19 @@ function drawIrrigation(chart_data) {
                 tooltip: {
                     valueSuffix: 'mm'
                 }
-            },{
-                name: 'Depth Linear',
-                type: 'spline',
-                data: chart_data.linear,
-                //fillOpacity: 0.3,
-                marker: {
-                    enabled: false
-                },
-                color: COLOR_L_GREY,
-	            dashstyle: 'dash',
-	            tooltip: {
-	                valueSuffix: 'mm'
-	        	}
+          //   },{
+          //       name: 'Depth Linear',
+          //       type: 'spline',
+          //       data: chart_data.linear,
+          //       //fillOpacity: 0.3,
+          //       marker: {
+          //           enabled: false
+          //       },
+          //       color: COLOR_L_GREY,
+	         //    dashstyle: 'dash',
+	         //    tooltip: {
+	         //        valueSuffix: 'mm'
+	        	// }
 	        },{
 	            name: 'Predicted Temp',
 	            type: 'spline',
@@ -211,7 +217,7 @@ function drawIrrigation(chart_data) {
 	        },{
                 name: 'Irrigation Amount',
                 type: 'column',
-                data: chart_data.irrig_amount,
+                data: irrig_amount,
                 color: COLOR_BLUE,
                 fillOpacity: 0.3,
                 tooltip: {
@@ -235,6 +241,7 @@ function drawIrrigation(chart_data) {
     }
 
 	// Draw chart
+    $(HTMLirrigButton).appendTo('#graph-container');
 	$('<div class="chart" style="height:360px">').appendTo('#graph-container').highcharts(highchartOptions);
 
 }

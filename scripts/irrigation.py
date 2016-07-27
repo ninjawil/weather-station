@@ -227,6 +227,9 @@ def main():
         days                    = config['irrigation']['RECOMMENDED_WATERING_DAYS']
         root_depth              = config['irrigation']['ROOT_DEPTH']
         soil_type               = config['irrigation']['SOIL_TYPE']
+        irrig_full              = config['irrigation']['IRRIG_FULL']
+        irrig_partial           = config['irrigation']['IRRIG_PARTIAL']
+
         
     except Exception, e:
         logger.error('Unable to load config data ({error_v}). Exiting...'.format(
@@ -262,6 +265,7 @@ def main():
         # Prepare variables
         #----------------------------------------------------------------------- 
         irrigation_amount = 0
+
         forecast = {}
 
         # Convert latitude from degrees to radians
@@ -278,6 +282,12 @@ def main():
         try:
             with open('{fl}/data/irrigation.json'.format(fl= folder_loc), 'r') as f:
                 irrig_data = json.load(f)
+
+            if len(sys.argv) > 1:
+                if '--full' in sys.argv:
+                    irrigation_amount = irrig_data['irrig_amount'] + irrig_full
+                if '--partial' in sys.argv:
+                    irrigation_amount = irrig_data['irrig_amount'] + irrig_partial
 
             previous_depth = irrig_data['depth'][0]
 
@@ -298,7 +308,7 @@ def main():
             etc  = eto * kc
             pe   = effective_rainfall_calc(actual_precip[-1])
 
-            current_depth = previous_depth - etc + pe + irrig_data['irrig_amount']
+            current_depth = previous_depth - etc + pe + irrigation_amount
 
             taw, raw = readily_available_water_calc(soil_type, root_depth, etc)
 
@@ -379,7 +389,7 @@ def main():
             'etc':              etc,
             'raw':              raw,
             'alarm_level':      alarm_levels,
-            'irrig_amount':     0
+            'irrig_amount':     irrig_amount
         }
 
         with open('{fl}/data/irrigation.json'.format(fl= folder_loc), 'w') as f:
