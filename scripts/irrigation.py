@@ -229,6 +229,8 @@ def main():
         soil_type               = config['irrigation']['SOIL_TYPE']
         irrig_full              = config['irrigation']['IRRIG_FULL']
         irrig_partial           = config['irrigation']['IRRIG_PARTIAL']
+        maker_ch_addr           = config['maker_channel']['MAKER_CH_ADDR']
+        maker_ch_key            = config['maker_channel']['MAKER_CH_KEY']
 
         
     except Exception, e:
@@ -246,27 +248,31 @@ def main():
         # Grab weather prediction data from online
         #----------------------------------------------------------------------- 
         web_forecast = get_forecast()
-        web_temp_low   = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['low']['celsius'])
-                                    for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
-        web_temp_high  = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius'])
-                                    for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
-        web_precip     = [int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm'])
-                                    for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])) ]
-        
-        logger.info('High temp {temps}'.format(temps=web_temp_high))
-        logger.info('Low temp  {temps}'.format(temps=web_temp_low))
-        # web_temp_high       = [20, 19, 19, 19, 19, 17, 16, 19, 19, 20]
-        # web_temp_low        = [10, 9,  9,  9,  9,  7,  6,  9,  9,  10]
-        # web_precip          = [0, 6, 5, 5, 6, 14, 1, 0, 6, 5]
-        web_precip_chance   = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        date_first   = [int(web_forecast['forecast']['simpleforecast']['forecastday'][0]['date']['year']), 
+                        int(web_forecast['forecast']['simpleforecast']['forecastday'][0]['date']['month']), 
+                        int(web_forecast['forecast']['simpleforecast']['forecastday'][0]['date']['day'])] 
 
 
         #-----------------------------------------------------------------------
         # Prepare variables
         #----------------------------------------------------------------------- 
-        irrigation_amount = 0
-
         forecast = {}
+        web_temp_low        = [] 
+        web_temp_high       = []
+        web_precip          = []
+        web_precip_chance   = []
+
+        for i in range(0, len(web_forecast['forecast']['simpleforecast']['forecastday'])):
+            # date = (86400 * i + date_first) * 1000
+            web_temp_low.append(int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['low']['celsius']))
+            web_temp_high.append(int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['high']['celsius']))
+            web_precip.append(int(web_forecast['forecast']['simpleforecast']['forecastday'][i]['qpf_allday']['mm']))
+            web_precip_chance.append(1)
+        
+        logger.info('High temp {temps}'.format(temps=web_temp_high))
+        logger.info('Low temp  {temps}'.format(temps=web_temp_low))
+        
+        irrigation_amount = 0
 
         # Convert latitude from degrees to radians
         # radians = degrees * (pi/180)
@@ -332,14 +338,15 @@ def main():
         # Populate predicted depth per day
         #----------------------------------------------------------------------- 
         # Create array for predicted depth with first value the starting depth
-        field_capacity  = [current_depth] + [0] * (days-1)
-        precip          = [0] * days   
-        linear_depth    = [0] * days   
-        pe              = [0] * days
-        temp_mean       = [0] * days     
-        etc             = [0] * days
-        raw             = [0] * days
-        alarm_levels    = [alarm_level] * days
+        field_capacity      = [current_depth] + [0] * (days-1)
+        precip              = [0] * days   
+        linear_depth        = [0] * days   
+        pe                  = [0] * days
+        temp_mean           = [0] * days     
+        etc                 = [0] * days
+        raw                 = [0] * days
+        alarm_levels        = [alarm_level] * days
+        irrigation_amount   = [irrigation_amount] + [0] * (days-1)
 
         for day in range(0, days):
             temp_mean[day]    = (web_temp_high[day] + web_temp_low[day]) / 2
@@ -382,6 +389,7 @@ def main():
         # Write water level data file
         #----------------------------------------------------------------------- 
         forecast = {
+            'date':             date_first,
             'depth':            field_capacity,
             'linear':           linear_depth,
             'precip':           pe,
@@ -389,7 +397,7 @@ def main():
             'etc':              etc,
             'raw':              raw,
             'alarm_level':      alarm_levels,
-            'irrig_amount':     irrig_amount
+            'irrig_amount':     irrigation_amount
         }
 
         with open('{fl}/data/irrigation.json'.format(fl= folder_loc), 'w') as f:

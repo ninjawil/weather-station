@@ -71,18 +71,6 @@ function drawIrrigation(chart_data) {
     }
 
     dates = [];
-    irrig_amount = [];
-
-    // Create x axis values
-    for(var i= 0; i < chart_data.depth.length; i++){ 
-    	dates[i] = i;
-        irrig_amount[i] = 0;
-    }
-
-    irrig_amount[0] = chart_data.irrig_amount;
-
-
-
 
     // Set up chart
 	highchartOptions = {
@@ -130,7 +118,8 @@ function drawIrrigation(chart_data) {
             events: {
                 setExtremes: syncExtremes
             },
-        	categories: dates,
+        	type: 'datetime',
+            maxZoom: 48 * 3600 * 1000,
             crosshair: false
         },
         credits: {
@@ -169,20 +158,49 @@ function drawIrrigation(chart_data) {
                     }
                 },
                 threshold: null
+            },
+            column: {
+                stacking: 'normal'
             }
         },
         series: [
-	        {
-	            name: 'Depth',
-	            type: 'area',
-	            data: chart_data.depth,
+	        {            
+	            name: 'Predicted Rainfall',
+	            type: 'column',
+	            data: chart_data.precip,
+                pointStart: Date.UTC(chart_data.date[0], chart_data.date[1]-1, chart_data.date[2]),
+                pointInterval: 24 * 3600 * 1000, // one day
+	            color: COLOR_L_BLUE,
 	            fillOpacity: 0.3,
-	            lineWidth: 4,
-	            color: COLOR_BLUE,
+	            tooltip: {
+	                valueSuffix: 'mm'
+	        	},
+                stack: 'irrig'
+	        },{
+                name: 'Irrigation Amount',
+                type: 'column',
+                data: chart_data.irrig_amount,
+                pointStart: Date.UTC(chart_data.date[0], chart_data.date[1]-1, chart_data.date[2]),
+                pointInterval: 24 * 3600 * 1000, // one day
+                color: COLOR_L_GREEN,
+                fillOpacity: 0.3,
+                tooltip: {
+                    valueSuffix: 'mm'
+                },
+                stack: 'irrig'
+            },{   
+                name: 'Depth',
+                type: 'area',
+                data: chart_data.depth,
+                pointStart: Date.UTC(chart_data.date[0], chart_data.date[1]-1, chart_data.date[2]),
+                pointInterval: 24 * 3600 * 1000, // one day
+                fillOpacity: 0.3,
+                lineWidth: 4,
+                color: COLOR_BLUE,
                 tooltip: {
                     valueSuffix: 'mm'
                 }
-          //   },{
+            },{
           //       name: 'Depth Linear',
           //       type: 'spline',
           //       data: chart_data.linear,
@@ -191,42 +209,17 @@ function drawIrrigation(chart_data) {
           //           enabled: false
           //       },
           //       color: COLOR_L_GREY,
-	         //    dashstyle: 'dash',
-	         //    tooltip: {
-	         //        valueSuffix: 'mm'
-	        	// }
-	        },{
-	            name: 'Predicted Temp',
-	            type: 'spline',
-	            data: chart_data.temp,
-	            fillOpacity: 0.3,
-	            color: COLOR_YELLOW,
-	            yAxis: 1,
-	            tooltip: {
-	                valueSuffix: '°C'
-	        	}
-	        },{
-	            name: 'Predicted Rainfall',
-	            type: 'column',
-	            data: chart_data.precip,
-	            color: COLOR_L_BLUE,
-	            fillOpacity: 0.3,
-	            tooltip: {
-	                valueSuffix: 'mm'
-	        	}
-	        },{
-                name: 'Irrigation Amount',
-                type: 'column',
-                data: irrig_amount,
-                color: COLOR_BLUE,
-                fillOpacity: 0.3,
-                tooltip: {
-                    valueSuffix: 'mm'
-                }
+             //    dashstyle: 'dash',
+             //    tooltip: {
+             //        valueSuffix: 'mm'
+                // }
+            
             },{
 	            name: 'Alarm Level',
 	            type: 'line',
 	            data: chart_data.alarm_level,
+                pointStart: Date.UTC(chart_data.date[0], chart_data.date[1]-1, chart_data.date[2]),
+                pointInterval: 24 * 3600 * 1000, // one day
 	            color: COLOR_RED,
                 dashstyle: 'dash',
 	            fillOpacity: 0.3,
@@ -236,6 +229,18 @@ function drawIrrigation(chart_data) {
 	            tooltip: {
 	                valueSuffix: 'mm'
 	        	}
+            },{
+                name: 'Predicted Temp',
+                type: 'spline',
+                data: chart_data.temp,
+                pointStart: Date.UTC(chart_data.date[0], chart_data.date[1]-1, chart_data.date[2]),
+                pointInterval: 24 * 3600 * 1000, // one day
+                fillOpacity: 0.3,
+                color: COLOR_YELLOW,
+                yAxis: 1,
+                tooltip: {
+                    valueSuffix: '°C'
+                }
 	        }
         ]
     }
