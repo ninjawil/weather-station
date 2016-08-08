@@ -9,6 +9,7 @@ import sys
 import time
 import json
 import logging
+import subprocess
 
 # Third party modules
 
@@ -191,6 +192,33 @@ class ErrorCode(AllErrors):
         self.write_data(errors)
 
 
+#---------------------------------------------------------------------------
+# Check wlan0
+#---------------------------------------------------------------------------
+def wlan_check(ip_addr= '192.168.0.1'):
+    '''
+    This function checks if the WLAN is still up by pinging the router.
+    If there is no return, we'll reset the WLAN connection.
+    If the resetting of the WLAN does not work, we need to reset the Pi.
+
+    '''
+    logger = logging.getLogger('root')
+
+    cmd = 'ping -c 2 -w 1 -q ' + ip_addr + ' |grep "1 received" > /dev/null 2> /dev/null'
+
+    ping_ret = subprocess.call([cmd], shell=True)
+    if ping_ret:
+        # we lost the WLAN connection.
+        # try to recover the connection by resetting the LAN
+        logger.error('*** WLAN is down, Pi is resetting WLAN connection ***')
+        subprocess.call(['sudo /sbin/ifdown wlan0 && sleep 10 && sudo /sbin/ifup --force wlan0'], shell=True)
+    else:
+        logger.info('WLAN is OK')
+
+    return ping_ret
+
+
+
 #===============================================================================
 # MAIN
 #===============================================================================
@@ -230,29 +258,34 @@ def main():
     #---------------------------------------------------------------------------    
     try:
 
-        filename = '{fl}/data/error.json'.format(fl= folder_loc)
+        error_file = '{fl}/data/error.json'.format(fl= folder_loc)
 
         #Check and action passed arguments
         if len(sys.argv) > 1:
             if '--clear' in sys.argv:
                 logger.info('User requested CLEAR ERROR command.')
-                wd = AllErrors(filename)
+                wd = AllErrors(error_file)
                 wd.clear()
-
         else:
-            wd_rain_counter = ErrorCode(filename, '0001')
+            # load configurationd data
+            with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
+                config = json.load(f)
+
+            # check connection to router and reset if down
+            if wlan_check(config['network']['router_ip']):
+                sys.exit()
+
+            # action errors
+            wd_rain_counter = ErrorCode(error_file, '0001')
 
             if not wd_rain_counter.check_counter():
                 wd_rain_counter.set()
-
-            with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
-                config = json.load(f)
 
             wd_rain_counter.notify_via_maker_ch(config['maker_channel']['MAKER_CH_ADDR'],
                                                 config['maker_channel']['MAKER_CH_KEY'])
 
     except Exception, e:
-        logger.error('Update failed ({error_v}). Exiting...'.format(
+        logger.error('Watchdog error ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
         sys.exit()
 
