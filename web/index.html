@@ -100,133 +100,194 @@
 	            <div class="modal-content">
 	                <div class="modal-header">
 	                    <h4 class="modal-title" id="settings_file_modal">Settings Files</h4>
-	                </div>
+	                </div> <!-- modal-header -->
 	                <div id="settingsForm" class="modal-body">
-						<h5>NETWORK</h5>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon0">Router IP Address</span>
-						  	<input id="ip1" name="ip1" type="text" class="form-control" aria-describedby="basic-addon0">
-						</div>
-	                	<h5>HEATER</h5>
-	                	<div class="input-group">
-	                		<div id="checkbox">
-								<input id="heater-enable" type="checkbox"> Enable Heater
-							</div>
-						</div>	
-	                	<div class="row">
-							<div id="on_temp" class="col-md-6">
-			                	<div class="input-group">
-									<span class="input-group-addon" id="basic-addon1">ON temperature</span>
-								  	<input id="heater-on-temp" name="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon1">
-									<span class="input-group-addon">°C</span>
-								</div>
-							</div>
-							<div id="hyst_temp" class="col-md-6">
-								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon2">Hysterisis ±</span>
-								  	<input id="heater-on-hyst" name="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon2">
-									<span class="input-group-addon">°C</span>
-								</div>
-							</div>
-						</div> <!-- row -->
-	                	<div class="input-group">
-							<span class="input-group-addon" id="basic-addon3">Miplug Sensor Id</span>
-						  	<input id="miplug-id" name="miplug-id" type="text" class="form-control" aria-describedby="basic-addon3">
-						</div>
-						<h5>RAIN GAUGE</h5>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon4">Tick Measurement</span>
-						  	<input id="rain-gauge" name="rain-gauge" type="text" class="form-control" aria-describedby="basic-addon4">
-						  	<span class="input-group-addon">mm per tick</span>
-						</div>
-						<h5>THINGSPEAK</h5>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon5">Host Address</span>
-						  	<input id="ts-host-addr" name="ts-host-addr" name="ts-host-addr" type="text" class="form-control" aria-describedby="basic-addon5">
-						</div>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon6">API Key</span>
-						  	<input id="ts-api-key" name="ts-api-key" type="text" class="form-control" aria-describedby="basic-addon6">
-						</div>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon7">Channel ID</span>
-						  	<input id="ts-ch-id" name="ts-ch-id" type="text" class="form-control" aria-describedby="basic-addon7">
-						</div>
-						<h5>MAKER CHANNEL</h5>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon8">POST Address</span>
-						  	<input id="mk-addr" name="mk-addr" type="text" class="form-control" aria-describedby="basic-addon8">
-						</div>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon9">Key</span>
-						  	<input id="mk-key" name="mk-key" type="text" class="form-control" aria-describedby="basic-addon9">
-						</div>
-
-						<h5>WATER LEVEL PREDICTION</h5>
-	                	<div class="row">
-							<div id="on_temp" class="col-md-6">
-								<div class="input-group">
-			                		<div id="checkbox">
-										<input id="irrig_alarm_en" type="checkbox"> Enable Water Level Alarm
+	                	<div class="panel-group" id="accordion">
+		                	<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">NETWORK</a>
+								    </h4>
+							    </div>
+							    <div id="collapse1" class="panel-collapse collapse">
+									<div class="panel-body">
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon0">Router IP Address</span>
+										  	<input id="ip1" name="ip1" type="text" class="form-control" aria-describedby="basic-addon0">
+										</div>
 									</div>
-								</div>	
-			                	<div class="input-group">
-									<span class="input-group-addon" id="basic-addon10">Alarm level </span>
-								  	<input id="irrig_alarm_lvl" name="irrig_alarm_lvl" type="text" class="form-control" aria-describedby="basic-addon10">
-									<span class="input-group-addon">mm</span>
-								</div>
-			                	<div class="input-group">
-									<span class="input-group-addon" id="basic-addon13">Watering Days </span>
-								  	<input id="irrig_days" name="irrig_days" type="text" class="form-control" aria-describedby="basic-addon13">
-									<span class="input-group-addon">days</span>
-								</div>
-								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon15">Irrig Depth Full </span>
-								  	<input id="irrig_full" name="irrig_full" type="text" class="form-control" aria-describedby="basic-addon16">
-									<span class="input-group-addon">mm</span>
-								</div>
-								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon15">Irrig Depth Partial </span>
-								  	<input id="irrig_partial" name="irrig_partial" type="text" class="form-control" aria-describedby="basic-addon17">
-									<span class="input-group-addon">mm</span>
-								</div>
-							</div>
-							<div id="hyst_temp" class="col-md-6">
-								<fieldset class="form-group">
-								    <label for="irrig_soil_type">Soil Type</label>
-								    <select class="form-control" id="irrig_soil_type" name="irrig_soil_type">
-								    	<option value="sandy">Sandy</option>
-								    	<option value="loamy sand">Loamy Sand</option>
-								    	<option value="sandy loam">Sandy Loam</option>
-								    	<option value="loam">Loam</option>
-								    	<option value="silt loam">Silt Loam</option>
-								    	<option value="silt">Silt</option>
-								    	<option value="silt clay loam">Silt Clay Loam</option>
-								    	<option value="silty loam">Silty Loam</option>
-								    	<option value="clay">Clay</option>
-								    </select>
-								</fieldset>
-								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon11">Coordinates </span>
-								  	<input id="irrig_coord_n" name="irrig_coord_n" placeholder="North" type="text" class="form-control" aria-describedby="basic-addon11">
-								  	<input id="irrig_coord_s" name="irrig_coord_s" placeholder="South" type="text" class="form-control" aria-describedby="basic-addon11">
-								</div>
-								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon14">Crop Factor Kc </span>
-								  	<input id="irrig_crop_factor" name="irrig_crop_factor" type="text" class="form-control" aria-describedby="basic-addon14">
-								</div>
-								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon15">Root Depth </span>
-								  	<input id="irrig_root_depth" name="irrig_root_depth" type="text" class="form-control" aria-describedby="basic-addon15">
-									<span class="input-group-addon">metres</span>
-								</div>
-							</div>
-						</div> <!-- row -->
+								</div> <!-- collapse1 -->
+							</div> <!-- NETWORK panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">HEATER</a>
+								    </h4>
+							    </div>
+							    <div id="collapse2" class="panel-collapse collapse">
+									<div class="panel-body">
+					                	<div class="input-group">
+					                		<div id="checkbox">
+												<input id="heater-enable" type="checkbox"> Enable Heater
+											</div>
+										</div>
+					                	<div class="row">
+											<div id="on_temp" class="col-md-6">
+							                	<div class="input-group">
+													<span class="input-group-addon" id="basic-addon1">ON temperature</span>
+												  	<input id="heater-on-temp" name="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon1">
+													<span class="input-group-addon">°C</span>
+												</div>
+											</div>
+											<div id="hyst_temp" class="col-md-6">
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon2">Hysterisis ±</span>
+												  	<input id="heater-on-hyst" name="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon2">
+													<span class="input-group-addon">°C</span>
+												</div>
+											</div>
+										</div> <!-- row -->
+					                	<div class="input-group">
+											<span class="input-group-addon" id="basic-addon3">Miplug Sensor Id</span>
+										  	<input id="miplug-id" name="miplug-id" type="text" class="form-control" aria-describedby="basic-addon3">
+										</div>
+									</div>
+								</div> <!-- collapse2 -->
+							</div> <!-- HEATER panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">RAIN GAUGE</a>
+								    </h4>
+							    </div>
+							    <div id="collapse3" class="panel-collapse collapse">
+									<div class="panel-body">
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon4">Tick Measurement</span>
+										  	<input id="rain-gauge" name="rain-gauge" type="text" class="form-control" aria-describedby="basic-addon4">
+										  	<span class="input-group-addon">mm per tick</span>
+										</div>
+									</div>
+								</div> <!-- collapse3 -->
+							</div> <!-- RAIN GAUGE panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">THINGSPEAK</a>
+								    </h4>
+							    </div>
+							    <div id="collapse4" class="panel-collapse collapse">
+									<div class="panel-body">										
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon5">Host Address</span>
+										  	<input id="ts-host-addr" name="ts-host-addr" name="ts-host-addr" type="text" class="form-control" aria-describedby="basic-addon5">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon6">API Key</span>
+										  	<input id="ts-api-key" name="ts-api-key" type="text" class="form-control" aria-describedby="basic-addon6">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon7">Channel ID</span>
+										  	<input id="ts-ch-id" name="ts-ch-id" type="text" class="form-control" aria-describedby="basic-addon7">
+										</div>
+									</div>
+								</div> <!-- collapse4 -->
+							</div> <!-- THINGSPEAK panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">MAKER CHANNEL</a>
+								    </h4>
+							    </div>
+							    <div id="collapse5" class="panel-collapse collapse">
+									<div class="panel-body">
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon8">POST Address</span>
+										  	<input id="mk-addr" name="mk-addr" type="text" class="form-control" aria-describedby="basic-addon8">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon9">Key</span>
+										  	<input id="mk-key" name="mk-key" type="text" class="form-control" aria-describedby="basic-addon9">
+										</div>
+									</div>
+								</div> <!-- collapse5 -->
+							</div> <!-- MAKER CHANNEL panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse6">WATER LEVEL PREDICTION</a>
+								    </h4>
+							    </div>
+							    <div id="collapse6" class="panel-collapse collapse">
+									<div class="panel-body">
+					                	<div class="row">
+											<div id="on_temp" class="col-md-6">
+												<div class="input-group">
+							                		<div id="checkbox">
+														<input id="irrig_alarm_en" type="checkbox"> Enable Water Level Alarm
+													</div>
+												</div>	
+							                	<div class="input-group">
+													<span class="input-group-addon" id="basic-addon10">Alarm level </span>
+												  	<input id="irrig_alarm_lvl" name="irrig_alarm_lvl" type="text" class="form-control" aria-describedby="basic-addon10">
+													<span class="input-group-addon">mm</span>
+												</div>
+							                	<div class="input-group">
+													<span class="input-group-addon" id="basic-addon13">Watering Days </span>
+												  	<input id="irrig_days" name="irrig_days" type="text" class="form-control" aria-describedby="basic-addon13">
+													<span class="input-group-addon">days</span>
+												</div>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon15">Irrig Depth Full </span>
+												  	<input id="irrig_full" name="irrig_full" type="text" class="form-control" aria-describedby="basic-addon16">
+													<span class="input-group-addon">mm</span>
+												</div>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon15">Irrig Depth Partial </span>
+												  	<input id="irrig_partial" name="irrig_partial" type="text" class="form-control" aria-describedby="basic-addon17">
+													<span class="input-group-addon">mm</span>
+												</div>
+											</div>
+											<div id="hyst_temp" class="col-md-6">
+												<fieldset class="form-group">
+												    <label for="irrig_soil_type">Soil Type</label>
+												    <select class="form-control" id="irrig_soil_type" name="irrig_soil_type">
+												    	<option value="sandy">Sandy</option>
+												    	<option value="loamy sand">Loamy Sand</option>
+												    	<option value="sandy loam">Sandy Loam</option>
+												    	<option value="loam">Loam</option>
+												    	<option value="silt loam">Silt Loam</option>
+												    	<option value="silt">Silt</option>
+												    	<option value="silt clay loam">Silt Clay Loam</option>
+												    	<option value="silty loam">Silty Loam</option>
+												    	<option value="clay">Clay</option>
+												    </select>
+												</fieldset>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon11">Coordinates </span>
+												  	<input id="irrig_coord_n" name="irrig_coord_n" placeholder="North" type="text" class="form-control" aria-describedby="basic-addon11">
+												  	<input id="irrig_coord_s" name="irrig_coord_s" placeholder="South" type="text" class="form-control" aria-describedby="basic-addon11">
+												</div>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon14">Crop Factor Kc </span>
+												  	<input id="irrig_crop_factor" name="irrig_crop_factor" type="text" class="form-control" aria-describedby="basic-addon14">
+												</div>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon15">Root Depth </span>
+												  	<input id="irrig_root_depth" name="irrig_root_depth" type="text" class="form-control" aria-describedby="basic-addon15">
+													<span class="input-group-addon">metres</span>
+												</div>
+											</div>
+										</div> <!-- row -->
+									</div>
+								</div> <!-- collapse6 -->
+							</div> <!-- WATER LEVEL PREDICTION panel -->
+						</div> <!-- panel-group -->
 	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
 	                    <button type="button" class="btn btn-default" onclick="saveSettings()">Save</button>
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-	                </div>
+	                </div> <!-- modal-footer -->
 	            </div>
 	        </div>
 	    </div> <!-- modal_settings -->
@@ -250,11 +311,11 @@
 						    </thead>
 						    <tbody id="error_table"></tbody>
 					  	</table>
-	                </div>
+	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
 	                	<button type="button" class="btn btn-default" onclick="clearErrors()">Clear Errors</button>
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-	                </div>
+	                </div> <!-- modal-footer -->
 	            </div>
 	        </div>
 	    </div> <!-- modal_errors -->
