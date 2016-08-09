@@ -195,7 +195,7 @@ class ErrorCode(AllErrors):
 #---------------------------------------------------------------------------
 # Check wlan0
 #---------------------------------------------------------------------------
-def wlan_check(ip_addr= '192.168.0.1'):
+def wlan_down_check(ip_addr= '192.168.0.1'):
     '''
     This function checks if the WLAN is still up by pinging the router.
     If there is no return, we'll reset the WLAN connection.
@@ -204,14 +204,17 @@ def wlan_check(ip_addr= '192.168.0.1'):
     '''
     logger = logging.getLogger('root')
 
-    cmd = 'ping -c 2 -w 1 -q ' + ip_addr + ' |grep "1 received" > /dev/null 2> /dev/null'
-
+    cmd = 'ping -c 2 -w 1 -q ' + ip_addr + ' |grep "1 received" 2> /dev/null'
+    logger.debug(cmd)
     ping_ret = subprocess.call([cmd], shell=True)
+
     if ping_ret:
         # we lost the WLAN connection.
         # try to recover the connection by resetting the LAN
         logger.error('*** WLAN is down, Pi is resetting WLAN connection ***')
-        subprocess.call(['sudo /sbin/ifdown wlan0 && sleep 10 && sudo /sbin/ifup --force wlan0'], shell=True)
+        cmd = 'sudo /sbin/ifdown wlan0 && sleep 10 && sudo /sbin/ifup --force wlan0'
+        logger.debug(cmd)
+        subprocess.call([cmd], shell=True)
     else:
         logger.info('WLAN is OK')
 
@@ -272,7 +275,7 @@ def main():
                 config = json.load(f)
 
             # check connection to router and reset if down
-            if wlan_check(config['network']['router_ip']):
+            if wlan_down_check(config['network']['ROUTER_IP']):
                 sys.exit()
 
             # action errors
@@ -285,7 +288,7 @@ def main():
                                                 config['maker_channel']['MAKER_CH_KEY'])
 
     except Exception, e:
-        logger.error('Watchdog error ({error_v}). Exiting...'.format(
+        logger.error('Script error ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
         sys.exit()
 
