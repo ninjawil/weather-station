@@ -35,40 +35,42 @@ function logGetData(directory, filename) {
 function displayLogData() {
 
 	var columnNumber = 1,
-		log = 0,
-		formattedHTMLlogBox = '';
+		log_no = 0;
 
 	var directory = 'weather_logs/',
-		filenames = ['read_sensors.log', 'read_rain_gauge.log', 'rrd_export.log', 'rrd_ts_sync.log', 'rrd_switch.log', 'watchdog.log'];
+		filenames = [	'irrigation.log', 
+						'read_sensors.log', 
+						'read_rain_gauge.log', 
+						'rrd_export.log', 
+						'rrd_ts_sync.log', 
+						'rrd_switch.log', 
+						'watchdog.log', 
+						'weekly_summary.log'];
 
-	for(var logFile in filenames) {
-		formattedHTMLlogFileSelect = HTMLlogFileSelect.replace('%logFileName%', filenames[logFile]);
-		$('#logFileSelect').append(formattedHTMLlogFileSelect);
+	$('#panel_group').empty();
+
+	for(var filename in filenames) {
+
+		console.log(filename);
+
+		// Prepare log menu
+		formattedHTMLlogCollapse = HTMLlogCollapse.replace('%collapse_no%', 'logCollapse' + log_no);
+		formattedHTMLlogCollapse = formattedHTMLlogCollapse.replace('%collapse_no%', 'logCollapse' + log_no);
+		formattedHTMLlogCollapse = formattedHTMLlogCollapse.replace('%collapse_name%', filenames[filename]);
+
+		//Prepare log box
+		formattedHTMLlogCollapse = formattedHTMLlogCollapse.replace('%logFileName%', filenames[filename]);
+		formattedHTMLlogCollapse = formattedHTMLlogCollapse.replace('%logName%', filenames[filename].slice(0, -4));
+		$('#panel_group').append(formattedHTMLlogCollapse);
+
+		//Write log data
+		logGetData(directory, filenames[filename]);
+
+		log_no = log_no + 1;
 	}
-
+	// }
+		
 	$('#modal_logs').modal('show');
 
-	$(#'show_log').click(function(){
-		if(filenames.length > 2) {
-			$('#log_file_modal_body').append(HTMLcolumns);
-		}
-
-		for(var logFile in filenames) {
-
-			//Prepare HTML with log file details
-			formattedHTMLlogBox = HTMLlogBox.replace('%logFileName%', filenames[logFile]);
-			formattedHTMLlogBox = formattedHTMLlogBox.replace('%logName%', filenames[logFile].slice(0, -4));
-			$('#log_modal_col_' + columnNumber).append(formattedHTMLlogBox);
-
-			//Write log data
-			logGetData(directory, filenames[logFile]);
-
-			log = log + 1;
-			if(log > 1) {
-				columnNumber = 2;
-			}
-		}
-	}
-		
 }
 
