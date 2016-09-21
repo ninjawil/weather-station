@@ -28,6 +28,12 @@ function displayIrrigation() {
         dataType: "json",
         success: function(data) {
             drawIrrigation(data);
+        },
+        error: function () {
+            console.log('loading irrigation file failure');
+        },
+        onFailure: function () {
+            console.log('loading irrigation file failure');
         }
     });
     
@@ -93,6 +99,7 @@ function drawIrrigation(chart_data) {
                     color: Highcharts.getOptions().colors[0]
                 }
             },
+            min: 0,
             labels: {
                 format: '{value} mm',
                 style: {
@@ -106,6 +113,7 @@ function drawIrrigation(chart_data) {
                     color: Highcharts.getOptions().colors[1]
                 }
             },
+            min: 0,
             labels: {
                 format: '{value}°C',
                 style: {
