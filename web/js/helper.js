@@ -22,7 +22,7 @@ var HTMLerrorTable = '<tr><td>%date%</td><td>%errornumber%</td><td>%message%</td
 
 var HTMLallDropdown = '<li><a href="#" onclick="displayHeatMap(%id%)">%name%</a></li>';
 
-var HTMLirrigButton = '<div class="btn-group"><button class="btn btn-default btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Water appled <span class="caret"></span></button><ul class="dropdown-menu"><li><a href="#">Fully watered</a></li><li><a href="#">Partially watered</a></li></ul></div>';
+var HTMLirrigButton = '<div class="btn-group"><button class="btn btn-default btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Water applied <span class="caret"></span></button><ul class="dropdown-menu"><li><a href="#">Fully watered</a></li><li><a href="#">Partially watered</a></li></ul></div>';
 
 var HTMLlogBox = '<h4>%logFileName%</h4><pre id="%logName%" class="log-display"></pre>';
 var HTMLlogFileSelect = '<option>%logFileName%</option>';
