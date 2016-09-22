@@ -18,8 +18,12 @@ function displayIrrigation() {
 	// Clear chart area
 	$('#graph-container').empty();
 
+    // Set up chart screen sections
+    $('<div id="chart-section"></div>').appendTo('#graph-container');
+    $('<div id="irrig-input-bar-section"></div>').appendTo('#graph-container');
 
-    getIrrigData(drawIrrigation, []);
+
+    getIrrigData(drawIrrigChart, []);
 
 }
 
@@ -62,46 +66,13 @@ function getIrrigData(functionCall, args) {
 }
 
 
-
-//-------------------------------------------------------------------------------
-// Add irrigation amount
-//-------------------------------------------------------------------------------
-function addIrrigationAmount(amount, config_data, chart_data) {
-
-    console.log(amount);
-    console.log(config_data);
-    console.log(chart_data.irrig_amount);
-
-    chart_data.irrig_amount[0] = chart_data.irrig_amount[0] + amount * 10;
-
-    if (chart_data.irrig_amount < 0) {
-        chart_data.irrig_amount[0] = 0;
-    } else if (chart_data.irrig_amount[0] > config_data.irrigation.IRRIG_FULL) {
-        chart_data.irrig_amount[0] = config_data.irrigation.IRRIG_FULL;
-    }
-
-    console.log(chart_data.irrig_amount);
-
-    saveIrrigation(chart_data);
-
-
-}
-
-
 //-------------------------------------------------------------------------------
 // Draw charts
 //-------------------------------------------------------------------------------
-function drawIrrigation(config_data, chart_data) {
-
-	// Create chart
-	var title = '<div class="row"><h1>%name%</h1></div><div id="irrig_title"></div>';
-    // $(title.replace("%name%", 'irrigation')).appendTo('#graph-container');
-    console.log(chart_data);
-    console.log(config_data);
-
+function drawIrrigChart(config_data, chart_data) {
 
 	// Clear chart area
-	$('#graph-container').empty();
+	$('#chart-section').empty();
 
 
     // Override the reset function, we don't need to hide the tooltips and crosshairs.
@@ -302,38 +273,79 @@ function drawIrrigation(config_data, chart_data) {
         ]
     }
 
-	// Draw chart
-    $('<div class="chart" style="height:360px">').appendTo('#graph-container').highcharts(highchartOptions);
+	// // Draw chart
+    $('<div id="chart" class="chart" style="height:360px">').appendTo('#chart-section').highcharts(highchartOptions);
 
-//     drawIrrigationBar(
-    var irrig_amount = chart_data.irrig_amount[0];
-    var irrig_depth_full = config_data.irrigation.IRRIG_FULL;
+    drawIrrigBar(chart_data.irrig_amount[0], config_data.irrigation.IRRIG_FULL, false);
 
-// }
+}
 
-// //-------------------------------------------------------------------------------
-// // Draws irrigation bar
-// //-------------------------------------------------------------------------------
-// function drawIrrigationBar(irrig_amount, irrig_depth_full) {
 
-    var HTMLirrigBar_edit   = HTMLirrigBar.replace(/%barvalue%/gi, (irrig_amount/irrig_depth_full)*100);
+
+//-------------------------------------------------------------------------------
+// Add irrigation amount
+//-------------------------------------------------------------------------------
+function addIrrigationAmount(amount, irrig_amount, irrig_full) {
+
+    // increment in 25% steps
+    irrig_amount = irrig_amount + amount * (irrig_full/4);
+
+    if (irrig_amount < 0) {
+        irrig_amount = 0;
+    } else if (irrig_amount > irrig_full) {
+        irrig_amount = irrig_full;
+    }
+
+    drawIrrigBar(irrig_amount, irrig_full, true);
+
+}
+
+
+
+//-------------------------------------------------------------------------------
+// Draws irrigation bar
+//-------------------------------------------------------------------------------
+function drawIrrigBar(irrig_amount, irrig_full, unsaved) {
+
+    // Clear chart area
+    $('#irrig-input-bar-section').empty();
+
+    if(unsaved == true) {
+        HTMLirrigButton_edit = HTMLirrigButton.replace(/%disk_icon%/gi, 'glyphicon glyphicon-floppy-disk')
+    } else {
+        HTMLirrigButton_edit = HTMLirrigButton.replace(/%disk_icon%/gi, 'glyphicon glyphicon-ok')
+    }
+
+    var HTMLirrigBar_edit   = HTMLirrigBar.replace(/%barvalue%/gi, (irrig_amount/irrig_full)*100);
     HTMLirrigBar_edit       = HTMLirrigBar_edit.replace(/%irrig_amount%/gi, irrig_amount);
-    HTMLirrigBar_edit       = HTMLirrigBar_edit.replace(/%irrig_depth_full%/gi, irrig_depth_full);
-    var HTMLirrig_edit      = HTMLirrig.replace('%col1%', HTMLirrigButton);
+    HTMLirrigBar_edit       = HTMLirrigBar_edit.replace(/%irrig_depth_full%/gi, irrig_full);
+    var HTMLirrig_edit      = HTMLirrig.replace('%col1%', HTMLirrigButton_edit);
     HTMLirrig_edit          = HTMLirrig_edit.replace('%col2%', HTMLirrigBar_edit);
-    $(HTMLirrig_edit).appendTo('#graph-container');
+    $(HTMLirrig_edit).appendTo('#irrig-input-bar-section');
+
+    $('#irrig-minus-btn').click(function() {
+        addIrrigationAmount(-1, irrig_amount, irrig_full);
+    });
+
+    $('#irrig-plus-btn').click(function() {
+        addIrrigationAmount(1, irrig_amount, irrig_full);
+    });
+
+    $('#irrig-save-btn').click(function() {
+         getIrrigData(saveIrrigation, [irrig_amount]);
+    });
 
 }
 
 //-------------------------------------------------------------------------------
 // If user has irrigated, save it to json file
 //-------------------------------------------------------------------------------
-function saveIrrigation(form_data) {
+function saveIrrigation(irrig_amount, config_data, chart_data) {
 
-    var json = JSON.stringify(form_data);
+    chart_data.irrig_amount[0] = irrig_amount;
+
+    var json = JSON.stringify(chart_data);
     var encoded = btoa(json);
-
-    console.log('data saved');
 
     $.ajax({
         url: 'php/save_irrig_data.php',
@@ -341,11 +353,9 @@ function saveIrrigation(form_data) {
         data: 'json=' + encoded,
         success: function(rxData) {
             alert(rxData);
+            getIrrigData(drawIrrigChart, []);
       }
     });
-
-    displayIrrigation();
-
 
 }
 
