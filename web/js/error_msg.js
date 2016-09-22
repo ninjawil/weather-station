@@ -45,6 +45,8 @@ function clearErrors(){
 //-------------------------------------------------------------------------------
 function displayErrorMessage(error_data) {
 
+	$('#error_display').empty();
+
 	errorValue = 0;
 	errorMessage = '';
 
