@@ -22,7 +22,11 @@ var HTMLerrorTable = '<tr><td>%date%</td><td>%errornumber%</td><td>%message%</td
 
 var HTMLallDropdown = '<li><a href="#" onclick="displayHeatMap(%id%)">%name%</a></li>';
 
-var HTMLirrigButton = '<div class="btn-group"><button class="btn btn-default btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Water applied <span class="caret"></span></button><ul class="dropdown-menu"><li><a href="#">Fully watered</a></li><li><a href="#">Partially watered</a></li></ul></div>';
+var HTMLirrig = '<div class="panel panel-default" style="margin-top: 20px;"><div class="panel-heading">Irrigation Amount</div><div class="panel-body"><div class="row"><div class="col-md-2">%col1%</div><div class="col-md-10"><div class="irrig-bar">%col2%</div></div></div></div>';
+//var HTMLirrigButton = '<div class="btn-group"><button class="btn btn-default btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Water applied <span class="caret"></span></button><ul class="dropdown-menu"><li><a href="#">Fully watered</a></li><li><a href="#">Partially watered</a></li></ul></div>';
+var HTMLirrigButton = '<div class="btn-group" role="group" aria-label="..."><button type="button" class="btn btn-default" onclick="getIrrigData(addIrrigationAmount, [-1])"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></button> <button type="button" class="btn btn-default" onclick="getIrrigData(addIrrigationAmount, [1])"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button></div>';
+var HTMLirrigBar = '<div class="progress"><div class="progress-bar" role="progressbar" aria-valuenow="%barvalue%" aria-valuemin="0" aria-valuemax="100" style="width: %barvalue%%;">%irrig_amount% / %irrig_depth_full%mm  %barvalue%%</div></div></div>';
+
 
 var HTMLlogBox = '<h4>%logFileName%</h4><pre id="%logName%" class="log-display"></pre>';
 var HTMLlogFileSelect = '<option>%logFileName%</option>';
