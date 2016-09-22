@@ -8,7 +8,7 @@
 
 
 //-------------------------------------------------------------------------------
-// Grab irrigation data from 
+// Draws irrigation data 
 //-------------------------------------------------------------------------------
 function displayIrrigation() {
 	// Highlights correct navbar location
@@ -18,37 +18,86 @@ function displayIrrigation() {
 	// Clear chart area
 	$('#graph-container').empty();
 
-	// $.getJSON('weather_data/irrigation.json', function(json) {
+
+    getIrrigData(drawIrrigation, []);
+
+}
+
+
+
+//-------------------------------------------------------------------------------
+// Grab irrigation data 
+//-------------------------------------------------------------------------------
+function getIrrigData(functionCall, args) {
+	
+    // $.getJSON('weather_data/irrigation.json', function(json) {
 	//     drawIrrigation(json);
 	// });
-
+    
     $.ajax({
         cache: false,
-        url: 'weather_data/irrigation.json',
+        url: 'weather_data/config.json',
         dataType: "json",
-        success: function(data) {
-            drawIrrigation(data);
-        },
-        error: function () {
-            console.log('loading irrigation file failure');
-        },
-        onFailure: function () {
-            console.log('loading irrigation file failure');
+        success: function(config_data) {
+            $.ajax({
+                cache: false,
+                url: 'weather_data/irrigation.json',
+                dataType: "json",
+                success: function(chart_data) {
+                    //drawIrrigation(config_data, chart_data);
+                    args.push(config_data);
+                    args.push(chart_data);
+                    functionCall.apply(this, args);
+                },
+                error: function () {
+                    console.log('loading irrigation file failure');
+                },
+                onFailure: function () {
+                    console.log('loading irrigation file failure');
+                }
+            })
         }
     });
     
 }
 
 
+
+//-------------------------------------------------------------------------------
+// Add irrigation amount
+//-------------------------------------------------------------------------------
+function addIrrigationAmount(amount, config_data, chart_data) {
+
+    console.log(amount);
+    console.log(config_data);
+    console.log(chart_data.irrig_amount);
+
+    chart_data.irrig_amount[0] = chart_data.irrig_amount[0] + amount * 10;
+
+    if (chart_data.irrig_amount < 0) {
+        chart_data.irrig_amount[0] = 0;
+    } else if (chart_data.irrig_amount[0] > config_data.irrigation.IRRIG_FULL) {
+        chart_data.irrig_amount[0] = config_data.irrigation.IRRIG_FULL;
+    }
+
+    console.log(chart_data.irrig_amount);
+
+    saveIrrigation(chart_data);
+
+
+}
+
+
 //-------------------------------------------------------------------------------
 // Draw charts
 //-------------------------------------------------------------------------------
-function drawIrrigation(chart_data) {
+function drawIrrigation(config_data, chart_data) {
 
 	// Create chart
 	var title = '<div class="row"><h1>%name%</h1></div><div id="irrig_title"></div>';
     // $(title.replace("%name%", 'irrigation')).appendTo('#graph-container');
     console.log(chart_data);
+    console.log(config_data);
 
 
 	// Clear chart area
@@ -248,37 +297,55 @@ function drawIrrigation(chart_data) {
                 yAxis: 1,
                 tooltip: {
                     valueSuffix: '°C'
-                }
+                } 
 	        }
         ]
     }
 
 	// Draw chart
-    $(HTMLirrigButton).appendTo('#graph-container');
-	$('<div class="chart" style="height:360px">').appendTo('#graph-container').highcharts(highchartOptions);
+    $('<div class="chart" style="height:360px">').appendTo('#graph-container').highcharts(highchartOptions);
+
+//     drawIrrigationBar(
+    var irrig_amount = chart_data.irrig_amount[0];
+    var irrig_depth_full = config_data.irrigation.IRRIG_FULL;
+
+// }
+
+// //-------------------------------------------------------------------------------
+// // Draws irrigation bar
+// //-------------------------------------------------------------------------------
+// function drawIrrigationBar(irrig_amount, irrig_depth_full) {
+
+    var HTMLirrigBar_edit   = HTMLirrigBar.replace(/%barvalue%/gi, (irrig_amount/irrig_depth_full)*100);
+    HTMLirrigBar_edit       = HTMLirrigBar_edit.replace(/%irrig_amount%/gi, irrig_amount);
+    HTMLirrigBar_edit       = HTMLirrigBar_edit.replace(/%irrig_depth_full%/gi, irrig_depth_full);
+    var HTMLirrig_edit      = HTMLirrig.replace('%col1%', HTMLirrigButton);
+    HTMLirrig_edit          = HTMLirrig_edit.replace('%col2%', HTMLirrigBar_edit);
+    $(HTMLirrig_edit).appendTo('#graph-container');
 
 }
-
-
 
 //-------------------------------------------------------------------------------
 // If user has irrigated, save it to json file
 //-------------------------------------------------------------------------------
-function saveIrrigation() {
+function saveIrrigation(form_data) {
 
     var json = JSON.stringify(form_data);
     var encoded = btoa(json);
 
     console.log('data saved');
 
-	$.ajax({
-		url: 'php/save_irrig_data.php',
-		type: "post",
-		data: 'json=' + encoded,
-		success: function(rxData) {
-			alert(rxData);
-	  }
-	});
+    $.ajax({
+        url: 'php/save_irrig_data.php',
+        type: "post",
+        data: 'json=' + encoded,
+        success: function(rxData) {
+            alert(rxData);
+      }
+    });
+
+    displayIrrigation();
+
 
 }
 
