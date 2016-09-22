@@ -11,6 +11,7 @@
 // Draws irrigation data 
 //-------------------------------------------------------------------------------
 function displayIrrigation() {
+
 	// Highlights correct navbar location
 	$('li').removeClass('active');
 	$('#irrig').parent().addClass('active');
@@ -33,31 +34,27 @@ function displayIrrigation() {
 // Grab irrigation data 
 //-------------------------------------------------------------------------------
 function getIrrigData(functionCall, args) {
+
+    var error_data = {"9999": {"time":10, "msg": "Loading data failure"}};
 	
-    // $.getJSON('weather_data/irrigation.json', function(json) {
-	//     drawIrrigation(json);
-	// });
-    
     $.ajax({
         cache: false,
         url: 'weather_data/config.json',
         dataType: "json",
-        success: function(config_data) {
-            $.ajax({
+        success: function(config_data) {            $.ajax({
                 cache: false,
                 url: 'weather_data/irrigation.json',
                 dataType: "json",
                 success: function(chart_data) {
-                    //drawIrrigation(config_data, chart_data);
                     args.push(config_data);
                     args.push(chart_data);
                     functionCall.apply(this, args);
                 },
                 error: function () {
-                    console.log('loading irrigation file failure');
+                    displayErrorMessage(error_data);
                 },
                 onFailure: function () {
-                    console.log('loading irrigation file failure');
+                    displayErrorMessage(error_data);
                 }
             })
         }
@@ -311,17 +308,17 @@ function drawIrrigBar(irrig_amount, irrig_full, unsaved) {
     $('#irrig-input-bar-section').empty();
 
     if(unsaved == true) {
-        HTMLirrigButton_edit = HTMLirrigButton.replace(/%disk_icon%/gi, 'glyphicon glyphicon-floppy-disk')
+        HTMLirrigButton_formatted = HTMLirrigButton.replace(/%disk_icon%/gi, 'glyphicon glyphicon-floppy-disk')
     } else {
-        HTMLirrigButton_edit = HTMLirrigButton.replace(/%disk_icon%/gi, 'glyphicon glyphicon-ok')
+        HTMLirrigButton_formatted = HTMLirrigButton.replace(/%disk_icon%/gi, 'glyphicon glyphicon-ok')
     }
 
-    var HTMLirrigBar_edit   = HTMLirrigBar.replace(/%barvalue%/gi, (irrig_amount/irrig_full)*100);
-    HTMLirrigBar_edit       = HTMLirrigBar_edit.replace(/%irrig_amount%/gi, irrig_amount);
-    HTMLirrigBar_edit       = HTMLirrigBar_edit.replace(/%irrig_depth_full%/gi, irrig_full);
-    var HTMLirrig_edit      = HTMLirrig.replace('%col1%', HTMLirrigButton_edit);
-    HTMLirrig_edit          = HTMLirrig_edit.replace('%col2%', HTMLirrigBar_edit);
-    $(HTMLirrig_edit).appendTo('#irrig-input-bar-section');
+    var HTMLirrigBar_formatted   = HTMLirrigBar.replace(/%barvalue%/gi, (irrig_amount/irrig_full)*100);
+    HTMLirrigBar_formatted       = HTMLirrigBar_formatted.replace(/%irrig_amount%/gi, irrig_amount);
+    HTMLirrigBar_formatted       = HTMLirrigBar_formatted.replace(/%irrig_depth_full%/gi, irrig_full);
+    var HTMLirrig_formatted      = HTMLirrig.replace('%col1%', HTMLirrigButton_formatted);
+    HTMLirrig_formatted          = HTMLirrig_formatted.replace('%col2%', HTMLirrigBar_formatted);
+    $(HTMLirrig_formatted).appendTo('#irrig-input-bar-section');
 
     $('#irrig-minus-btn').click(function() {
         addIrrigationAmount(-1, irrig_amount, irrig_full);
@@ -342,6 +339,8 @@ function drawIrrigBar(irrig_amount, irrig_full, unsaved) {
 //-------------------------------------------------------------------------------
 function saveIrrigation(irrig_amount, config_data, chart_data) {
 
+    var error_data = {"9999": {"time":10, "msg": "Unable to save data!"}};
+
     chart_data.irrig_amount[0] = irrig_amount;
 
     var json = JSON.stringify(chart_data);
@@ -354,7 +353,13 @@ function saveIrrigation(irrig_amount, config_data, chart_data) {
         success: function(rxData) {
             alert(rxData);
             getIrrigData(drawIrrigChart, []);
-      }
+        },
+        error: function () {
+            displayErrorMessage(error_data);
+        },
+        onFailure: function () {
+            displayErrorMessage(error_data);
+        }
     });
 
 }
