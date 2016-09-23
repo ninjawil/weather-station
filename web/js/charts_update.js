@@ -151,6 +151,7 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 	xhttp.open("GET", filename, true);
 	xhttp.send();
 
+
 }
 
 
@@ -165,10 +166,14 @@ function displayHeatMap(sensor_id) {
 
 	// Highlights correct navbar location
 	$('li').removeClass('active');
-	$('#all').parent().addClass('active');
+	$('#calendar').parent().addClass('active');
 
 	// Clear chart area
 	$('#graph-container').empty();
+
+    // Set up chart screen sections
+    $('<div id="title-section"></div>').appendTo('#graph-container');
+    $('<div id="charts-section"><div id="charts-col1" class="col-md-2"></div><div id="charts-col2" class="col-md-10"></div></div>').appendTo('#graph-container');
 
 	xmlGetData(dir + '_data/' + dataFiles['1y'], '', drawHeatMap, [sensor_id]);
     
@@ -180,9 +185,10 @@ function displayHeatMap(sensor_id) {
 //-------------------------------------------------------------------------------
 function drawHeatMap(sensor_name, value_array) {
 
+
 	// Create chart
 	var title = '<div class="row"><h1>%name%</h1></div><div id="cal-heatmap"></div>';
-    $(title.replace("%name%", sensor_setup[sensor_name].description)).appendTo('#graph-container');
+    $(title.replace("%name%", sensor_setup[sensor_name].description)).appendTo('#title-section');
 
     var parser = function(data) {
 		var stats = {};
@@ -206,6 +212,7 @@ function drawHeatMap(sensor_name, value_array) {
 
 	var calendar = new CalHeatMap();
 	calendar.init({
+		itemSelector: "#charts-col2",
 		data: value_array[sensor_name],
 		afterLoadData: parser,
 		itemName: [sensor_setup[sensor_name].unit, sensor_setup[sensor_name].unit],
