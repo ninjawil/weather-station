@@ -19,10 +19,12 @@ function pad(num, size) {
 //-------------------------------------------------------------------------------
 // Grab error.json data
 //-------------------------------------------------------------------------------
-function grabErrorData(functionCall){
+function grabErrorData(functionCall, args){
 
 	$.getJSON('weather_data/error.json', function(json) {
-		functionCall(json);
+		//functionCall(json, true);
+		args.push(json);
+		functionCall.apply(this, args);
 	});
 
 }
@@ -43,7 +45,8 @@ function clearErrors(){
 //-------------------------------------------------------------------------------
 // Manages error messages depending on passed error code
 //-------------------------------------------------------------------------------
-function displayErrorMessage(error_data) {
+function displayErrorMessage(error_data, display_err_code= true, display_err_table_link= true) {
+
 
 	$('#error_display').empty();
 
@@ -59,12 +62,20 @@ function displayErrorMessage(error_data) {
 
 	if(errorValue != 0){
 
-		var displayErrorType = "   Error E"+ pad(errorValue, 4) + ": ";
-
-		var formattedErrorMsg 	= HTMLerrorMSG.replace("%error_type%", displayErrorType);
+		var displayErrorType = "   Error";
+		
+		if(display_err_code != false){
+			displayErrorType = displayErrorType + " E"+ pad(errorValue, 4);
+		}
+		
+		var formattedErrorMsg 	= HTMLerrorMSG.replace("%error_type%", displayErrorType + ": ");
 		formattedErrorMsg 		= formattedErrorMsg.replace("%error_msg%", errorMessage);
 
 		$('#error_display').append(formattedErrorMsg);
+		
+		if(display_err_table_link != true){
+			$('span').remove("#err_table_link");
+		}
 	}
 }
 
@@ -105,10 +116,10 @@ function parseErrorMsgTable(error_data) {
 //-------------------------------------------------------------------------------
 function main() {
 
-	grabErrorData(displayErrorMessage);
+	grabErrorData(displayErrorMessage, []);
 
 	$('#modal_errors').on('shown.bs.modal', function (e) {
-    	grabErrorData(parseErrorMsgTable);
+    	grabErrorData(parseErrorMsgTable, []);
 	});
 
 	$('#modal_errors').on('hidden.bs.modal', function (e) {

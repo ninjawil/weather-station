@@ -10,7 +10,7 @@
 //===============================================================================
 // HTML Values
 //===============================================================================
-var HTMLerrorMSG	= '<div class="alert alert-danger alert-mod" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><span class="glyphicon glyphicon-new-window" aria-hidden="true" data-toggle="modal" data-target="#modal_errors"></span><strong>%error_type%</strong>%error_msg%</div>';
+var HTMLerrorMSG		= '<div class="alert alert-danger alert-mod" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><span id="err_table_link" class="glyphicon glyphicon-new-window" aria-hidden="true" data-toggle="modal" data-target="#modal_errors"></span><strong>%error_type%</strong>%error_msg%</div>';
 
 var HTMLupdateTime = '<div class="row">%time%</div>';
 var HTMLupdateDate = '<div class="row">%date%</div>';

@@ -41,7 +41,8 @@ function getIrrigData(functionCall, args) {
         cache: false,
         url: 'weather_data/config.json',
         dataType: "json",
-        success: function(config_data) {            $.ajax({
+        success: function(config_data) {            
+            $.ajax({
                 cache: false,
                 url: 'weather_data/irrigation.json',
                 dataType: "json",
@@ -51,10 +52,10 @@ function getIrrigData(functionCall, args) {
                     functionCall.apply(this, args);
                 },
                 error: function () {
-                    displayErrorMessage(error_data);
+                    displayErrorMessage(error_data, false, false);
                 },
                 onFailure: function () {
-                    displayErrorMessage(error_data);
+                    displayErrorMessage(error_data, false, false);
                 }
             })
         }
@@ -355,10 +356,10 @@ function saveIrrigation(irrig_amount, config_data, chart_data) {
             getIrrigData(drawIrrigChart, []);
         },
         error: function () {
-            displayErrorMessage(error_data);
+            displayErrorMessage(error_data, false, false);
         },
         onFailure: function () {
-            displayErrorMessage(error_data);
+            displayErrorMessage(error_data, false, false);
         }
     });
 
