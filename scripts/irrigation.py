@@ -290,10 +290,9 @@ def main():
                 irrig_data = json.load(f)
 
             if len(sys.argv) > 1:
-                if '--full' in sys.argv:
-                    irrigation_amount = irrig_data['irrig_amount'] + irrig_full
-                if '--partial' in sys.argv:
-                    irrigation_amount = irrig_data['irrig_amount'] + irrig_partial
+                if '--irrigated' in sys.argv:
+                    irrigation_amount = irrig_data['irrig_amount'][0]
+                    logger.info('Irrigation amount = {value}'.format(value= irrigation_amount))
 
             previous_depth = irrig_data['depth'][0]
 
@@ -327,7 +326,7 @@ def main():
             logger.info('Current depth = {value}'.format(value= current_depth)) 
        
         except Exception, e:
-            logger.error('Unable to load config data ({error_v}). Exiting...'.format(
+            logger.error('Unable to load irrigation data ({error_v}). Exiting...'.format(
                 error_v=e), exc_info=True)
             logger.info('Water level file not found.')
             logger.info('Using 24 l/m^2 as a starting value.')
