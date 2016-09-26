@@ -173,7 +173,7 @@ function displayHeatMap(sensor_id) {
 
     // Set up chart screen sections
     $('<div id="title-section"></div>').appendTo('#graph-container');
-    $('<div id="charts-section"><div id="charts-col1" class="col-md-2"></div><div id="charts-col2" class="col-md-10"></div></div>').appendTo('#graph-container');
+    $('<div id="charts-section"><div id="charts-col1" class="col-md-1"></div><div id="charts-col2" class="col-md-11"></div></div>').appendTo('#graph-container');
 
 	xmlGetData(dir + '_data/' + dataFiles['1y'], '', drawHeatMap, [sensor_id]);
     
@@ -187,8 +187,12 @@ function drawHeatMap(sensor_name, value_array) {
 
 
 	// Create chart
-	var title = '<div class="row"><h1>%name%</h1></div><div id="cal-heatmap"></div>';
+	var title = '<div class="row"><h4>%name%</h4></div><div id="cal-heatmap"></div>';
     $(title.replace("%name%", sensor_setup[sensor_name].description)).appendTo('#title-section');
+
+	var date = '<div class="vertical-text"><h4>%date%</h4></div>';
+    $(date.replace("%date%", '2016')).appendTo('#charts-col1');
+
 
     var parser = function(data) {
 		var stats = {};
