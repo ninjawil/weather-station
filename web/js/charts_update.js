@@ -204,15 +204,17 @@ function drawHeatMap(sensor_name, value_array) {
 
 	var data_array = [];
 	for(var i = 0; i<value_array[sensor_name].length; i++){
-	    data_array[i] = value_array[sensor_name][i][1];
+		data_array.push(value_array[sensor_name][i][1]);
 	}
-	var max_of_array = Math.max.apply(Math, data_array);
-	var min_of_array = Math.min.apply(Math, data_array);
-	var legend_range = [];
 
-	for(var i = 0; i < 4; i++) {
-		legend_range[i] = ((i+2)* (max_of_array - min_of_array))/5;
-	}
+	var min_of_array = Math.min.apply(Math, data_array);
+	var legend_range = [0,0,0,0];
+
+	legend_range[3] = average(data_array) + standardDeviation(data_array);
+	legend_range[2] = min_of_array + 0.75*(legend_range[3] - min_of_array);
+	legend_range[1] = min_of_array + 0.50*(legend_range[3] - min_of_array);
+	legend_range[0] = min_of_array + 0.25*(legend_range[3] - min_of_array);
+
 
 	var calendar = new CalHeatMap();
 	calendar.init({
@@ -226,8 +228,16 @@ function drawHeatMap(sensor_name, value_array) {
 		cellsize: 20,
 		cellpadding: 3,
 		cellradius: 5,
+		tooltip: true,
+		legendVerticalPosition: "center",
+		legendHorizontalPosition: "right",
+		legendOrientation: "vertical",
 		legend: legend_range,
-		legendColors: [sensor_setup[sensor_name].color.replace(/\%,.*\%\)/gi, '%, 95%)'), sensor_setup[sensor_name].color]
+		legendColors: {
+			min: 	sensor_setup[sensor_name].color.replace(/\%,.*\%\)/gi, '%, 85%)'), 
+			max: 	sensor_setup[sensor_name].color,
+			empty: 	sensor_setup[sensor_name].color.replace(/\%,.*\%\)/gi, '%, 95%)') //"#ededed"
+		}
 	});
 }
 
