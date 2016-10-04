@@ -65,6 +65,7 @@ class AllErrors:
         self.write_data(errors)
 
         self.logger.info('Cleared all errors')
+        print('Cleared all errors.')
 
 
 
@@ -290,6 +291,7 @@ def main():
     except Exception, e:
         logger.error('Script error ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
+        print('Script error ({error_v}). Exiting...'.format(error_v=e))
         sys.exit()
 
     finally:
