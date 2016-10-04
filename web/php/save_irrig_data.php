@@ -4,7 +4,7 @@
 	$jsonFile = fopen($filename,'w') or die("Unable to open file!");
 	fwrite($jsonFile,$decoded);
 	fclose($jsonFile);
-	$command = escapeshellcmd('/usr/bin/python2.7 /home/pi/weather/scripts/irrigation.py --irrigated');
-	$output = shell_exec($command);
-	echo $output;
+	// $command = escapeshellcmd('/usr/bin/python2.7 /home/pi/weather/scripts/irrigation.py --irrigated');
+	// $output = shell_exec($command);
+	// echo $output;
 ?>
