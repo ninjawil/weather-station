@@ -83,6 +83,25 @@ function sidebarData(sensors) {
 
 
 //-------------------------------------------------------------------------------
+// Displays last updated values on web page
+//-------------------------------------------------------------------------------
+function formatAllDropdown(sensors) {
+
+	var formattedDropdown;
+
+	for(var sensor in sensors) {
+
+		formattedDropdown = HTMLallDropdown.replace("%id%", "'" + sensor + "'");
+		formattedDropdown = formattedDropdown.replace("%name%", sensors[sensor].description);
+
+		//Display data		
+		$('#allDropdown').append(formattedDropdown);
+	}
+}
+
+
+
+//-------------------------------------------------------------------------------
 // Gets data from XML file
 //-------------------------------------------------------------------------------
 function xmlGetData(filename, sensors_array, functionCall, args) {
@@ -132,8 +151,95 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 	xhttp.open("GET", filename, true);
 	xhttp.send();
 
+
 }
 
+
+//-------------------------------------------------------------------------------
+// Display heat map
+//-------------------------------------------------------------------------------
+function displayHeatMap(sensor_id) {
+
+	// Called from index.html
+	// Highlights the appropriate button and clears working screen area
+	// 
+
+	// Highlights correct navbar location
+	$('li').removeClass('active');
+	$('#calendar').parent().addClass('active');
+
+	// Clear chart area
+	$('#graph-container').empty();
+
+    // Set up chart screen sections
+    $('<div id="title-section"></div>').appendTo('#graph-container');
+    $('<div id="charts-section"><div id="charts-col1" class="col-md-1"></div><div id="charts-col2" class="col-md-11"></div></div>').appendTo('#graph-container');
+
+	xmlGetData(dir + '_data/' + dataFiles['1y'], '', drawHeatMap, [sensor_id]);
+    
+}
+
+
+//-------------------------------------------------------------------------------
+// Draw heat map
+//-------------------------------------------------------------------------------
+function drawHeatMap(sensor_name, value_array) {
+
+
+	// Create chart
+	var title = '<div class="row"><h4>%name%</h4></div><div id="cal-heatmap"></div>';
+    $(title.replace("%name%", sensor_setup[sensor_name].description)).appendTo('#title-section');
+
+	var date = '<div class="vertical-text"><h4>%date%</h4></div>';
+    $(date.replace("%date%", '2016')).appendTo('#charts-col1');
+
+
+    var parser = function(data) {
+		var stats = {};
+		for (var d in data) {
+			stats[data[d][0]/1000] = data[d][1];
+		}
+		return stats;
+	};
+
+	var data_array = [];
+	for(var i = 0; i<value_array[sensor_name].length; i++){
+		data_array.push(value_array[sensor_name][i][1]);
+	}
+
+	var min_of_array = Math.min.apply(Math, data_array);
+	var legend_range = [0,0,0,0];
+
+	legend_range[3] = average(data_array) + standardDeviation(data_array);
+	legend_range[2] = min_of_array + 0.75*(legend_range[3] - min_of_array);
+	legend_range[1] = min_of_array + 0.50*(legend_range[3] - min_of_array);
+	legend_range[0] = min_of_array + 0.25*(legend_range[3] - min_of_array);
+
+
+	var calendar = new CalHeatMap();
+	calendar.init({
+		itemSelector: "#charts-col2",
+		data: value_array[sensor_name],
+		afterLoadData: parser,
+		itemName: [sensor_setup[sensor_name].unit, sensor_setup[sensor_name].unit],
+		start: new Date(2016, 0),
+		domain : "month",			// Group data by month
+		subDomain : "day",			// Split each month by days
+		cellsize: 20,
+		cellpadding: 3,
+		cellradius: 5,
+		tooltip: true,
+		legendVerticalPosition: "center",
+		legendHorizontalPosition: "right",
+		legendOrientation: "vertical",
+		legend: legend_range,
+		legendColors: {
+			min: 	sensor_setup[sensor_name].color.replace(/\%,.*\%\)/gi, '%, 85%)'), 
+			max: 	sensor_setup[sensor_name].color,
+			empty: 	sensor_setup[sensor_name].color.replace(/\%,.*\%\)/gi, '%, 95%)') //"#ededed"
+		}
+	});
+}
 
 
 //-------------------------------------------------------------------------------
@@ -350,15 +456,8 @@ function prepareYearCharts(chart_names, values) {
 function displayCharts(file_ref) {
 
 	var chart_names;
-
 	var dayNightList = ['1d', '2d', '1w', '1m'];
-
-
 	var displayDayNight = (dayNightList.indexOf(file_ref) !== -1) ? true : false;
-
-    console.log(file_ref);
-    console.log(displayDayNight);
-
 
 	// Highlights correct navbar location
 	$('li').removeClass('active');
@@ -382,6 +481,8 @@ function displayCharts(file_ref) {
 //-------------------------------------------------------------------------------
 function main() {
 
+	formatAllDropdown(sensor_setup);
+
 	xmlGetData(dir + '_data/' + dataFiles['1d'], sensor_setup, sidebarData, []);
 
 	displayCharts('1d');
@@ -393,20 +494,20 @@ function main() {
 //===============================================================================
 // Constants
 //===============================================================================
-var 	COLOR_BLUE		= '#058DC7',
- 		COLOR_L_BLUE	= '#24CBE5',
-		COLOR_GREEN 	= '#50B432',
-		COLOR_L_GREEN 	= '#64E572',
-		COLOR_D_GREEN	= '#006600',
-		COLOR_ORANGE	= '#FF9655',
-		COLOR_PURPLE	= '#9900cc',
-		COLOR_PINK		= '#ff6699',
-		COLOR_YELLOW	= '#DDDF00',
-		COLOR_RED		= '#ED561B',
-		COLOR_ACQUA		= '#6AF9C4'
-		COLOR_BLACK		= '#000000',
-		COLOR_L_GREY	= '#b3b3b3',
-		COLOR_D_GREY	= '#4d4d4d';
+var 	COLOR_BLUE		= 'hsl(198, 95%, 40%)', 	//'#058DC7',
+ 		COLOR_L_BLUE	= 'hsl(188, 79%, 52%)',		//'#24CBE5',
+		COLOR_GREEN 	= 'hsl(106, 57%, 45%)',		//'#50B432',
+		COLOR_L_GREEN 	= 'hsl(127, 71%, 65%)',		//'#64E572',
+		COLOR_D_GREEN	= 'hsl(120, 100%, 20%)',	//'#006600',
+		COLOR_ORANGE	= 'hsl(23, 100%, 67%)',		//'#FF9655',
+		COLOR_PURPLE	= 'hsl(285, 100%, 40%)',	//'#9900cc',
+		COLOR_PINK		= 'hsl(340, 100%, 70%)',	//'#ff6699',
+		COLOR_YELLOW	= 'hsl(61, 100%, 44%)',		//'#DDDF00',
+		COLOR_RED		= 'hsl(17, 85%, 52%)',		//'#ED561B',
+		COLOR_ACQUA		= 'hsl(158, 92%, 70%)',		//'#6AF9C4',
+		COLOR_BLACK		= 'hsl(0, 0%, 0%)',			//'#000000',
+		COLOR_L_GREY	= 'hsl(0, 0%, 70%)',		//'#b3b3b3',
+		COLOR_D_GREY	= 'hsl(0, 0%, 30%)';		//'#4d4d4d';
 
 
 

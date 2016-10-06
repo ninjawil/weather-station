@@ -7,9 +7,13 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<link rel="stylesheet" type="text/css" href="css/cal-heatmap.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="js/helper.js"></script>
+    <script src="js/maths_functions.js"></script>
+    <script src="js/cal-heatmap.min.js"></script>
     <script src="http://code.highcharts.com/highcharts.js"></script>
     <script src="http://code.highcharts.com/highcharts-more.js"></script>
     <!-- <script src="my_jquery_functions.js"></script> -->
@@ -33,28 +37,32 @@
 				      		<a class="navbar-brand">Plots</a>
 				    	</div>
 				    	<div>
-					      	<ul class="nav navbar-nav hidden-xs hidden-sm">
+						    <ul class="nav navbar-nav">
 						        <li><a href="#" id="1d" onclick="displayCharts('1d')">24 hours</a></li>
-						        <li><a href="#" id="2d" onclick="displayCharts('2d')">48 hours</a></li>
-						        <li><a href="#" id="1w" onclick="displayCharts('1w')">1 week</a></li>
-						        <li><a href="#" id="1m" onclick="displayCharts('1m')">1 month</a></li>
-						        <li><a href="#" id="3m" onclick="displayCharts('3m')">3 months</a></li>
-						        <li><a href="#" id="1y" onclick="displayCharts('1y')">1 year</a></li>
 					      	</ul>
-					      	<ul class="nav navbar-nav hidden-xs hidden-md hidden-lg">
-						      	<li class="dropdown">
-							        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Plots <span class="caret"></span></a>
-							        <ul class="dropdown-menu">
-							        	<li class="active"><a href="#">3 hours</a></li>
-								        <li><a href="#" onclick="bob()">24 hours</a></li>
-								        <li><a href="#">48 hours</a></li>
-								        <li><a href="#">1 week</a></li>
-								        <li><a href="#">1 month</a></li> 
-								        <li><a href="#">3 months</a></li>
-								        <li><a href="#">1 year</a></li> 
-							        </ul>
-							    </li>
-							 </ul>
+					      	<ul class="nav navbar-nav hidden-xs hidden-sm">
+					      		<li class="dropdown">
+						          	<a href="#" id="all" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+						          	<span class="glyphicon glyphicon-time" aria-hidden="true"></span> 
+						          	<span class="caret"></span></a>
+						          	<ul class="dropdown-menu">
+								        <li><a href="#" id="2d" onclick="displayCharts('2d')">48 hours</a></li>
+								        <li><a href="#" id="1w" onclick="displayCharts('1w')">1 week</a></li>
+								        <li><a href="#" id="1m" onclick="displayCharts('1m')">1 month</a></li>
+								        <li><a href="#" id="3m" onclick="displayCharts('3m')">3 months</a></li>
+								        <li><a href="#" id="1y" onclick="displayCharts('1y')">1 year</a></li>
+								    </ul>
+						        </li>
+						        <li class="dropdown">
+						          	<a href="#" id="calendar" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+						          	<span class="glyphicon glyphicon-calendar" aria-hidden="true"></span> 
+						          	<span class="caret"></span></a>
+						          	<ul id="allDropdown" class="dropdown-menu"></ul>
+						        </li>
+					      	</ul>
+						    <ul class="nav navbar-nav">
+						        <li><a href="#" id="irrig" onclick="displayIrrigation()"><span class="glyphicon glyphicon-tint" aria-hidden="true"></span></a></li>
+					      	</ul>
 					      	<ul class="nav navbar-nav navbar-right">
 						        <li><a href="http://suncalc.net/#/53.0128,-1.7325,18">SunCalc</a></li>
 						        <li><a href="https://thingspeak.com/channels/39722/private_show">ThingSpeak</a></li>
@@ -64,7 +72,7 @@
 						          		<span class="caret"></span>
 						          	</a>
 						          	<ul class="dropdown-menu">
-							            <li><a href="#" data-toggle="modal" data-target="#modal_logs">View Logs</a></li>
+							            <li><a href="#" id="modal_log" onclick="displayLogData()">View Logs</a></li>
 							            <li><a href="#" data-toggle="modal" data-target="#modal_errors">Errors</a></li>
 							            <li role="separator" class="divider"></li>
 							            <li><a href="#" data-toggle="modal" data-target="#modal_settings">Settings</a></li>
@@ -79,17 +87,14 @@
         </div> <!-- main-display -->
 
 	    <div id="modal_logs" class="modal fade" role="dialog">
-	        <div class="modal-dialog-lg">
+	        <div class="modal-dialog-md">
 	            <div class="modal-content">
 	                <div class="modal-header">
 	                    <h4 class="modal-title" id="log_file_modal">Log Files</h4>
 	                </div>
 	                <div class="modal-body">
-	                	<div class="row">
-							<div id="log_modal_col_1" class="col-md-6"></div>
-							<div id="log_modal_col_2" class="col-md-6"></div>
-						</div>
-	                </div>
+					  	<div class="panel-group" id="panel_group"></div>
+	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 	                </div>
@@ -102,67 +107,194 @@
 	            <div class="modal-content">
 	                <div class="modal-header">
 	                    <h4 class="modal-title" id="settings_file_modal">Settings Files</h4>
-	                </div>
+	                </div> <!-- modal-header -->
 	                <div id="settingsForm" class="modal-body">
-	                	<h5>HEATER</h5>
-	                	<div class="input-group">
-	                		<div id="checkbox">
-								<input id="heater-enable" type="checkbox"> Enable Heater
-							</div>
-						</div>	
-	                	<div class="row">
-							<div id="on_temp" class="col-md-6">
-			                	<div class="input-group">
-									<span class="input-group-addon" id="basic-addon1">ON temperature</span>
-								  	<input id="heater-on-temp" name="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon1">
-									<span class="input-group-addon">°C</span>
-								</div>
-							</div>
-							<div id="hyst_temp" class="col-md-6">
-								<div class="input-group">
-									<span class="input-group-addon" id="basic-addon2">Hysterisis ±</span>
-								  	<input id="heater-on-hyst" name="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon2">
-									<span class="input-group-addon">°C</span>
-								</div>
-							</div>
-						</div> <!-- row -->
-	                	<div class="input-group">
-							<span class="input-group-addon" id="basic-addon3">Miplug Sensor Id</span>
-						  	<input id="miplug-id" name="miplug-id" type="text" class="form-control" aria-describedby="basic-addon3">
-						</div>
-						<h5>RAIN GAUGE</h5>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon4">Tick Measurement</span>
-						  	<input id="rain-gauge" name="rain-gauge" type="text" class="form-control" aria-describedby="basic-addon4">
-						  	<span class="input-group-addon">mm per tick</span>
-						</div>
-						<h5>THINGSPEAK</h5>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon5">Host Address</span>
-						  	<input id="ts-host-addr" name="ts-host-addr" name="ts-host-addr" type="text" class="form-control" aria-describedby="basic-addon5">
-						</div>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon6">API Key</span>
-						  	<input id="ts-api-key" name="ts-api-key" type="text" class="form-control" aria-describedby="basic-addon6">
-						</div>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon7">Channel ID</span>
-						  	<input id="ts-ch-id" name="ts-ch-id" type="text" class="form-control" aria-describedby="basic-addon7">
-						</div>
-						<h5>MAKER CHANNEL</h5>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon8">POST Address</span>
-						  	<input id="mk-addr" name="mk-addr" type="text" class="form-control" aria-describedby="basic-addon8">
-						</div>
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon9">Key</span>
-						  	<input id="mk-key" name="mk-key" type="text" class="form-control" aria-describedby="basic-addon9">
-						</div>
+	                	<div class="panel-group" id="accordion">
+		                	<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">NETWORK</a>
+								    </h4>
+							    </div>
+							    <div id="collapse1" class="panel-collapse collapse">
+									<div class="panel-body">
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon0">Router IP Address</span>
+										  	<input id="ip1" name="ip1" type="text" class="form-control" aria-describedby="basic-addon0">
+										</div>
+									</div>
+								</div> <!-- collapse1 -->
+							</div> <!-- NETWORK panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">HEATER</a>
+								    </h4>
+							    </div>
+							    <div id="collapse2" class="panel-collapse collapse">
+									<div class="panel-body">
+					                	<div class="input-group">
+					                		<div id="checkbox">
+												<input id="heater-enable" type="checkbox"> Enable Heater
+											</div>
+										</div>
+					                	<div class="row">
+											<div id="on_temp" class="col-md-6">
+							                	<div class="input-group">
+													<span class="input-group-addon" id="basic-addon1">ON temperature</span>
+												  	<input id="heater-on-temp" name="heater-on-temp" type="text" class="form-control" aria-describedby="basic-addon1">
+													<span class="input-group-addon">°C</span>
+												</div>
+											</div>
+											<div id="hyst_temp" class="col-md-6">
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon2">Hysterisis ±</span>
+												  	<input id="heater-on-hyst" name="heater-on-hyst" type="text" class="form-control" aria-describedby="basic-addon2">
+													<span class="input-group-addon">°C</span>
+												</div>
+											</div>
+										</div> <!-- row -->
+					                	<div class="input-group">
+											<span class="input-group-addon" id="basic-addon3">Miplug Sensor Id</span>
+										  	<input id="miplug-id" name="miplug-id" type="text" class="form-control" aria-describedby="basic-addon3">
+										</div>
+									</div>
+								</div> <!-- collapse2 -->
+							</div> <!-- HEATER panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">RAIN GAUGE</a>
+								    </h4>
+							    </div>
+							    <div id="collapse3" class="panel-collapse collapse">
+									<div class="panel-body">
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon4">Tick Measurement</span>
+										  	<input id="rain-gauge" name="rain-gauge" type="text" class="form-control" aria-describedby="basic-addon4">
+										  	<span class="input-group-addon">mm per tick</span>
+										</div>
+									</div>
+								</div> <!-- collapse3 -->
+							</div> <!-- RAIN GAUGE panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">THINGSPEAK</a>
+								    </h4>
+							    </div>
+							    <div id="collapse4" class="panel-collapse collapse">
+									<div class="panel-body">										
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon5">Host Address</span>
+										  	<input id="ts-host-addr" name="ts-host-addr" name="ts-host-addr" type="text" class="form-control" aria-describedby="basic-addon5">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon6">API Key</span>
+										  	<input id="ts-api-key" name="ts-api-key" type="text" class="form-control" aria-describedby="basic-addon6">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon7">Channel ID</span>
+										  	<input id="ts-ch-id" name="ts-ch-id" type="text" class="form-control" aria-describedby="basic-addon7">
+										</div>
+									</div>
+								</div> <!-- collapse4 -->
+							</div> <!-- THINGSPEAK panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">MAKER CHANNEL</a>
+								    </h4>
+							    </div>
+							    <div id="collapse5" class="panel-collapse collapse">
+									<div class="panel-body">
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon8">POST Address</span>
+										  	<input id="mk-addr" name="mk-addr" type="text" class="form-control" aria-describedby="basic-addon8">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon9">Key</span>
+										  	<input id="mk-key" name="mk-key" type="text" class="form-control" aria-describedby="basic-addon9">
+										</div>
+									</div>
+								</div> <!-- collapse5 -->
+							</div> <!-- MAKER CHANNEL panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse6">WATER LEVEL PREDICTION</a>
+								    </h4>
+							    </div>
+							    <div id="collapse6" class="panel-collapse collapse">
+									<div class="panel-body">
+					                	<div class="row">
+											<div id="on_temp" class="col-md-6">
+												<div class="input-group">
+							                		<div id="checkbox">
+														<input id="irrig_alarm_en" type="checkbox"> Enable Water Level Alarm
+													</div>
+												</div>	
+							                	<div class="input-group">
+													<span class="input-group-addon" id="basic-addon10">Alarm level </span>
+												  	<input id="irrig_alarm_lvl" name="irrig_alarm_lvl" type="text" class="form-control" aria-describedby="basic-addon10">
+													<span class="input-group-addon">mm</span>
+												</div>
+							                	<div class="input-group">
+													<span class="input-group-addon" id="basic-addon13">Watering Days </span>
+												  	<input id="irrig_days" name="irrig_days" type="text" class="form-control" aria-describedby="basic-addon13">
+													<span class="input-group-addon">days</span>
+												</div>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon15">Irrig Depth Full </span>
+												  	<input id="irrig_full" name="irrig_full" type="text" class="form-control" aria-describedby="basic-addon16">
+													<span class="input-group-addon">mm</span>
+												</div>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon15">Irrig Depth Partial </span>
+												  	<input id="irrig_partial" name="irrig_partial" type="text" class="form-control" aria-describedby="basic-addon17">
+													<span class="input-group-addon">mm</span>
+												</div>
+											</div>
+											<div id="hyst_temp" class="col-md-6">
+												<fieldset class="form-group">
+												    <label for="irrig_soil_type">Soil Type</label>
+												    <select class="form-control" id="irrig_soil_type" name="irrig_soil_type">
+												    	<option value="sandy">Sandy</option>
+												    	<option value="loamy sand">Loamy Sand</option>
+												    	<option value="sandy loam">Sandy Loam</option>
+												    	<option value="loam">Loam</option>
+												    	<option value="silt loam">Silt Loam</option>
+												    	<option value="silt">Silt</option>
+												    	<option value="silt clay loam">Silt Clay Loam</option>
+												    	<option value="silty loam">Silty Loam</option>
+												    	<option value="clay">Clay</option>
+												    </select>
+												</fieldset>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon11">Coordinates </span>
+												  	<input id="irrig_coord_n" name="irrig_coord_n" placeholder="North" type="text" class="form-control" aria-describedby="basic-addon11">
+												  	<input id="irrig_coord_s" name="irrig_coord_s" placeholder="South" type="text" class="form-control" aria-describedby="basic-addon11">
+												</div>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon14">Crop Factor Kc </span>
+												  	<input id="irrig_crop_factor" name="irrig_crop_factor" type="text" class="form-control" aria-describedby="basic-addon14">
+												</div>
+												<div class="input-group">
+													<span class="input-group-addon" id="basic-addon15">Root Depth </span>
+												  	<input id="irrig_root_depth" name="irrig_root_depth" type="text" class="form-control" aria-describedby="basic-addon15">
+													<span class="input-group-addon">metres</span>
+												</div>
+											</div>
+										</div> <!-- row -->
+									</div>
+								</div> <!-- collapse6 -->
+							</div> <!-- WATER LEVEL PREDICTION panel -->
+						</div> <!-- panel-group -->
 	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
 	                    <button type="button" class="btn btn-default" onclick="saveSettings()">Save</button>
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-	                </div>
+	                </div> <!-- modal-footer -->
 	            </div>
 	        </div>
 	    </div> <!-- modal_settings -->
@@ -186,11 +318,11 @@
 						    </thead>
 						    <tbody id="error_table"></tbody>
 					  	</table>
-	                </div>
+	                </div> <!-- modal-body -->
 	                <div class="modal-footer">
 	                	<button type="button" class="btn btn-default" onclick="clearErrors()">Clear Errors</button>
 	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-	                </div>
+	                </div> <!-- modal-footer -->
 	            </div>
 	        </div>
 	    </div> <!-- modal_errors -->
@@ -201,6 +333,7 @@
     <script src="js/log.js"></script>
     <script src="js/config_data.js"></script>
     <script src="js/error_msg.js"></script>
+    <script src="js/irrigation.js"></script>
 
 </body>
 </html>  

@@ -1,4 +1,5 @@
 <?php
-$result = shell_exec('/usr/bin/python /home/pi/weather/scripts/watchdog.py --clear');
-echo $result;
+$command = escapeshellcmd('/usr/bin/python2.7 /home/pi/weather/scripts/watchdog.py --clear');
+$output = shell_exec($command);
+echo $output;
 ?>

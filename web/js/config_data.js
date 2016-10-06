@@ -1,3 +1,13 @@
+//
+// config_data.js
+// Will De Freitas
+//
+// Reads and writes weather station configuration data
+//
+// 
+
+
+
 //-------------------------------------------------------------------------------
 // Grab config.json data
 //-------------------------------------------------------------------------------
@@ -16,6 +26,8 @@ function grabConfigData(){
 function updateSettingsModal(json) {
 
     config_data = json;
+
+	$('#ip1').attr('value', config_data.network.ROUTER_IP);
 
 	if(config_data.heater.HEATER_ENABLE == 1){
 		$('#heater-enable').prop('checked', true);
@@ -41,6 +53,23 @@ function updateSettingsModal(json) {
 
 	$('#mk-addr').attr('value', config_data.maker_channel.MAKER_CH_ADDR);
 	$('#mk-key').attr('value', config_data.maker_channel.MAKER_CH_KEY);
+
+	
+	if(config_data.irrigation.ALARM_ENABLE == 1){
+		$('#irrig_alarm_en').prop('checked', true);
+	} else {
+		$('#irrig_alarm_en').prop('checked', false);
+	}
+
+	$('#irrig_alarm_lvl').attr('value', config_data.irrigation.ALARM_LEVEL);
+	$('#irrig_coord_n').attr('value', config_data.irrigation.COORD_NORTH);
+	$('#irrig_coord_s').attr('value', config_data.irrigation.COORD_SOUTH);
+	$('#irrig_days').attr('value', config_data.irrigation.RECOMMENDED_WATERING_DAYS);
+	$('#irrig_soil_type').val(config_data.irrigation.SOIL_TYPE);
+	$('#irrig_crop_factor').attr('value', config_data.irrigation.CROP_FACTOR_KC);
+	$('#irrig_root_depth').attr('value', config_data.irrigation.ROOT_DEPTH);
+	$('#irrig_full').attr('value', config_data.irrigation.IRRIG_FULL);
+	$('#irrig_partial').attr('value', config_data.irrigation.IRRIG_PARTIAL);
 
     $(function(){
         $('#checkbox input:checkbox').on('change', function(){
@@ -72,26 +101,52 @@ function saveSettings() {
 	  	heaterEnabled = 1;
 	}
 
+    var gwAlarm = 0;
+    if ($('#irrig_alarm_en').is(":checked"))
+	{
+	  	gwAlarm = 1;
+	}
+
+	// router_ip = $('#settingsForm').find('[name="ip1"]').val()
+	// router_ip = router_ip.concat(	'.',('#settingsForm').find('[name="ip2"]').val(),
+	// 								'.',('#settingsForm').find('[name="ip3"]').val(),
+	// 								'.',('#settingsForm').find('[name="ip4"]').val());
+
     var form_data = {
-	   "heater":{
-	      "HEATER_ENABLE": 		heaterEnabled,
-	      "HEATER_FORCE_ON": 	0,
-	      "TEMP_HEATER_ON": 	Number($('#settingsForm').find('[name="heater-on-temp"]').val()),
-	      "TEMP_HYSTERISIS":	Number($('#settingsForm').find('[name="heater-on-hyst"]').val()),
-	      "MIPLUG_SENSOR_ID":	Number($('#settingsForm').find('[name="miplug-id"]').val())
-	   },
-	   "rain_gauge":{
-	      "PRECIP_TICK_MEASURE": Number($('#settingsForm').find('[name="rain-gauge"]').val())
-	   },
-	   "thingspeak":{
-	      "THINGSPEAK_HOST_ADDR": 	$('#settingsForm').find('[name="ts-host-addr"]').val(),
-	      "THINGSPEAK_API_KEY": 	$('#settingsForm').find('[name="ts-api-key"]').val(),
-	      "THINGSPEAK_CHANNEL_ID": 	Number($('#settingsForm').find('[name="ts-ch-id"]').val())
-	   },
-	   "maker_channel":{
-	      "MAKER_CH_ADDR": 	$('#settingsForm').find('[name="mk-addr"]').val(),
-	      "MAKER_CH_KEY": 	$('#settingsForm').find('[name="mk-key"]').val()
-	   }
+    	"network":{
+    		"ROUTER_IP": 			$('#settingsForm').find('[name="ip1"]').val()	
+    	},
+	    "heater":{
+	       "HEATER_ENABLE": 		heaterEnabled,
+	       "HEATER_FORCE_ON": 		0,
+	       "TEMP_HEATER_ON": 		Number($('#settingsForm').find('[name="heater-on-temp"]').val()),
+	       "TEMP_HYSTERISIS":		Number($('#settingsForm').find('[name="heater-on-hyst"]').val()),
+	       "MIPLUG_SENSOR_ID":		Number($('#settingsForm').find('[name="miplug-id"]').val())
+	    },
+	    "rain_gauge":{
+	       "PRECIP_TICK_MEASURE": 	Number($('#settingsForm').find('[name="rain-gauge"]').val())
+	    },
+	    "thingspeak":{
+	       "THINGSPEAK_HOST_ADDR": 	$('#settingsForm').find('[name="ts-host-addr"]').val(),
+	       "THINGSPEAK_API_KEY": 	$('#settingsForm').find('[name="ts-api-key"]').val(),
+	       "THINGSPEAK_CHANNEL_ID": Number($('#settingsForm').find('[name="ts-ch-id"]').val())
+	    },
+	    "maker_channel":{
+	       "MAKER_CH_ADDR": 		$('#settingsForm').find('[name="mk-addr"]').val(),
+	       "MAKER_CH_KEY": 			$('#settingsForm').find('[name="mk-key"]').val()
+	    },
+	    "irrigation":{
+	    	  "ALARM_ENABLE": 		gwAlarm,
+	       "ALARM_LEVEL": 			Number($('#settingsForm').find('[name="irrig_alarm_lvl"]').val()),
+	       "COORD_NORTH": 			Number($('#settingsForm').find('[name="irrig_coord_n"]').val()),
+	       "COORD_SOUTH": 			Number($('#settingsForm').find('[name="irrig_coord_s"]').val()),
+	       "RECOMMENDED_WATERING_DAYS": Number($('#settingsForm').find('[name="irrig_days"]').val()),
+	       "SOIL_TYPE": 			$('#settingsForm').find('[name="irrig_soil_type"]').val().toLowerCase(),
+	       "CROP_FACTOR_KC": 		Number($('#settingsForm').find('[name="irrig_crop_factor"]').val()),
+	       "ROOT_DEPTH": 			Number($('#settingsForm').find('[name="irrig_root_depth"]').val()),
+	       "IRRIG_FULL": 			Number($('#settingsForm').find('[name="irrig_full"]').val()),
+	       "IRRIG_PARTIAL": 		Number($('#settingsForm').find('[name="irrig_partial"]').val())
+	    }
 	};
 
     var json = JSON.stringify(form_data);
