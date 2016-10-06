@@ -98,8 +98,6 @@ def main():
             gardening_notes = json.load(f)
     except Exception, e:
         logger.warning('Error ({error_v}).'.format(error_v=e), exc_info=True)
-        gardening_notes = {'sync_updateCount': 0, 'tags': {}, 'notes': {}}
-
 
 
 
@@ -131,15 +129,21 @@ def main():
             logger.info('Local file is in sync with Evernote. Exiting...')
             # sys.exit()
 
-        gardening_notes['sync_updateCount'] = state.updateCount
-
         logger.info('Syncing local data with Evernote...')
+
+
+        # Reset data
+        gardening_notes = {'sync_updateCount': 0, 'plants': {}, 'location': {}, 'notes': {}}
+
+
+        # Add new update count
+        gardening_notes['sync_updateCount'] = state.updateCount
 
 
         # Get all tags and search for a specific tag
         tags            = note_store.listTags()
         gardening_tag   = get_tag_guid(tags, config['evernote']['GARDENING_TAG'])
-        gardening_notes['tags']  = get_tag_guid(tags, config['evernote']['PLANT_TAG_ID'])
+        gardening_notes['plants']  = get_tag_guid(tags, config['evernote']['PLANT_TAG_ID'])
 
 
         # Get all notes with specific tag
