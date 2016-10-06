@@ -51,6 +51,9 @@ function updateSettingsModal(json) {
 	$('#ts-api-key').attr('value', config_data.thingspeak.THINGSPEAK_API_KEY);
 	$('#ts-ch-id').attr('value', config_data.thingspeak.THINGSPEAK_CHANNEL_ID);
 
+	$('#garden-tag').attr('value', config_data.evernote.GARDENING_TAG);
+	$('#plant-tag-id').attr('value', config_data.evernote.PLANT_TAG_ID);
+
 	$('#mk-addr').attr('value', config_data.maker_channel.MAKER_CH_ADDR);
 	$('#mk-key').attr('value', config_data.maker_channel.MAKER_CH_KEY);
 
@@ -146,7 +149,12 @@ function saveSettings() {
 	       "ROOT_DEPTH": 			Number($('#settingsForm').find('[name="irrig_root_depth"]').val()),
 	       "IRRIG_FULL": 			Number($('#settingsForm').find('[name="irrig_full"]').val()),
 	       "IRRIG_PARTIAL": 		Number($('#settingsForm').find('[name="irrig_partial"]').val())
-	    }
+	    },
+  		"evernote": {
+		  	"GARDENING_TAG": 		$('#settingsForm').find('[name="garden-tag"]').val(),
+		  	"PLANT_TAG_ID": 		$('#settingsForm').find('[name="plant-tag-id"]').val()
+  }
+}
 	};
 
     var json = JSON.stringify(form_data);
