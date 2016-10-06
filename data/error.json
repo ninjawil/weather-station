@@ -47,6 +47,13 @@
 		"msg": "Script RRD_TS_SYNC error",
 		"notified":0,
 		"count":0 
+	},
+
+	"0008": {
+		"time":0,
+		"msg": "Script EVERNOTE_SYNC error",
+		"notified":0,
+		"count":0 
 	}
 
 }

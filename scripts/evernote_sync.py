@@ -22,6 +22,7 @@ from evernote.api.client import EvernoteClient
 import settings as s
 import log
 import check_process
+# import watchdog as wd
 
 
 #---------------------------------------------------------------------------
@@ -65,9 +66,17 @@ def main():
 
 
     #---------------------------------------------------------------------------
+    # SET UP WATCHDOG
+    #---------------------------------------------------------------------------
+    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
+    # wd_err      = wd.ErrorCode(err_file, '0007')
+
+
+    #---------------------------------------------------------------------------
     # CHECK SCRIPT IS NOT ALREADY RUNNING
     #---------------------------------------------------------------------------    
     if check_process.is_running(script_name):
+        # wd_err.set()
         sys.exit()
 
 
@@ -81,6 +90,7 @@ def main():
             key = json.load(f)
     except Exception, e:
         logger.error('Error ({error_v}). Exiting...'.format(error_v=e), exc_info=True)
+        # wd_err.set()
         sys.exit()
 
     try:
@@ -167,6 +177,7 @@ def main():
     except Exception, e:
         logger.error('Script error ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
+        # wd_err.set()
         sys.exit()
 
     finally:
