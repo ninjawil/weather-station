@@ -144,6 +144,7 @@ def main():
         tags            = note_store.listTags()
         gardening_tag   = get_tag_guid(tags, config['evernote']['GARDENING_TAG'])
         gardening_notes['plants']  = get_tag_guid(tags, config['evernote']['PLANT_TAG_ID'])
+        gardening_notes['location']  = get_tag_guid(tags, config['evernote']['LOCATION_TAG_ID'])
 
 
         # Get all notes with specific tag
