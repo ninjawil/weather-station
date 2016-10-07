@@ -60,7 +60,7 @@
 	margin-left: 15px;
 }
 
-.irrig-bar{
+.irrig-bar {
     padding-top: 10px;
     padding-left: 0px;
     padding-right: 30px;
@@ -70,4 +70,8 @@
 	transform: rotate(270deg);
 	transform-origin: right center 0;
 	margin-left: 20px;
+}
+
+.text-left {
+	text-align: left;
 }

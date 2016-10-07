@@ -20,11 +20,11 @@ function displayGarden() {
 	$('#graph-container').empty();
 
     // Set up chart screen sections
-    $('<div id="garden-input-bar-section"></div>').appendTo('#graph-container');
+    $('<div id="garden-input-bar-section" class="text-left"></div>').appendTo('#graph-container');
     $('<div id="chart-section"></div>').appendTo('#graph-container');
 
 
-    getGardenData(drawIrrigChart, []);
+    getGardenData(drawGardenSearchBar, []);
 
 }
 
@@ -41,7 +41,7 @@ function getGardenData(functionCall, args) {
         url: 'weather_data/gardening.json',
         dataType: "json",
         success: function(config_data) {            
-            args.push(chart_data);
+            args.push(config_data);
             functionCall.apply(this, args);
         },
         error: function () {
@@ -59,7 +59,34 @@ function getGardenData(functionCall, args) {
 //-------------------------------------------------------------------------------
 // Draw charts
 //-------------------------------------------------------------------------------
-function drawIrrigChart(garden_data) {
+function drawGardenSearchBar(garden_data) {
+
+	// Clear chart area
+	$('#garden-input-bar-section').empty();
+
+	console.log(garden_data);
+
+	HTMLplantList = '<form><div class="form-group"><label for="plant_sel">Select list (select one):</label><select class="form-control" id="plant_sel">%plant_list%</select><br></div></form>';
+
+   	var plant_list =  "";
+
+    for (var plant in garden_data['plants']) {
+    	plant_list = plant_list + "<option>" + plant + "</option>";
+    }
+
+    console.log(plant_list);
+
+    formattedHTMLplantList = HTMLplantList.replace("%plant_list%", plant_list);
+	$('#garden-input-bar-section').append(formattedHTMLplantList);
+
+
+
+}
+
+//-------------------------------------------------------------------------------
+// Draw charts
+//-------------------------------------------------------------------------------
+function drawGardenChart(garden_data) {
 
 	// Clear chart area
 	$('#chart-section').empty();
