@@ -37,7 +37,7 @@ def get_tag_guid(tag_list, search_string):
 
     '''
 
-    return {tag.name: tag.guid for tag in tag_list if tag.name.find(search_string) > -1}
+    return {tag.guid: tag.name for tag in tag_list if tag.name.find(search_string) > -1}
 
 
 
@@ -133,7 +133,7 @@ def main():
 
 
         # Reset data
-        gardening_notes = {'sync_updateCount': 0, 'plants': {}, 'location': {}, 'notes': {}}
+        gardening_notes = {'sync_updateCount': 0, 'plant_tags': {}, 'location_tags': {}, 'notes': {}}
 
 
         # Add new update count
@@ -143,13 +143,13 @@ def main():
         # Get all tags and search for a specific tag
         tags            = note_store.listTags()
         gardening_tag   = get_tag_guid(tags, config['evernote']['GARDENING_TAG'])
-        gardening_notes['plants']  = get_tag_guid(tags, config['evernote']['PLANT_TAG_ID'])
-        gardening_notes['location']  = get_tag_guid(tags, config['evernote']['LOCATION_TAG_ID'])
+        gardening_notes['plant_tags']  = get_tag_guid(tags, config['evernote']['PLANT_TAG_ID'])
+        gardening_notes['location_tags']  = get_tag_guid(tags, config['evernote']['LOCATION_TAG_ID'])
 
 
         # Get all notes with specific tag
         filter = NoteStore.NoteFilter()
-        filter.tagGuids = [gardening_tag[config['evernote']['GARDENING_TAG']]]
+        filter.tagGuids = gardening_tag.keys()
 
         spec = NoteStore.NotesMetadataResultSpec()
         spec.includeTitle = True
