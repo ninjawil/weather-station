@@ -40,6 +40,21 @@ def get_tag_guid(tag_list, search_string):
     return {tag.guid: tag.name for tag in tag_list if tag.name.find(search_string) > -1}
 
 
+#---------------------------------------------------------------------------
+# Get all children from parent tag
+#---------------------------------------------------------------------------
+def get_tag_children(tag_list, parent_guid):
+    '''
+    Function returns all children from the tag guid provided
+
+    tag_list        Struct: Tag as defined by Evernote
+    search_string   string of tag name to search 
+
+    '''
+
+    return {tag.guid: tag.name for tag in tag_list if tag.parentGuid == parent_guid}
+
+
 
 #===============================================================================
 # MAIN
@@ -144,7 +159,16 @@ def main():
         tags            = note_store.listTags()
         gardening_tag   = get_tag_guid(tags, config['evernote']['GARDENING_TAG'])
         gardening_notes['plant_tags']  = get_tag_guid(tags, config['evernote']['PLANT_TAG_ID'])
-        gardening_notes['location_tags']  = get_tag_guid(tags, config['evernote']['LOCATION_TAG_ID'])
+      
+        gardening_loc_tag = get_tag_guid(tags, config['evernote']['LOCATION_TAG_ID']).keys()
+
+        if len(gardening_loc_tag) > 1:
+            logger.error("More than one Location Tag Parent found. Exiting...")
+            sys.exit()
+
+        gardening_notes['location_tags']  = get_tag_children(tags, gardening_loc_tag[0])
+
+
 
 
         # Get all notes with specific tag
