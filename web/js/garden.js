@@ -145,7 +145,7 @@ function drawGardenSearchBar(garden_data) {
 			search_data['location'] = Object.keys(garden_data['location_tags']); 
 		} else {
 			for (var i = 0; i <= location_input.length - 1; i++) {
-				search_data["location"].push(location_input[location_input[i]]);
+				search_data["location"].push(locations_by_name[location_input[i]]);
 			}
 		}
 
@@ -179,20 +179,39 @@ function sortGardenData(garden_data, search) {
     		if(	containsSome(search['plant'], garden_data['notes'][note]['tags']) &&
     			containsSome(search['location'], garden_data['notes'][note]['tags'])) {
 
-				notes_flt.push(note);
+				notes_flt.push(note);			
 			}
 	    }	
     }
 
     // Sort notes into plant and location order
-    notes_sorted = {};
+    var notes_sorted = {};
 	for (var k = 0; k <= notes_flt.length - 1; k++) {
+    
 	    for (var i = 0; i <= search['plant'].length - 1; i++) {
-		    if ($.inArray(search['plant'][i], garden_data['notes'][notes_flt[k]]['tags']) !== -1) {
-			    notes_sorted[search['plant'][i]] = {};
+		    if ($.inArray(search['plant'][i], garden_data['notes'][notes_flt[k]]['tags']) !== -1) {	  
+
+		    	// Create a key if it does not exist
+				if ($.inArray(search['plant'][i], Object.keys(notes_sorted)) === -1) {
+				    notes_sorted[search['plant'][i]] = {};
+				}
+		      
 			    for (var j = 0; j <= search['location'].length - 1; j++) {	    	
 			    	if ($.inArray(search['location'][j], garden_data['notes'][notes_flt[k]]['tags']) !== -1) {
-				    	notes_sorted[search['plant'][i]][search['location'][j]].push(notes_flt[k]);
+
+			    		var year = new Date(Number(garden_data['notes'][notes_flt[k]]['created'])).getFullYear().toString();
+
+		    			// Create a key if it does not exist
+				    	if ($.inArray(search['location'][j], Object.keys(notes_sorted[search['plant'][i]])) === -1) {
+				    		notes_sorted[search['plant'][i]][search['location'][j]] = {};
+					    	notes_sorted[search['plant'][i]][search['location'][j]][year] = [];
+			    		} else {
+					    	if ($.inArray(year, Object.keys(notes_sorted[search['plant'][i]][search['location'][j]])) === -1) {
+					    		notes_sorted[search['plant'][i]][search['location'][j]][year] = [];
+				    		}
+				    	}
+
+				    	notes_sorted[search['plant'][i]][search['location'][j]][year].push(notes_flt[k]);
 			    	}
 			    }
 		    }
@@ -207,35 +226,51 @@ function sortGardenData(garden_data, search) {
 //-------------------------------------------------------------------------------
 // Draw charts
 //-------------------------------------------------------------------------------
-function drawGardenChart(notes_sorted, garden_data) {
+function drawGardenChart(notes_to_display, garden_data) {
 
 	// Clear chart area
 	$('#chart-section').empty();
 
-	console.log(notes_sorted);
+	console.log(notes_to_display);
 
 	HTMLtable = '<table class="table table-bordered"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table>';
 
-	var week_no = '';
+	var HTML_title_week_no = '';
+	var HTML_week_no = '';
 	for (i = 0; i < 54; i++) {
-		week_no = week_no + '<th>' + i.toString() + '</th>';
+		HTML_title_week_no = HTML_title_week_no + '<th>' + i.toString() + '</th>';
+		HTML_week_no = HTML_week_no + '<th>%wk' + i.toString() + '%</th>';
 	}
 
-	var plants = '<tr>';
-	for (var plant in notes_sorted) {
-		for (var location in notes_sorted[plant]) {
-			var date = new Date(Number(garden_data['notes'][note]['created']));
-			
-			plants = plants + '<td>' + garden_data['plant_tags'][plant] + '</td>';
-			plants = plants + '<td>' + garden_data['location_tags'][location] + '</td>';
-			plants = plants + '<td>' + date.getFullYear().toString() + '</td>';
-			plants = plants + '</tr>';	
+	var HTML_plants = '<tr>';
+	for (var plant in notes_to_display) {
+		for (var location in notes_to_display[plant]) {
+			for (var year in notes_to_display[plant][location]) {
+				
+				HTML_plants = HTML_plants + '<td>' + garden_data['plant_tags'][plant] + '</td>';
+				HTML_plants = HTML_plants + '<td>' + garden_data['location_tags'][location] + '</td>';
+				HTML_plants = HTML_plants + '<td>' + year + '</td>';
+
+				formatted_HTML_week_no = HTML_week_no;
+				
+				for (var i = 0; i <= notes_to_display[plant][location][year].length - 1; i++) {
+
+					var date = new Date(Number(garden_data['notes'][notes_to_display[plant][location][year][i]]['created']));
+
+					console.log(date);
+					console.log(date.getWeek());
+
+					formatted_HTML_week_no = formatted_HTML_week_no.replace('%wk' + date.getWeek().toString() + '%', 'XX');
+				}
+
+    			HTML_plants = HTML_plants + formatted_HTML_week_no + '</tr>';	
+			}
 		}	
 	}
 
 
-    formattedHTMLtable = HTMLtable.replace("%week_no%", week_no);
-    formattedHTMLtable = formattedHTMLtable.replace("%plants%", plants);
+    formattedHTMLtable = HTMLtable.replace("%week_no%", HTML_title_week_no);
+    formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_plants);
 
 	$('#chart-section').append(formattedHTMLtable);
 
