@@ -235,11 +235,13 @@ function drawGardenChart(notes_to_display, garden_data) {
 
 	HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 
+	HTML_symb_info = '<td class="success"><span class="glyphicon glyphicon-info-sign"></span></td>';
+
 	var HTML_title_week_no = '';
 	var HTML_week_no = '';
 	for (i = 0; i < 54; i++) {
 		HTML_title_week_no = HTML_title_week_no + '<th>' + '00'.substring(i.toString().length) + i.toString() + '</th>';
-		HTML_week_no = HTML_week_no + '<th>%wk' + i.toString() + '%</th>';
+		HTML_week_no = HTML_week_no + '%wk' + i.toString() + '%';
 	}
 
 	var HTML_plants = '<tr>';
@@ -247,7 +249,7 @@ function drawGardenChart(notes_to_display, garden_data) {
 		for (var location in notes_to_display[plant]) {
 			for (var year in notes_to_display[plant][location]) {
 				
-				HTML_plants = HTML_plants + '<td>' + garden_data['plant_tags'][plant] + '</td>';
+				HTML_plants = HTML_plants + '<td nowrap>' + garden_data['plant_tags'][plant] + '</td>';
 				HTML_plants = HTML_plants + '<td>' + garden_data['location_tags'][location] + '</td>';
 				HTML_plants = HTML_plants + '<td>' + year + '</td>';
 
@@ -260,7 +262,7 @@ function drawGardenChart(notes_to_display, garden_data) {
 					console.log(date);
 					console.log(date.getWeek());
 
-					formatted_HTML_week_no = formatted_HTML_week_no.replace('%wk' + date.getWeek().toString() + '%', 'XX');
+					formatted_HTML_week_no = formatted_HTML_week_no.replace('%wk' + date.getWeek().toString() + '%', HTML_symb_info);
 				}
 
     			HTML_plants = HTML_plants + formatted_HTML_week_no + '</tr>';	
@@ -271,7 +273,7 @@ function drawGardenChart(notes_to_display, garden_data) {
 
     formattedHTMLtable = HTMLtable.replace("%week_no%", HTML_title_week_no);
     formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_plants);
-    formattedHTMLtable = formattedHTMLtable.replace(/%wk\d+%/g, '');
+    formattedHTMLtable = formattedHTMLtable.replace(/%wk\d+%/g, '<td></td>');
 
 	$('#chart-section').append(formattedHTMLtable);
 
