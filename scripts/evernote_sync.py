@@ -148,7 +148,13 @@ def main():
 
 
         # Reset data
-        gardening_notes = {'sync_updateCount': 0, 'plant_tags': {}, 'location_tags': {}, 'notes': {}}
+        gardening_notes = {
+            'sync_updateCount': 0, 
+            'plant_tags': {}, 
+            'state_tags': {},
+            'location_tags': {}, 
+            'notes': {}
+        }
 
 
         # Add new update count
@@ -167,6 +173,14 @@ def main():
             sys.exit()
 
         gardening_notes['location_tags']  = get_tag_children(tags, gardening_loc_tag[0])
+
+        gardening_state_tag = get_tag_guid(tags, config['evernote']['STATE_TAG_ID']).keys()
+
+        if len(gardening_state_tag) > 1:
+            logger.error("More than one State Tag Parent found. Exiting...")
+            sys.exit()
+
+        gardening_notes['state_tags']  = get_tag_children(tags, gardening_state_tag[0])
 
 
 
