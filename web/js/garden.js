@@ -20,8 +20,8 @@ function displayGarden() {
 	$('#graph-container').empty();
 
     // Set up chart screen sections
-    $('<div id="garden-input-bar-section" class="text-left"></div>').appendTo('#graph-container');
-    $('<div id="chart-section"></div>').appendTo('#graph-container');
+    $('<div class="row"><div id="garden-input-bar-section" class="text-left"></div></div>').appendTo('#graph-container');
+    $('<div class="row"><div id="chart-section"></div></div>').appendTo('#graph-container');
 
 
     getGardenData(drawGardenSearchBar, []);
@@ -233,12 +233,12 @@ function drawGardenChart(notes_to_display, garden_data) {
 
 	console.log(notes_to_display);
 
-	HTMLtable = '<table class="table table-bordered"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table>';
+	HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 
 	var HTML_title_week_no = '';
 	var HTML_week_no = '';
 	for (i = 0; i < 54; i++) {
-		HTML_title_week_no = HTML_title_week_no + '<th>' + i.toString() + '</th>';
+		HTML_title_week_no = HTML_title_week_no + '<th>' + '00'.substring(i.toString().length) + i.toString() + '</th>';
 		HTML_week_no = HTML_week_no + '<th>%wk' + i.toString() + '%</th>';
 	}
 
@@ -271,6 +271,7 @@ function drawGardenChart(notes_to_display, garden_data) {
 
     formattedHTMLtable = HTMLtable.replace("%week_no%", HTML_title_week_no);
     formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_plants);
+    formattedHTMLtable = formattedHTMLtable.replace(/%wk\d+%/g, '');
 
 	$('#chart-section').append(formattedHTMLtable);
 
