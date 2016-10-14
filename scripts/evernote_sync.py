@@ -123,9 +123,10 @@ def main():
 
         client = EvernoteClient(token=key['AUTH_TOKEN'], sandbox=True)
         
-        note_store = client.get_note_store()
-        user_store = client.get_user_store()
-        user = user_store.getUser()
+        note_store  = client.get_note_store()
+        user_store  = client.get_user_store()
+        user        = user_store.getUser()
+        user_public = user_store.getPublicUserInfo(user.username)
 
 
         # Check evernote API
@@ -193,14 +194,26 @@ def main():
         spec.includeTitle = True
         spec.includeCreated = True
         spec.includeTagGuids = True
+        spec.includeLargestResourceMime = True
 
         note_list = note_store.findNotesMetadata(key['AUTH_TOKEN'], filter, 0, 10000, spec)
 
         for note in note_list.notes:
+            
+            res_guid = []
+
+            if note.largestResourceMime == 'image/jpeg':
+                note_detail = note_store.getNote(key['AUTH_TOKEN'], note.guid, False, False, False, False)
+
+                for resource in note_detail.resources:
+                    res_guid.append('{user}res/{r_guid}'.format(user= user_public.webApiUrlPrefix, r_guid= resource.guid))
+
+
             gardening_notes['notes'][note.guid] = {
                 'created':  note.created,
                 'title':    note.title,
                 'tags':     note.tagGuids,
+                'res':      res_guid,
                 'link':     'https://{service}/shard/{shardId}/nl/{userId}/{noteGuid}/'.format(
                                     service= key['SERVICE'],
                                     shardId= user.shardId,
