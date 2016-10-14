@@ -235,7 +235,7 @@ function drawGardenChart(notes_to_display, garden_data) {
 
 	HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 
-	HTML_symb_info = '<td class="success"><div data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">i</div></td>';
+	HTML_symb_info = '<td class="success"><div style="cursor:pointer" data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div></td>';
 
 	HTML_popover_body = "<img src='%res_link%' width='200' />";
 
@@ -270,6 +270,10 @@ function drawGardenChart(notes_to_display, garden_data) {
 					} else {
 						formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%popover_body%', '');
 					}
+
+					// Add plant state symbol
+					
+					formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%plant_symbol%', 'X');
 
 					// Place symbol for note in week number column
 					var date = new Date(Number(garden_data['notes'][notes_to_display[plant][location][year][i]]['created']));
