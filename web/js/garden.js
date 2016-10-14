@@ -71,6 +71,7 @@ function drawGardenSearchBar(garden_data) {
 	HTMLaliveList = '<form><div class="form-group"><label for="alive_sel">Alive:</label><select class="form-control" id="alive_sel"><option> Y </option><option> N </option></select><br></div></form>';
 	HTMLfilterButton = '<button type="button" class="btn btn-secondary" id="filter-btn"><span class="glyphicon glyphicon-filter"></span></button>';
 
+
 	// Prepare plant list
    	var plants_by_name = {};
    	for(var key in garden_data['plant_tags']) {
@@ -85,6 +86,7 @@ function drawGardenSearchBar(garden_data) {
     }
     formattedHTMLplantList = HTMLplantList.replace("%plant_list%", plant_list);
 
+
 	// Prepare location list
    	var locations_by_name = {};
    	for(var key in garden_data['location_tags']) {
@@ -98,15 +100,16 @@ function drawGardenSearchBar(garden_data) {
     }
     formattedHTMLlocList = HTMLlocList.replace("%loc_list%", loc_list);
 
-	// Prepare date list
-   	var year_list = ['2015', '2016', '2017']; //[];
-    // for (var note in garden_data['notes']) {
-    // 	date = new Date(Number(garden_data['notes'][note]['created']));
-    // 	if ($.inArray(date.getFullYear(), year_list)) {
-    // 		year_list.push(date.getFullYear().toString());
-    // 	}
 
-    // }
+	// Prepare date list
+   	var year_list = [];
+    for (var note in garden_data['notes']) {
+    	var year = new Date(Number(garden_data['notes'][note]['created'])).getFullYear().toString();
+    	if ($.inArray(year, year_list) == -1) {
+     		year_list.push(year);
+    	}
+    }
+
    	var html_year_list = "<option selected> All </option>";
     for (var year in year_list) {
     	html_year_list = html_year_list + "<option>" + year_list[year] + "</option>";
