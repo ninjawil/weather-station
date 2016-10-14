@@ -235,7 +235,10 @@ function drawGardenChart(notes_to_display, garden_data) {
 
 	HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 
-	HTML_symb_info = '<td class="success"><span class="glyphicon glyphicon-info-sign"></span></td>';
+	HTML_symb_info = '<td class="success"><div data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">i</div></td>';
+
+	HTML_popover_body = "<img src='%res_link%' width='200' />";
+
 
 	var HTML_title_week_no = '';
 	var HTML_week_no = '';
@@ -257,12 +260,21 @@ function drawGardenChart(notes_to_display, garden_data) {
 				
 				for (var i = 0; i <= notes_to_display[plant][location][year].length - 1; i++) {
 
+		
+					// Format popover with note title and note image			
+					formatted_HTML_symb_info = HTML_symb_info.replace('%popover_title%', garden_data['notes'][notes_to_display[plant][location][year][i]]['title']);
+					
+					if(garden_data['notes'][notes_to_display[plant][location][year][i]]['res'].length > 0){
+						formatted_HTML_popover_body = HTML_popover_body.replace('%res_link%', garden_data['notes'][notes_to_display[plant][location][year][i]]['res'][0]);
+						formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%popover_body%', formatted_HTML_popover_body);
+					} else {
+						formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%popover_body%', '');
+					}
+
+					// Place symbol for note in week number column
 					var date = new Date(Number(garden_data['notes'][notes_to_display[plant][location][year][i]]['created']));
 
-					console.log(date);
-					console.log(date.getWeek());
-
-					formatted_HTML_week_no = formatted_HTML_week_no.replace('%wk' + date.getWeek().toString() + '%', HTML_symb_info);
+					formatted_HTML_week_no = formatted_HTML_week_no.replace('%wk' + date.getWeek().toString() + '%', formatted_HTML_symb_info);
 				}
 
     			HTML_plants = HTML_plants + formatted_HTML_week_no + '</tr>';	
@@ -276,6 +288,10 @@ function drawGardenChart(notes_to_display, garden_data) {
     formattedHTMLtable = formattedHTMLtable.replace(/%wk\d+%/g, '<td></td>');
 
 	$('#chart-section').append(formattedHTMLtable);
+
+	$(document).ready(function() {
+	    $("#chart-section").popover({ selector: '[data-toggle=popover]' });
+	});
 
 
 }
