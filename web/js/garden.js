@@ -239,6 +239,11 @@ function drawGardenChart(notes_to_display, garden_data) {
 
 	// console.log(notes_to_display);
 
+	var state_colours = {
+	    "05760b67-5d9b-4c47-9b75-729c0f2f4614": "info",
+	    "b6014f8c-a736-4672-97a5-77e6ae925a64": "success"
+	  }
+
 	var state_symbols = {
 	    "05760b67-5d9b-4c47-9b75-729c0f2f4614": "♣",
 	    "2fb9a7e6-99ac-487c-af7f-3c468ce31e95": "i",
@@ -250,7 +255,7 @@ function drawGardenChart(notes_to_display, garden_data) {
 	  }
 
 	HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-	HTML_symb_info = '<td class="success"><div style="cursor:pointer" data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div></td>';
+	HTML_symb_info = '<td class="%cell_colour%"><div style="cursor:pointer" data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div></td>';
 	HTML_popover_body = "<img src='%res_link%' width='200' />";
 
 
@@ -296,9 +301,9 @@ function drawGardenChart(notes_to_display, garden_data) {
 
 					// Add plant state symbol
 					var state_tag 	 = containsSome(garden_data['notes'][note]['tags'], Object.keys(garden_data['state_tags']));					
-					var state_symbol = state_tag ? state_symbols[state_tag] : 'i';
 
-					formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%plant_symbol%', state_symbol);
+					formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%plant_symbol%', state_tag ? state_symbols[state_tag] : 'i');
+					formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%cell_colour%',  state_tag ? state_colours[state_tag] : '');
 
 
 					// Place symbol for note in week number column
