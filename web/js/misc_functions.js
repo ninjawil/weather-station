@@ -78,7 +78,7 @@ function containsAll(needles, haystack){
 //-------------------------------------------------------------------------------
 function containsSome(needles, haystack){ 
   for(var i = 0 , len = needles.length; i < len; i++){
-     if($.inArray(needles[i], haystack) !== -1) return true;
+     if($.inArray(needles[i], haystack) !== -1) return needles[i];
   }
   return false;
 }

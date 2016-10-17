@@ -61,14 +61,12 @@ function getGardenData(functionCall, args) {
 //-------------------------------------------------------------------------------
 function drawGardenSearchBar(garden_data) {
 
-	// Clear chart area
-	$('#garden-input-bar-section').empty();
-	$('<div id="bar1" class="col-md-4"></div><div id="bar2" class="col-md-4"></div><div id="bar3" class="col-md-2"></div><div id="bar4" class="col-md-1"></div><div id="bar5" class="col-md-1" style="top: 25px;;"></div>').appendTo('#garden-input-bar-section');
-
+	HTMLPlantSearchContainer = '<div id="bar1" class="col-md-4"></div><div id="bar2" class="col-md-4"></div><div id="bar3" class="col-md-2"></div><div id="bar4" class="col-md-1"></div><div id="bar5" class="col-md-1" style="top: 25px;;"></div>';
 	HTMLplantList = '<form><div class="form-group"><label for="plant_sel">Plant:</label><select multiple class="form-control" id="plant_sel">%plant_list%</select><br></div></form>';
 	HTMLlocList = '<form><div class="form-group"><label for="loc_sel">Location:</label><select multiple class="form-control" id="loc_sel">%loc_list%</select><br></div></form>';
 	HTMLdateList = '<form><div class="form-group"><label for="date_sel">Year:</label><select multiple class="form-control" id="date_sel">%date_list%</select><br></div></form>';
-	HTMLaliveList = '<form><div class="form-group"><label for="alive_sel">Alive:</label><select class="form-control" id="alive_sel"><option> Y </option><option> N </option></select><br></div></form>';
+	HTMLoptionsList = '<form><div class="form-group"><label for="options_sel">Options:</label><div class="checkbox"><label><input type="checkbox" value="" checked="checked" id="alive_check">Alive</label></div><div class="checkbox"><label><input type="checkbox" value="" id="watering_check">Watering</label></div></div></form>';
+	// HTMLaliveList = '<form><div class="form-group"><label for="alive_sel">Alive:</label><select class="form-control" id="alive_sel"><option> Y </option><option> N </option></select><br></div></form>';
 	HTMLfilterButton = '<button type="button" class="btn btn-secondary" id="filter-btn"><span class="glyphicon glyphicon-filter"></span></button>';
 
 
@@ -117,10 +115,14 @@ function drawGardenSearchBar(garden_data) {
     formattedHTMLdateList = HTMLdateList.replace("%date_list%", html_year_list);
 
 
+	// Clear chart area
+	$('#garden-input-bar-section').empty();
+	$(HTMLPlantSearchContainer).appendTo('#garden-input-bar-section');
+
 	$('#bar1').append(formattedHTMLplantList);
 	$('#bar2').append(formattedHTMLlocList);
 	$('#bar3').append(formattedHTMLdateList);
-	$('#bar4').append(HTMLaliveList);
+	$('#bar4').append(HTMLoptionsList);
 	$('#bar5').append(HTMLfilterButton);
 
 	$("#filter-btn").click(function(){
@@ -129,7 +131,8 @@ function drawGardenSearchBar(garden_data) {
 			"plant": 	[],
 			"location": [],
 			"year": 	$( "#date_sel" ).val(),
-			"alive": 	$( "#alive_sel" ).val()
+			"alive": 	$('#alive_check').is(':checked') ? "checked" : "unchecked",
+			"watering": $('#watering_check').is(':checked') ? "checked" : "unchecked"
 		}
 
 		// Return plant guid
@@ -234,12 +237,20 @@ function drawGardenChart(notes_to_display, garden_data) {
 	// Clear chart area
 	$('#chart-section').empty();
 
-	console.log(notes_to_display);
+	// console.log(notes_to_display);
+
+	var state_symbols = {
+	    "05760b67-5d9b-4c47-9b75-729c0f2f4614": "♣",
+	    "2fb9a7e6-99ac-487c-af7f-3c468ce31e95": "i",
+	    "6d2fab44-76fb-4f0a-b9b6-60846ebadba2": "£",
+	    "9da9be98-9bf5-4170-9d8c-2a1751d11203": "♱",
+	    "a2a964fe-eb33-4fac-b2a9-2e001a8390e0": "X",
+	    "b6014f8c-a736-4672-97a5-77e6ae925a64": "ϒ",
+	    "cfdf9e45-d107-40fa-8852-e15c86a14202": "w"
+	  }
 
 	HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-
 	HTML_symb_info = '<td class="success"><div style="cursor:pointer" data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div></td>';
-
 	HTML_popover_body = "<img src='%res_link%' width='200' />";
 
 
@@ -260,26 +271,39 @@ function drawGardenChart(notes_to_display, garden_data) {
 				HTML_plants = HTML_plants + '<td>' + year + '</td>';
 
 				formatted_HTML_week_no = HTML_week_no;
-				
+
+
+				// Loop through each note
+				//    - create the popover
+				//    - assign a symbol depending on the state tag
+				//    - assign the state colour
+				//    - add note to relevant week number
+				//    - 
 				for (var i = 0; i <= notes_to_display[plant][location][year].length - 1; i++) {
 
+					var note = notes_to_display[plant][location][year][i];
 		
-					// Format popover with note title and note image			
-					formatted_HTML_symb_info = HTML_symb_info.replace('%popover_title%', garden_data['notes'][notes_to_display[plant][location][year][i]]['title']);
+					// Create popover			
+					formatted_HTML_symb_info = HTML_symb_info.replace('%popover_title%', garden_data['notes'][note]['title']);
 					
-					if(garden_data['notes'][notes_to_display[plant][location][year][i]]['res'].length > 0){
-						formatted_HTML_popover_body = HTML_popover_body.replace('%res_link%', garden_data['notes'][notes_to_display[plant][location][year][i]]['res'][0]);
+					if(garden_data['notes'][note]['res'].length > 0){
+						formatted_HTML_popover_body = HTML_popover_body.replace('%res_link%', garden_data['notes'][note]['res'][0]);
 						formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%popover_body%', formatted_HTML_popover_body);
 					} else {
 						formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%popover_body%', '');
 					}
 
 					// Add plant state symbol
-					
-					formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%plant_symbol%', 'X');
+					var state_tag = containsSome(garden_data['notes'][note]['tags'], Object.keys(garden_data['state_tags']));					
+					var state_symbol = 'i';
+					if(state_tag) {
+						state_symbol = state_symbols[state_tag];
+					}
+
+					formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%plant_symbol%', state_symbol);
 
 					// Place symbol for note in week number column
-					var date = new Date(Number(garden_data['notes'][notes_to_display[plant][location][year][i]]['created']));
+					var date = new Date(Number(garden_data['notes'][note]['created']));
 
 					formatted_HTML_week_no = formatted_HTML_week_no.replace('%wk' + date.getWeek().toString() + '%', formatted_HTML_symb_info);
 				}
