@@ -293,14 +293,13 @@ function drawGardenChart(notes_to_display, garden_data) {
 						formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%popover_body%', '');
 					}
 
+
 					// Add plant state symbol
-					var state_tag = containsSome(garden_data['notes'][note]['tags'], Object.keys(garden_data['state_tags']));					
-					var state_symbol = 'i';
-					if(state_tag) {
-						state_symbol = state_symbols[state_tag];
-					}
+					var state_tag 	 = containsSome(garden_data['notes'][note]['tags'], Object.keys(garden_data['state_tags']));					
+					var state_symbol = state_tag ? state_symbols[state_tag] : 'i';
 
 					formatted_HTML_symb_info = formatted_HTML_symb_info.replace('%plant_symbol%', state_symbol);
+
 
 					// Place symbol for note in week number column
 					var date = new Date(Number(garden_data['notes'][note]['created']));
