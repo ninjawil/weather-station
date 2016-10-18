@@ -250,13 +250,13 @@ function drawGardenChart(notes_to_display, garden_data) {
 	  };
 
 	var state_symbols = {
-	    "05760b67-5d9b-4c47-9b75-729c0f2f4614": "♣",
-	    "2fb9a7e6-99ac-487c-af7f-3c468ce31e95": "🛈",
-	    "6d2fab44-76fb-4f0a-b9b6-60846ebadba2": "£",
-	    "6dc756b8-35fa-4136-8a7b-c826084b11ed": "⛮",
-	    "9da9be98-9bf5-4170-9d8c-2a1751d11203": "⛪",
+	    "05760b67-5d9b-4c47-9b75-729c0f2f4614": '<span class="ion-ios-flower" aria-hidden="true"></span>',
+	    "2fb9a7e6-99ac-487c-af7f-3c468ce31e95": '<span class="glyphicon glyphicon-info-sign"></span>',
+	    "6d2fab44-76fb-4f0a-b9b6-60846ebadba2": '£',
+	    "6dc756b8-35fa-4136-8a7b-c826084b11ed": '<span class="ion-bug" aria-hidden="true"></span>',
+	    "9da9be98-9bf5-4170-9d8c-2a1751d11203": "✝",
 	    "a2a964fe-eb33-4fac-b2a9-2e001a8390e0": "X",
-	    "b6014f8c-a736-4672-97a5-77e6ae925a64": "ϒ",
+	    "b6014f8c-a736-4672-97a5-77e6ae925a64": '<span class="glyphicon glyphicon-grain"></span>',
 	    "cfdf9e45-d107-40fa-8852-e15c86a14202": "⍵",
     	"d3bd0212-af17-463d-b85d-01460c54b95c": "m"
 	  };
