@@ -205,14 +205,16 @@ function sortGardenData(garden_data, search) {
 	    		// Create object if does not exist
 				if ($.inArray(search['plant'][i], Object.keys(notes_sorted)) === -1) {
 					notes_sorted[search['plant'][i]] = {}
-				    notes_sorted[search['plant'][i]][year] = { 
-				    	'01': [], '02': [], '03': [], '04': [], '05': [], '06': [], '07': [], '08': [], '09': [], '10': [],
-				    	'11': [], '12': [], '13': [], '14': [], '15': [], '16': [], '17': [], '18': [], '19': [], '20': [],
-				    	'21': [], '22': [], '23': [], '24': [], '25': [], '26': [], '27': [], '28': [], '29': [], '30': [],
-				    	'31': [], '32': [], '33': [], '34': [], '35': [], '36': [], '37': [], '38': [], '39': [], '40': [],
-				    	'41': [], '42': [], '43': [], '44': [], '45': [], '46': [], '47': [], '48': [], '49': [], '50': [],
-				    	'51': [], '52': [], '53': []
-				    };
+				    notes_sorted[search['plant'][i]][year] = [ 
+				    	[], [], [], [], [], [], [], [], [], [],
+				    	[], [], [], [], [], [], [], [], [], [],
+				    	[], [], [], [], [], [], [], [], [], [],
+				    	[], [], [], [], [], [], [], [], [], [],
+				    	[], [], [], [], [], [], [], [], [], [],
+				    	[], [], [], []
+				    ];
+
+
 				}
 
 		    	notes_sorted[search['plant'][i]][year][week].push(notes_flt[k]);
@@ -233,12 +235,17 @@ function drawGardenChart(notes_to_display, garden_data) {
 	// Clear chart area
 	$('#chart-section').empty();
 
-	console.log(notes_to_display);
+	// console.log(notes_to_display);
 
 	var state_colours = {
 	    "05760b67-5d9b-4c47-9b75-729c0f2f4614": "info",
-	    "b6014f8c-a736-4672-97a5-77e6ae925a64": "success"
-	  }
+	    "2fb9a7e6-99ac-487c-af7f-3c468ce31e95": "",
+	    "6d2fab44-76fb-4f0a-b9b6-60846ebadba2": "",
+	    "9da9be98-9bf5-4170-9d8c-2a1751d11203": "",
+	    "a2a964fe-eb33-4fac-b2a9-2e001a8390e0": "",
+	    "b6014f8c-a736-4672-97a5-77e6ae925a64": "success",
+	    "cfdf9e45-d107-40fa-8852-e15c86a14202": ""
+	  };
 
 	var state_symbols = {
 	    "05760b67-5d9b-4c47-9b75-729c0f2f4614": "♣",
@@ -248,83 +255,126 @@ function drawGardenChart(notes_to_display, garden_data) {
 	    "a2a964fe-eb33-4fac-b2a9-2e001a8390e0": "X",
 	    "b6014f8c-a736-4672-97a5-77e6ae925a64": "ϒ",
 	    "cfdf9e45-d107-40fa-8852-e15c86a14202": "w"
-	  }
+	  };
 
-	HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-	HTML_cell = '<td class="%cell_colour%"><div style="cursor:pointer" data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div>';
-	HTML_popover_body = "<img src='%res_link%' width='200' />";
+	var watering_tag = "cfdf9e45-d107-40fa-8852-e15c86a14202";
+
+	var HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
+	var HTML_cell = '<td class="%cell_colour%"><div style="cursor:pointer" data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div>';
+	var HTML_popover_body = "<img src='%res_link%' width='200' />";
 
 
-	var HTML_title_week_no = '';
-	var HTML_week = '';
-	for (i = 0; i < 54; i++) {
-		HTML_title_week_no = HTML_title_week_no + '<th>' + '00'.substring(i.toString().length) + i.toString() + '</th>';
+	var today = new Date();
+	today_wk = today.getWeek(); // align to week 0
+	today_yr = today.getFullYear().toString();
+
+
+	// Filter tags
+	var state_tags = jQuery.extend({}, garden_data['state_tags']);
+	if ($('#watering_check').is(':checked') === false) {
+		delete state_tags[watering_tag];
 	}
 
-	var HTML_plants = '<tr>';
+
+	var HTML_header_week_no = '';
+	for (i = 0; i < 54; i++) {
+		HTML_header_week_no = HTML_header_week_no + '<th>' + '00'.substring(i.toString().length) + i.toString() + '</th>';
+	}
+
+	var HTML_row = '<tr>';
 	for (var plant in notes_to_display) {
 		for (var year in notes_to_display[plant]) {
 			
-			HTML_plants = HTML_plants + '<td nowrap>' + garden_data['plant_tags'][plant] + '</td>';
-			HTML_plants = HTML_plants + '<td>' + year + '</td>';
+			HTML_row = HTML_row + '<td nowrap>' + garden_data['plant_tags'][plant] + '</td>';
+			HTML_row = HTML_row + '<td>' + year + '</td>';
 
-			// Loop through each note
-			//    - create the popover
-			//    - assign a symbol depending on the state tag
-			//    - assign the state colour
-			//    - add note to relevant week number
-			//    - 
-			for (var week in notes_to_display[plant][year]) {
+			var cell_colour = '';
 
-				console.log(week);
+			// Loop through each week
+			for (var week = 0; week < notes_to_display[plant][year].length; week++) {
 
 				var note = notes_to_display[plant][year][week];
 
-				var formatted_HTML_week = '<td>';
+				var formatted_HTML_cell = '<td class="%cell_colour%"></td>';
 
-				if (note.length > 0) {
+				// Clear cell contents for future weeks
+				if(week > today_wk && year === today_yr){
+						formatted_HTML_cell = '<td></td>';
 
-					var i = 0;
+				} else if (note.length > 0) {
+
+					// Set max number of symbols to display per cell
+					var iter = note.length > 3 ? 3 : note.length;
+
+					var cell_symbols 	= '',
+						popover_title 	= '',
+						popover_body 	= '';
+
+					
+					// Loop through all notes in the week
+					for (var i = 0; i < iter; i++) {
+
+						// Get plant state
+						var state_tag 	 = containsSome(garden_data['notes'][note[i]]['tags'], Object.keys(state_tags));
+						console.log(garden_data['notes'][note[i]]['title']);
+						
+						console.log(state_tag);
+
+
+						// Ignore if no state tag present
+						if (state_tag !== false) {
+
+							// Set cell color depending on plant state
+							if( state_colours[state_tag] !== '' ) {
+								cell_colour = state_colours[state_tag];
+							}
+
+							// Populate symbols for cell
+							cell_symbols = cell_symbols + state_tag ? state_symbols[state_tag] : 'i';
+
+							if (popover_title !== '') {
+								popover_body = popover_title + garden_data['notes'][note[i]]['title'] + popover_body;
+								popover_title = 'Multiple notes this week'
+								
+							} else {
+								popover_title = garden_data['notes'][note[i]]['title'];
+
+								// Add image if present in note
+								if(garden_data['notes'][note[i]]['res'].length > 0){
+									popover_body = HTML_popover_body.replace('%res_link%', garden_data['notes'][note[i]]['res'][0]);								
+								} else {
+									popover_body = '';
+								}
+							}
+
+						}
+					}
 	
 					// Create popover			
-					formatted_HTML_cell = HTML_cell.replace('%popover_title%', garden_data['notes'][note[i]]['title']);
+					formatted_HTML_cell = HTML_cell.replace('%popover_title%', popover_title);
+					formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body);
 					
-					if(garden_data['notes'][note[i]]['res'].length > 0){
-						formatted_HTML_popover_body = HTML_popover_body.replace('%res_link%', garden_data['notes'][note[i]]['res'][0]);
-						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', formatted_HTML_popover_body);
-					} else {
-						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', '');
-					}
+					// Draw cell
+					formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', cell_symbols);
+					formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  cell_colour);
 
-
-					// Add plant state symbol
-					var state_tag 	 = containsSome(garden_data['notes'][note[i]]['tags'], Object.keys(garden_data['state_tags']));					
-
-					formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', state_tag ? state_symbols[state_tag] : 'i');
-					formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  state_tag ? state_colours[state_tag] : '');
-
-
-					// Place symbol for note in week number column
-					var date = new Date(Number(garden_data['notes'][note[i]]['created']));
-
-					
-					// formatted_HTML_week = formatted_HTML_week.replace('%wk' + date.getWeek().toString() + '%', formatted_HTML_cell);
 				}
 
-				formatted_HTML_week = formatted_HTML_week + '</td>';
+				HTML_row = HTML_row + formatted_HTML_cell;
 			}
 
-			HTML_plants = HTML_plants + formatted_HTML_week + '</tr>';	
+			HTML_row = HTML_row + '</tr>';
 		}
 	}
 
-
-    formattedHTMLtable = HTMLtable.replace("%week_no%", HTML_title_week_no);
-    formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_plants);
+	// Draw table
+    formattedHTMLtable = HTMLtable.replace("%week_no%", HTML_header_week_no);
+    formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_row);
     // formattedHTMLtable = formattedHTMLtable.replace(/%wk\d+%/g, '<td></td>');
 
 	$('#chart-section').append(formattedHTMLtable);
 
+	// Enable popover
 	$(document).ready(function() {
 	    $("#chart-section").popover({ selector: '[data-toggle=popover]' });
 	});
