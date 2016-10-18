@@ -240,27 +240,32 @@ function drawGardenChart(notes_to_display, garden_data) {
 	var state_colours = {
 	    "05760b67-5d9b-4c47-9b75-729c0f2f4614": "info",
 	    "2fb9a7e6-99ac-487c-af7f-3c468ce31e95": "",
-	    "6d2fab44-76fb-4f0a-b9b6-60846ebadba2": "",
+	    "6d2fab44-76fb-4f0a-b9b6-60846ebadba2": "success",
+	    "6dc756b8-35fa-4136-8a7b-c826084b11ed": "danger",
 	    "9da9be98-9bf5-4170-9d8c-2a1751d11203": "",
 	    "a2a964fe-eb33-4fac-b2a9-2e001a8390e0": "",
 	    "b6014f8c-a736-4672-97a5-77e6ae925a64": "success",
-	    "cfdf9e45-d107-40fa-8852-e15c86a14202": ""
+	    "cfdf9e45-d107-40fa-8852-e15c86a14202": "",	
+    	"d3bd0212-af17-463d-b85d-01460c54b95c": ""
 	  };
 
 	var state_symbols = {
 	    "05760b67-5d9b-4c47-9b75-729c0f2f4614": "♣",
-	    "2fb9a7e6-99ac-487c-af7f-3c468ce31e95": "i",
+	    "2fb9a7e6-99ac-487c-af7f-3c468ce31e95": "🛈",
 	    "6d2fab44-76fb-4f0a-b9b6-60846ebadba2": "£",
-	    "9da9be98-9bf5-4170-9d8c-2a1751d11203": "♱",
+	    "6dc756b8-35fa-4136-8a7b-c826084b11ed": "⛮",
+	    "9da9be98-9bf5-4170-9d8c-2a1751d11203": "⛪",
 	    "a2a964fe-eb33-4fac-b2a9-2e001a8390e0": "X",
 	    "b6014f8c-a736-4672-97a5-77e6ae925a64": "ϒ",
-	    "cfdf9e45-d107-40fa-8852-e15c86a14202": "w"
+	    "cfdf9e45-d107-40fa-8852-e15c86a14202": "⍵",
+    	"d3bd0212-af17-463d-b85d-01460c54b95c": "m"
 	  };
 
 	var watering_tag = "cfdf9e45-d107-40fa-8852-e15c86a14202";
+	var dead_tag 	 = "9da9be98-9bf5-4170-9d8c-2a1751d11203";
 
 	var HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-	var HTML_cell = '<td class="%cell_colour%"><div style="cursor:pointer" data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div>';
+	var HTML_cell = '<td class="%cell_colour%" nowrap><div style="cursor:pointer" data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div>';
 	var HTML_popover_body = "<img src='%res_link%' width='200' />";
 
 
@@ -285,10 +290,9 @@ function drawGardenChart(notes_to_display, garden_data) {
 	for (var plant in notes_to_display) {
 		for (var year in notes_to_display[plant]) {
 			
-			HTML_row = HTML_row + '<td nowrap>' + garden_data['plant_tags'][plant] + '</td>';
-			HTML_row = HTML_row + '<td>' + year + '</td>';
-
-			var cell_colour = '';
+			var cell_colour = ''
+				plant_data  = '',
+				plant_dead  = false;
 
 			// Loop through each week
 			for (var week = 0; week < notes_to_display[plant][year].length; week++) {
@@ -298,28 +302,23 @@ function drawGardenChart(notes_to_display, garden_data) {
 				var formatted_HTML_cell = '<td class="%cell_colour%"></td>';
 
 				// Clear cell contents for future weeks
-				if(week > today_wk && year === today_yr){
+				if((week > today_wk && year === today_yr) || plant_dead ){
 						formatted_HTML_cell = '<td></td>';
 
 				} else if (note.length > 0) {
-
-					// Set max number of symbols to display per cell
-					var iter = note.length > 3 ? 3 : note.length;
 
 					var cell_symbols 	= '',
 						popover_title 	= '',
 						popover_body 	= '';
 
-					
+					// Set max number of symbols to display per cell
+					var iter = note.length > 3 ? 3 : note.length;
+
 					// Loop through all notes in the week
 					for (var i = 0; i < iter; i++) {
 
 						// Get plant state
 						var state_tag 	 = containsSome(garden_data['notes'][note[i]]['tags'], Object.keys(state_tags));
-						console.log(garden_data['notes'][note[i]]['title']);
-						
-						console.log(state_tag);
-
 
 						// Ignore if no state tag present
 						if (state_tag !== false) {
@@ -330,21 +329,27 @@ function drawGardenChart(notes_to_display, garden_data) {
 							}
 
 							// Populate symbols for cell
-							cell_symbols = cell_symbols + state_tag ? state_symbols[state_tag] : 'i';
+							cell_symbols = cell_symbols + (state_tag ? state_symbols[state_tag] : '🛈');
 
+							// Create popover or append if multiple notes in a single week
 							if (popover_title !== '') {
 								popover_body = popover_title + garden_data['notes'][note[i]]['title'] + popover_body;
-								popover_title = 'Multiple notes this week'
+								popover_title = 'Multiple notes this week';
 								
 							} else {
 								popover_title = garden_data['notes'][note[i]]['title'];
 
 								// Add image if present in note
-								if(garden_data['notes'][note[i]]['res'].length > 0){
+								if(garden_data['notes'][note[i]]['res'].length > 0) {
 									popover_body = HTML_popover_body.replace('%res_link%', garden_data['notes'][note[i]]['res'][0]);								
 								} else {
 									popover_body = '';
 								}
+							}
+
+							// Stop shading cells if plant has died
+							if ( state_tag === dead_tag ) {
+								plant_dead = true;
 							}
 
 						}
@@ -356,22 +361,22 @@ function drawGardenChart(notes_to_display, garden_data) {
 					
 					// Draw cell
 					formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', cell_symbols);
-					formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  cell_colour);
-
 				}
-
-				HTML_row = HTML_row + formatted_HTML_cell;
-			}
-
-			HTML_row = HTML_row + '</tr>';
+				
+				formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  cell_colour);
+				plant_data = plant_data + formatted_HTML_cell;
+			}	
 		}
+
+		// Draw row
+		HTML_row = HTML_row + '<td nowrap>' + garden_data['plant_tags'][plant] + '</td>';
+		HTML_row = HTML_row + '<td>' + year + '</td>';
+		HTML_row = HTML_row + plant_data + '</tr>';
 	}
 
 	// Draw table
     formattedHTMLtable = HTMLtable.replace("%week_no%", HTML_header_week_no);
     formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_row);
-    // formattedHTMLtable = formattedHTMLtable.replace(/%wk\d+%/g, '<td></td>');
-
 	$('#chart-section').append(formattedHTMLtable);
 
 	// Enable popover
