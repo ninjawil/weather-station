@@ -265,8 +265,9 @@ function drawGardenChart(notes_to_display, garden_data) {
 	var dead_tag 	 = "9da9be98-9bf5-4170-9d8c-2a1751d11203";
 
 	var HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-	var HTML_cell = '<td class="%cell_colour%" nowrap><div style="cursor:pointer" data-toggle="popover" data-placement="top" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div>';
-	var HTML_popover_body = "<img src='%res_link%' width='200' />";
+	var HTML_cell = '<td class="%cell_colour%" nowrap><div style="cursor:pointer" data-toggle="popover" data-placement="auto" data-html="true" title="<b>%popover_title%</b>" data-content="%popover_body%">%plant_symbol%</div>';
+	var HTML_popover_img = "<img src='%res_link%' width='200' />";
+	var HTML_popover_link = "<a href='%url%'>%link_text%</a>";
 
 
 	var today = new Date();
@@ -290,7 +291,8 @@ function drawGardenChart(notes_to_display, garden_data) {
 	for (var plant in notes_to_display) {
 		for (var year in notes_to_display[plant]) {
 			
-			var cell_colour = ''
+			var cell_colour = '',
+				popover_img = '',
 				plant_data  = '',
 				plant_dead  = false;
 
@@ -312,13 +314,13 @@ function drawGardenChart(notes_to_display, garden_data) {
 						popover_body 	= '';
 
 					// Set max number of symbols to display per cell
-					var iter = note.length > 3 ? 3 : note.length;
+					//var iter = note.length > 3 ? 3 : note.length;
 
 					// Loop through all notes in the week
-					for (var i = 0; i < iter; i++) {
+					for (var i = 0; i < note.length; i++) {
 
 						// Get plant state
-						var state_tag 	 = containsSome(garden_data['notes'][note[i]]['tags'], Object.keys(state_tags));
+						var state_tag = containsSome(garden_data['notes'][note[i]]['tags'], Object.keys(state_tags));
 
 						// Ignore if no state tag present
 						if (state_tag !== false) {
@@ -331,21 +333,15 @@ function drawGardenChart(notes_to_display, garden_data) {
 							// Populate symbols for cell
 							cell_symbols = cell_symbols + (state_tag ? state_symbols[state_tag] : '🛈');
 
-							// Create popover or append if multiple notes in a single week
-							if (popover_title !== '') {
-								popover_body = popover_title + garden_data['notes'][note[i]]['title'] + popover_body;
-								popover_title = 'Multiple notes this week';
-								
-							} else {
-								popover_title = garden_data['notes'][note[i]]['title'];
-
-								// Add image if present in note
-								if(garden_data['notes'][note[i]]['res'].length > 0) {
-									popover_body = HTML_popover_body.replace('%res_link%', garden_data['notes'][note[i]]['res'][0]);								
-								} else {
-									popover_body = '';
-								}
+							// Add image if present in note
+							if(garden_data['notes'][note[i]]['res'].length > 0) {
+								popover_img = HTML_popover_img.replace('%res_link%', garden_data['notes'][note[i]]['res'][0]);								
 							}
+
+							// Create popover or append if multiple notes in a single week
+							popover_title = popover_title !== '' ? 'Multiple notes this week' : garden_data['notes'][note[i]]['title'];
+							popover_body  = popover_body + HTML_popover_link.replace('%url%', garden_data['notes'][note[i]]['link']);
+							popover_body  = popover_body.replace('%link_text%', garden_data['notes'][note[i]]['title']);
 
 							// Stop shading cells if plant has died
 							if ( state_tag === dead_tag ) {
@@ -357,7 +353,7 @@ function drawGardenChart(notes_to_display, garden_data) {
 	
 					// Create popover			
 					formatted_HTML_cell = HTML_cell.replace('%popover_title%', popover_title);
-					formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body);
+					formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
 					
 					// Draw cell
 					formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', cell_symbols);
