@@ -41,6 +41,7 @@ function updateSettingsModal(config_data) {
 	$('#garden-tag').attr('value', config_data.evernote.GARDENING_TAG);
 	$('#plant-tag-id').attr('value', config_data.evernote.PLANT_TAG_ID);
 	$('#location-tag-id').attr('value', config_data.evernote.LOCATION_TAG_ID);
+	$('#state-tag-id').attr('value', config_data.evernote.STATE_TAG_ID);
 
 	$('#mk-addr').attr('value', config_data.maker_channel.MAKER_CH_ADDR);
 	$('#mk-key').attr('value', config_data.maker_channel.MAKER_CH_KEY);
@@ -141,7 +142,8 @@ function saveSettings() {
   		"evernote": {
 		  	"GARDENING_TAG": 		$('#settingsForm').find('[name="garden-tag"]').val(),
 		  	"PLANT_TAG_ID": 		$('#settingsForm').find('[name="plant-tag-id"]').val(),
-		  	"LOCATION_TAG_ID": 		$('#settingsForm').find('[name="location-tag-id"]').val()
+		  	"LOCATION_TAG_ID": 		$('#settingsForm').find('[name="location-tag-id"]').val(),
+		  	"STATE_TAG_ID": 		$('#settingsForm').find('[name="state-tag-id"]').val()
   		}
 	};
 
