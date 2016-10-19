@@ -9,23 +9,10 @@
 
 
 //-------------------------------------------------------------------------------
-// Grab config.json data
-//-------------------------------------------------------------------------------
-function grabConfigData(){
-
-	$.getJSON('weather_data/config.json', function(json) {
-	    updateSettingsModal(json);
-	});
-
-}
-
-
-//-------------------------------------------------------------------------------
 // Once config data is loaded, draw it in Settings Modal
 //-------------------------------------------------------------------------------
-function updateSettingsModal(json) {
+function updateSettingsModal(config_data) {
 
-    config_data = json;
 
 	$('#ip1').attr('value', config_data.network.ROUTER_IP);
 
@@ -178,7 +165,9 @@ function saveSettings() {
 //-------------------------------------------------------------------------------
 function main() {
 
-	grabConfigData();
+	// grabConfigData();
+
+	getFileData('weather_data/config.json', 'json', updateSettingsModal, []);
 
 }
 
