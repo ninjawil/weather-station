@@ -85,6 +85,7 @@ function drawGardenSearchBar(garden_data) {
     for (var year in year_list) {
     	html_year_list = html_year_list + "<option>" + year_list[year] + "</option>";
     }
+    console.log(html_year_list);
     formattedHTMLdateList = HTMLdateList.replace("%date_list%", html_year_list);
 
 
@@ -113,7 +114,7 @@ function drawGardenSearchBar(garden_data) {
 		if($.inArray('All', plant_input) !== -1) {
 			search_data.plant = Object.keys(garden_data.plant_tags); 
 		} else {
-			for (var i = 0; i <= plant_input.length - 1; i++) {
+			for (var i=0, len=plant_input.length; i<len; i++) {
 				search_data.plant.push(plants_by_name[plant_input[i]]);
 			}
 		}
@@ -123,7 +124,7 @@ function drawGardenSearchBar(garden_data) {
 		if($.inArray('All', location_input) !== -1) {
 			search_data.location = Object.keys(garden_data.location_tags); 
 		} else {
-			for (var i = 0; i <= location_input.length - 1; i++) {
+			for (var i=0, len=location_input.length; i<len; i++) {
 				search_data.location.push(locations_by_name[location_input[i]]);
 			}
 		}
@@ -153,22 +154,21 @@ function sortGardenData(garden_data, search) {
     var notes_flt = [];
     for (var note in garden_data.notes) {
  
-    	var date = new Date(Number(garden_data.notes[note].created));
+    	var date = new Date(Number(garden_data.notes[note].created)).getFullYear().toString();
 
-    	if ($.inArray(date.getFullYear().toString(), search.year) !== -1) {
-    		if(	containsAny(search.plant, garden_data.notes[note].tags) &&
-    			containsAny(search.location, garden_data.notes[note].tags)) {
+    	if ($.inArray(date, search.year) !== -1 &&
+    		containsAny(search.plant, garden_data.notes[note].tags) &&
+    		containsAny(search.location, garden_data.notes[note].tags)) {
 
-				notes_flt.push(note);			
-			}
+			notes_flt.push(note);			
 	    }	
     }
 
     // Sort notes into plant and location order
     var notes_sorted = {};
-	for (var k = 0; k <= notes_flt.length - 1; k++) {
-    
-	    for (var i = 0; i <= search.plant.length - 1; i++) {
+	for (var k=0, k_len=notes_flt.length; k<k_len; k++) { 
+	    for (var i=0, i_len=search.plant.length; i<i_len; i++) {
+
 		    if ($.inArray(search.plant[i], garden_data.notes[notes_flt[k]].tags) !== -1) {	  
 
 	    		var date = new Date(Number(garden_data.notes[notes_flt[k]].created));
@@ -207,14 +207,15 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	// Clear chart area
 	$('#chart-section').empty();
 	    
-	var watering_tag = "cfdf9e45-d107-40fa-8852-e15c86a14202";
-	var dead_tag 	 = "9da9be98-9bf5-4170-9d8c-2a1751d11203";
+	//var watering_tag = "cfdf9e45-d107-40fa-8852-e15c86a14202";
+	//var dead_tag 	 = "9da9be98-9bf5-4170-9d8c-2a1751d11203";
 
 	var HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 	var HTML_cell = "<td %cell_colour% nowrap><div style='cursor:pointer' data-toggle='popover' data-placement='auto' data-html='true' title='<b>%popover_title%</b>' data-content='<dl>%popover_body%</dl>'>%plant_symbol%</div>";
 	var HTML_popover_img = '<img src="%res_link%" width="200" />';
 	var HTML_popover_link = '<dd><a href="%url%">• %link_text%</a></dd>';
 
+	var state_tags = Object.keys(state);
 
 	var today = new Date();
 	today_wk = today.getWeek(); // align to week 0
@@ -222,7 +223,20 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 
 	// Filter tags
-	// var state = jQuery.extend({}, garden_data.state_tags);
+	for(var key in state) {
+    	if(state[key] === '*watering') {
+    		var watering_tag = key;
+    		break;
+	    }
+	}
+
+	for(var key in state) {
+    	if(state[key] === '*dead') {
+    		var dead_tag = key;
+    		break;
+	    }
+	}
+
 	if ($('#watering_check').is(':checked') === false) {
 		delete state[watering_tag];
 	}
@@ -236,13 +250,14 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	for (var plant in notes_to_display) {
 		for (var year in notes_to_display[plant]) {
 			
+			// Reset variables
 			var cell_colour = '',
 				popover_img = '',
 				plant_data  = '',
 				plant_dead  = false;
 
 			// Loop through each week
-			for (var week = 0; week < notes_to_display[plant][year].length; week++) {
+			for (var week=0, week_len=notes_to_display[plant][year].length; week<week_len; week++) {
 
 				var note = notes_to_display[plant][year][week];
 
@@ -263,11 +278,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 					}
 
 					// Loop through all notes in the week
-					for (var i = 0; i < note.length; i++) {
-
-						var state_tags = Object.keys(state);
-
-						for (var tag = 0; tag < garden_data.notes[note[i]].tags.length; tag++) {
+					for (var i=0, note_len=note.length; i<note_len; i++) {
+						for (var tag=0, tag_len=garden_data.notes[note[i]].tags.length; tag<tag_len; tag++) {
 
 							var state_tag = garden_data.notes[note[i]].tags[tag];
 
