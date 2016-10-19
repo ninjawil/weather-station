@@ -120,3 +120,34 @@ Date.prototype.getWeek = function () {
     // first thursday of the year and the thursday in the target week  
     return 1 + Math.ceil((firstThursday - target) / 604800000); // 604800000 = 7 * 24 * 3600 * 1000  
 } 
+
+
+
+//-------------------------------------------------------------------------------
+// Grab data from file
+//
+//  Author: wdf
+//  Site:   
+//
+//-------------------------------------------------------------------------------
+function getFileData(loc, type, functionCall, args) {
+
+    var error_data = {"9999": {"time":10, "msg": "Loading data failure"}};
+  
+    $.ajax({
+        cache: false,
+        url: loc,
+        dataType: type,
+        success: function(config_data) {            
+            args.push(config_data);
+            functionCall.apply(this, args);
+        },
+        error: function () {
+            displayErrorMessage(error_data, false, false);
+        },
+        onFailure: function () {
+            displayErrorMessage(error_data, false, false);
+        }
+    });
+    
+}
