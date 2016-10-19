@@ -71,12 +71,12 @@ function containsAll(needles, haystack){
 
 
 //-------------------------------------------------------------------------------
-//  Check whether SOME multiple values exist within an Javascript array
+//  Check whether ANY multiple values exist within an Javascript array
 //
 //  Author: wdf
 //
 //-------------------------------------------------------------------------------
-function containsSome(needles, haystack){ 
+function containsAny(needles, haystack){ 
   for(var i = 0 , len = needles.length; i < len; i++){
      if($.inArray(needles[i], haystack) !== -1) return needles[i];
   }
