@@ -34,13 +34,12 @@ function displayGarden() {
 //-------------------------------------------------------------------------------
 function drawGardenSearchBar(garden_data) {
 
-	HTMLPlantSearchContainer = '<div id="bar1" class="col-md-4"></div><div id="bar2" class="col-md-4"></div><div id="bar3" class="col-md-2"></div><div id="bar4" class="col-md-1"></div><div id="bar5" class="col-md-1" style="top: 25px;;"></div>';
-	HTMLplantList = '<form><div class="form-group"><label for="plant_sel">Plant:</label><select multiple class="form-control" id="plant_sel">%plant_list%</select><br></div></form>';
-	HTMLlocList = '<form><div class="form-group"><label for="loc_sel">Location:</label><select multiple class="form-control" id="loc_sel">%loc_list%</select><br></div></form>';
-	HTMLdateList = '<form><div class="form-group"><label for="date_sel">Year:</label><select multiple class="form-control" id="date_sel">%date_list%</select><br></div></form>';
-	HTMLoptionsList = '<form><div class="form-group"><label for="options_sel">Options:</label><div class="checkbox"><label><input type="checkbox" value="" checked="checked" id="alive_check">Alive</label></div><div class="checkbox"><label><input type="checkbox" value="" id="watering_check">Watering</label></div></div></form>';
-	// HTMLaliveList = '<form><div class="form-group"><label for="alive_sel">Alive:</label><select class="form-control" id="alive_sel"><option> Y </option><option> N </option></select><br></div></form>';
-	HTMLfilterButton = '<button type="button" class="btn btn-secondary" id="filter-btn"><span class="glyphicon glyphicon-filter"></span></button>';
+	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar2" class="col-md-4">%bar2%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;;">%bar5%</div>',
+		HTMLplantList = '<form><div class="form-group"><label for="plant_sel">Plant:</label><select multiple class="form-control" id="plant_sel"><option selected>All</option><option>%plant_list%</option></select><br></div></form>',
+		HTMLlocList = '<form><div class="form-group"><label for="loc_sel">Location:</label><select multiple class="form-control" id="loc_sel"><option selected>All</option><option>%loc_list%</option></select><br></div></form>',
+		HTMLdateList = '<form><div class="form-group"><label for="date_sel">Year:</label><select multiple class="form-control" id="date_sel"><option selected>All</option><option>%date_list%</option></select><br></div></form>',
+		HTMLoptionsList = '<form><div class="form-group"><label for="options_sel">Options:</label><div class="checkbox"><label><input type="checkbox" value="" checked="checked" id="alive_check">Alive</label></div><div class="checkbox"><label><input type="checkbox" value="" id="watering_check">Watering</label></div></div></form>',
+		HTMLfilterButton = '<button type="button" class="btn btn-secondary" id="filter-btn"><span class="glyphicon glyphicon-filter"></span></button>';
 
 
 	// Prepare plant list
@@ -48,15 +47,7 @@ function drawGardenSearchBar(garden_data) {
    	for(var key in garden_data.plant_tags) {
    		plants_by_name[garden_data.plant_tags[key]] = key;
 	}
-
     var plants = Object.keys(plants_by_name).sort();
- 	
-   	var plant_list =  "<option selected> All </option>";
-    for (var i = 0; i <= plants.length - 1; i++) {
-    	plant_list = plant_list + "<option>" + plants[i] + "</option>";
-    }
-    formattedHTMLplantList = HTMLplantList.replace("%plant_list%", plant_list);
-
 
 	// Prepare location list
    	var locations_by_name = {};
@@ -64,13 +55,6 @@ function drawGardenSearchBar(garden_data) {
    		locations_by_name[garden_data.location_tags[key]] = key;
   	}
     var locations = Object.keys(locations_by_name).sort();
-
-   	var loc_list = "<option selected> All </option>";
-    for (var i = 0; i <= locations.length - 1; i++) {
-    	loc_list = loc_list + "<option>" + locations[i] + "</option>";
-    }
-    formattedHTMLlocList = HTMLlocList.replace("%loc_list%", loc_list);
-
 
 	// Prepare date list
    	var year_list = [];
@@ -81,23 +65,15 @@ function drawGardenSearchBar(garden_data) {
     	}
     }
 
-   	var html_year_list = "<option selected> All </option>";
-    for (var year in year_list) {
-    	html_year_list = html_year_list + "<option>" + year_list[year] + "</option>";
-    }
-    console.log(html_year_list);
-    formattedHTMLdateList = HTMLdateList.replace("%date_list%", html_year_list);
+	// Draw filter options
+	var HTMLPlantFilter 	=   HTMLPlantFilter.replace('%bar1%', HTMLplantList.replace("%plant_list%", plants.join('</option><option>')));
+	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar2%', HTMLlocList.replace("%loc_list%", locations.join('</option><option>')));
+	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar3%', HTMLdateList.replace("%date_list%", year_list.join('</option><option>')));
+	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar4%', HTMLoptionsList)
+	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar5%', HTMLfilterButton)
 
-
-	// Clear chart area
 	$('#garden-input-bar-section').empty();
-	$(HTMLPlantSearchContainer).appendTo('#garden-input-bar-section');
-
-	$('#bar1').append(formattedHTMLplantList);
-	$('#bar2').append(formattedHTMLlocList);
-	$('#bar3').append(formattedHTMLdateList);
-	$('#bar4').append(HTMLoptionsList);
-	$('#bar5').append(HTMLfilterButton);
+	$(f_HTMLPlantSearchContainer).appendTo('#garden-input-bar-section');
 
 	$("#filter-btn").click(function(){
 
