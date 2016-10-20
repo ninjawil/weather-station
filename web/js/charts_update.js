@@ -203,7 +203,7 @@ function drawHeatMap(sensor_name, value_array) {
 	};
 
 	var data_array = [];
-	for(var i=0 len=value_array[sensor_name].length; i<len; i++){
+	for(var i=0, len=value_array[sensor_name].length; i<len; i++){
 		data_array.push(value_array[sensor_name][i][1]);
 	}
 
@@ -318,7 +318,7 @@ function drawCharts(chart_names, drawDayNight, sensors) {
     }
 
     //Create a chart per unit type
-    for (chart_no=0, chart_len=chart_names.length; chart_no<len; chart_no++) { 
+    for (chart_no=0, chart_len=chart_names.length; chart_no<chart_len; chart_no++) { 
 
     	//Populate each graph
     	var	valueSeries = [];		
