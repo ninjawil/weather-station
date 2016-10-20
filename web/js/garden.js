@@ -213,24 +213,31 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	    }
 	}
 
-	if ($('#watering_check').is(':checked') === false) {
+	if (!$('#watering_check').is(':checked')) {
 		delete state[watering_tag];
 	}
 
-	var HTML_header_week_no = '';
+	// Create week number table header
+	var week_numbers = [];
 	for (i = 0; i < 54; i++) {
-		HTML_header_week_no = HTML_header_week_no + '<th>' + '00'.substring(i.toString().length) + i.toString() + '</th>';
+		week_numbers.push('00'.substring(i.toString().length) + i.toString());
 	}
+	var HTML_header_week_no = '<th>' + week_numbers.join('<th></th>') + '</th>';
 
-	var HTML_row = '<tr>';
+
+	var HTML_row = [];
 	for (var plant in notes_to_display) {
+
+		HTML_row.push('<tr><td nowrap>' + garden_data.plant_tags[plant] + '</td>');
+
 		for (var year in notes_to_display[plant]) {
 			
 			// Reset variables
 			var cell_colour = '',
 				popover_img = '',
-				plant_data  = '',
 				plant_dead  = false;
+
+			HTML_row.push('<td>' + year + '</td>');
 
 			// Loop through each week
 			for (var week=0, week_len=notes_to_display[plant][year].length; week<week_len; week++) {
@@ -298,19 +305,17 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 				}
 
 				formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  cell_colour);
-				plant_data = plant_data + formatted_HTML_cell;
+				HTML_row.push(formatted_HTML_cell);
 			}	
 		}
 
 		// Draw row
-		HTML_row = HTML_row + '<td nowrap>' + garden_data.plant_tags[plant] + '</td>';
-		HTML_row = HTML_row + '<td>' + year + '</td>';
-		HTML_row = HTML_row + plant_data + '</tr>';
+		HTML_row.push('</tr>');
 	}
 
 	// Draw table
     formattedHTMLtable = HTMLtable.replace("%week_no%", HTML_header_week_no);
-    formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_row);
+    formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_row.join());
 	$('#chart-section').append(formattedHTMLtable);
 
 	// Enable popover
