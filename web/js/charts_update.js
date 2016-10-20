@@ -117,11 +117,11 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 				xml_sensors  = xml.getElementsByTagName("entry"),
 				xmlValue = xml.getElementsByTagName("row");
 
-			for(var i = 0; i < xml_sensors.length; i++) {
+			for(var i=0, i_len=xml_sensors.length; i<i_len; i++) {
 
 				output_data[xml_sensors[i].childNodes[0].nodeValue] = [];
 
-				for(var j = 0; j < xmlValue.length; j++) {
+				for(var j=0, j_len=xmlValue.length; j<j_len; j++) {
 					var xmlEntryValue = xmlValue[j].childNodes[i+1].childNodes[0].nodeValue,
 						xmlEntryTime = xmlValue[j].childNodes[0].childNodes[0].nodeValue;
 
@@ -203,7 +203,7 @@ function drawHeatMap(sensor_name, value_array) {
 	};
 
 	var data_array = [];
-	for(var i = 0; i<value_array[sensor_name].length; i++){
+	for(var i=0 len=value_array[sensor_name].length; i<len; i++){
 		data_array.push(value_array[sensor_name][i][1]);
 	}
 
@@ -318,7 +318,7 @@ function drawCharts(chart_names, drawDayNight, sensors) {
     }
 
     //Create a chart per unit type
-    for (chart_no = 0; chart_no < chart_names.length; chart_no++) { 
+    for (chart_no=0, chart_len=chart_names.length; chart_no<len; chart_no++) { 
 
     	//Populate each graph
     	var	valueSeries = [];		
