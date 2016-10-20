@@ -126,49 +126,46 @@ function drawGardenSearchBar(garden_data) {
 //-------------------------------------------------------------------------------
 function sortGardenData(garden_data, search) {
 
+	console.time("sort_data");
+
     // Filter notes
-    var notes_flt = [];
+    var notes_sorted = {};
     for (var note in garden_data.notes) {
  
-    	var date = new Date(Number(garden_data.notes[note].created)).getFullYear().toString();
+    	var date = new Date(Number(garden_data.notes[note].created));
+    	var year = date.getFullYear().toString();
+		var week = date.getWeek();
 
-    	if ($.inArray(date, search.year) !== -1 &&
-    		containsAny(search.plant, garden_data.notes[note].tags) &&
-    		containsAny(search.location, garden_data.notes[note].tags)) {
+		var note_tags = garden_data.notes[note].tags;
 
-			notes_flt.push(note);			
+    	if ($.inArray(year, search.year) !== -1) {
+
+		    for (var i=0, i_len=search.plant.length; i<i_len; i++) {
+
+			    if ($.inArray(search.plant[i], note_tags) !== -1) {	  
+
+		    		// Create object if does not exist
+					if ($.inArray(search.plant[i], Object.keys(notes_sorted)) === -1) {
+						notes_sorted[search.plant[i]] = {};
+					    notes_sorted[search.plant[i]][year] = [ 
+					    	[], [], [], [], [], [], [], [], [], [],
+					    	[], [], [], [], [], [], [], [], [], [],
+					    	[], [], [], [], [], [], [], [], [], [],
+					    	[], [], [], [], [], [], [], [], [], [],
+					    	[], [], [], [], [], [], [], [], [], [],
+					    	[], [], [], []
+					    ];
+					}
+
+			    	notes_sorted[search.plant[i]][year][week].push(note);
+			    }
+			}
 	    }	
     }
 
-    // Sort notes into plant and location order
-    var notes_sorted = {};
-	for (var k=0, k_len=notes_flt.length; k<k_len; k++) { 
-	    for (var i=0, i_len=search.plant.length; i<i_len; i++) {
 
-		    if ($.inArray(search.plant[i], garden_data.notes[notes_flt[k]].tags) !== -1) {	  
-
-	    		var date = new Date(Number(garden_data.notes[notes_flt[k]].created));
-	    		var year = date.getFullYear().toString();
-	    		var week = date.getWeek();
-	    		week = '00'.substring(week.toString().length) + week.toString();
-
-	    		// Create object if does not exist
-				if ($.inArray(search.plant[i], Object.keys(notes_sorted)) === -1) {
-					notes_sorted[search.plant[i]] = {}
-				    notes_sorted[search.plant[i]][year] = [ 
-				    	[], [], [], [], [], [], [], [], [], [],
-				    	[], [], [], [], [], [], [], [], [], [],
-				    	[], [], [], [], [], [], [], [], [], [],
-				    	[], [], [], [], [], [], [], [], [], [],
-				    	[], [], [], [], [], [], [], [], [], [],
-				    	[], [], [], []
-				    ];
-				}
-
-		    	notes_sorted[search.plant[i]][year][week].push(notes_flt[k]);
-		    }
-		}
-	}
+	console.timeEnd("sort_data");
+	console.log(notes_sorted);
 
 	return notes_sorted;
 
