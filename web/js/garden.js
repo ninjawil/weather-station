@@ -77,7 +77,7 @@ function drawGardenSearchBar(garden_data) {
 
 	$("#filter-btn").click(function(){
 
-		search_data = {
+		var search_data = {
 			"plant": 	[],
 			"location": [],
 			"year": 	$( "#date_sel" ).val(),
@@ -86,22 +86,22 @@ function drawGardenSearchBar(garden_data) {
 		}
 
 		// Return plant guid
-		var plant_input = $( "#plant_sel" ).val();
-		if($.inArray('All', plant_input) !== -1) {
+		vsearch_data.plant = $( "#plant_sel" ).val();
+		if($.inArray('All', search_data.plant) !== -1) {
 			search_data.plant = Object.keys(garden_data.plant_tags); 
 		} else {
-			for (var i=0, len=plant_input.length; i<len; i++) {
-				search_data.plant.push(plants_by_name[plant_input[i]]);
+			for (var i=0, len=search_data.plant.length; i<len; i++) {
+				search_data.plant[i] = plants_by_name[search_data.plant[i]];
 			}
 		}
 
 		// Return location guid
-		var location_input = $( "#loc_sel" ).val();
-		if($.inArray('All', location_input) !== -1) {
+		search_data.location = $( "#loc_sel" ).val();
+		if($.inArray('All', search_data.location) !== -1) {
 			search_data.location = Object.keys(garden_data.location_tags); 
 		} else {
-			for (var i=0, len=location_input.length; i<len; i++) {
-				search_data.location.push(locations_by_name[location_input[i]]);
+			for (var i=0, len=search_data.location.length; i<len; i++) {
+				search_data.location[i] = locations_by_name[search_data.location[i]];
 			}
 		}
 
@@ -131,6 +131,7 @@ function sortGardenData(garden_data, search) {
     // Filter notes
     var notes_sorted = {};
     for (var note in garden_data.notes) {
+		if (!garden_data.notes.hasOwnProperty(note)) continue;
  
     	var date = new Date(Number(garden_data.notes[note].created));
     	var year = date.getFullYear().toString();
@@ -145,7 +146,7 @@ function sortGardenData(garden_data, search) {
 			    if ($.inArray(search.plant[i], note_tags) !== -1) {	  
 
 		    		// Create object if does not exist
-					if ($.inArray(search.plant[i], Object.keys(notes_sorted)) === -1) {
+					if (!notes_sorted.hasOwnProperty(search.plant[i])) {
 						notes_sorted[search.plant[i]] = {};
 					    notes_sorted[search.plant[i]][year] = [ 
 					    	[], [], [], [], [], [], [], [], [], [],
@@ -165,7 +166,6 @@ function sortGardenData(garden_data, search) {
 
 
 	console.timeEnd("sort_data");
-	console.log(notes_sorted);
 
 	return notes_sorted;
 
@@ -176,6 +176,8 @@ function sortGardenData(garden_data, search) {
 // Draw charts
 //-------------------------------------------------------------------------------
 function drawGardenChart(notes_to_display, garden_data, state) {
+
+	console.time("draw_data");
 	    
 	//var watering_tag = "cfdf9e45-d107-40fa-8852-e15c86a14202";
 	//var dead_tag 	 = "9da9be98-9bf5-4170-9d8c-2a1751d11203";
@@ -185,8 +187,6 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	var HTML_popover_img = '<img src="%res_link%" width="200" />';
 	var HTML_popover_link = '<dd><a href="%url%">• %link_text%</a></dd>';
 
-	var state_tags = Object.keys(state);
-
 	var today = new Date();
 	today_wk = today.getWeek(); // align to week 0
 	today_yr = today.getFullYear().toString();
@@ -194,43 +194,51 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 	// Filter tags
 	for(var key in state) {
-    	if(state[key] === '*watering') {
+    	if(state[key].name === '*watering') {
     		var watering_tag = key;
     		break;
 	    }
 	}
 
 	for(var key in state) {
-    	if(state[key] === '*dead') {
+    	if(state[key].name === '*dead') {
     		var dead_tag = key;
     		break;
 	    }
 	}
 
-	if (!$('#watering_check').is(':checked')) {
-		delete state[watering_tag];
-	}
+	if (!$('#watering_check').is(':checked'))  delete state[watering_tag];
+
 
 	// Create week number table header
 	var week_numbers = [];
 	for (i = 0; i < 54; i++) {
 		week_numbers.push('00'.substring(i.toString().length) + i.toString());
 	}
-	var HTML_header_week_no = '<th>' + week_numbers.join('</th><th>') + '</th>';
+	var HTML_header_week_no  = '<th>';
+	HTML_header_week_no 	+= week_numbers.join('</th><th>');
+	HTML_header_week_no 	+= '</th>';
+
 
 	var HTML_row = [];
 	for (var plant in notes_to_display) {
+    	if (!notes_to_display.hasOwnProperty(plant)) continue;
 
-		HTML_row.push('<tr><td nowrap>' + garden_data.plant_tags[plant] + '</td>');
+		HTML_row.push('<tr><td nowrap>');
+		HTML_row.push(garden_data.plant_tags[plant]);
+		HTML_row.push('</td>');
 
 		for (var year in notes_to_display[plant]) {
-			
+	    	if (!notes_to_display[plant].hasOwnProperty(year)) continue;
+
 			// Reset variables
 			var cell_colour = '',
 				popover_img = '',
 				plant_dead  = false;
 
-			HTML_row.push('<td>' + year + '</td>');
+			HTML_row.push('<td>');
+			HTML_row.push(year);
+			HTML_row.push('</td>');
 
 			// Loop through each week
 			for (var week=0, week_len=notes_to_display[plant][year].length; week<week_len; week++) {
@@ -241,7 +249,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 				// Clear cell contents for future weeks
 				if((week > today_wk && year === today_yr) || plant_dead ){
-						formatted_HTML_cell = '<td></td>';
+					formatted_HTML_cell = '<td></td>';
 
 				} else if (note.length > 0) {
 
@@ -249,9 +257,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 						popover_title 	= '',
 						popover_body 	= '';
 
-					if (cell_colour === ''){
-						cell_colour = 'class="success"';
-					}
+					if (cell_colour === '') cell_colour = 'class="success"';
 
 					// Loop through all notes in the week
 					for (var i=0, note_len=note.length; i<note_len; i++) {
@@ -259,11 +265,13 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 							var state_tag = garden_data.notes[note[i]].tags[tag];
 
-							if ( $.inArray(state_tag, state_tags) !== -1 ) {
+							if ( state.hasOwnProperty(state_tag) ) {
 
 								// Set cell color depending on plant state
 								if( state[state_tag].color !== '' ) {
-									cell_colour = 'class="' + state[state_tag].color + '"';
+									cell_colour = 'class="';
+									cell_colour += state[state_tag].color + '"';
+									cell_colour += '"';
 								}
 
 								// Populate symbols for cell
@@ -275,9 +283,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 								}
 
 								// Stop shading cells if plant has died
-								if ( state_tag === dead_tag ) {
-									plant_dead = true;
-								}
+								if ( state_tag === dead_tag ) plant_dead = true;
+
 							}							
 						}
 
@@ -306,6 +313,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 		HTML_row.push('</tr>');
 	}
 
+	console.timeEnd("draw_data");
+
 	// Clear chart area
 	$('#chart-section').empty();
 
@@ -318,6 +327,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	$(document).ready(function() {
 	    $("#chart-section").popover({ selector: '[data-toggle=popover]' });
 	});
+
 
 
 }
