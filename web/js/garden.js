@@ -176,9 +176,6 @@ function sortGardenData(garden_data, search) {
 // Draw charts
 //-------------------------------------------------------------------------------
 function drawGardenChart(notes_to_display, garden_data, state) {
-
-	// Clear chart area
-	$('#chart-section').empty();
 	    
 	//var watering_tag = "cfdf9e45-d107-40fa-8852-e15c86a14202";
 	//var dead_tag 	 = "9da9be98-9bf5-4170-9d8c-2a1751d11203";
@@ -219,8 +216,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	for (i = 0; i < 54; i++) {
 		week_numbers.push('00'.substring(i.toString().length) + i.toString());
 	}
-	var HTML_header_week_no = '<th>' + week_numbers.join('<th></th>') + '</th>';
-
+	var HTML_header_week_no = '<th>' + week_numbers.join('</th><th>') + '</th>';
 
 	var HTML_row = [];
 	for (var plant in notes_to_display) {
@@ -310,9 +306,12 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 		HTML_row.push('</tr>');
 	}
 
+	// Clear chart area
+	$('#chart-section').empty();
+
 	// Draw table
     formattedHTMLtable = HTMLtable.replace("%week_no%", HTML_header_week_no);
-    formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_row.join());
+    formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_row.join(''));
 	$('#chart-section').append(formattedHTMLtable);
 
 	// Enable popover
