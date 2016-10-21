@@ -15,10 +15,7 @@ function displayTime(timeSinceEpoch) {
 
 	//Convert time since epoch to human dates (time needs to be in milliseconds)
 	var datetime = new Date(timeSinceEpoch);
-	// datetime = datetime.toString();
-	// datetime = datetime.toUTCString();
-
-	var time = datetime.toLocaleTimeString();
+	var time 	 = datetime.toLocaleTimeString();
 
 	if(datetime.getTimezoneOffset() == "-60") {
 		time += " &#x263C;";
@@ -83,16 +80,22 @@ function sidebarData(sensors) {
 //-------------------------------------------------------------------------------
 function formatAllDropdown(sensors) {
 
-	var formattedDropdown;
+	var HTMLallDropdown = '<li><a href="#" onclick="displayHeatMap(%id%)">%name%</a></li>';
+	
+	var f_Dropdown,
+		f_Dropdown_list = [];
 
 	for(var sensor in sensors) {
+		if (!sensors.hasOwnProperty(sensor)) continue;
 
-		formattedDropdown = HTMLallDropdown.replace("%id%", "'" + sensor + "'");
-		formattedDropdown = formattedDropdown.replace("%name%", sensors[sensor].description);
+		f_Dropdown = HTMLallDropdown.replace("%id%", "'" + sensor + "'");
+		f_Dropdown = f_Dropdown.replace("%name%", sensors[sensor].description);
 
-		//Display data		
-		$('#allDropdown').append(formattedDropdown);
+		f_Dropdown_list.push(f_Dropdown);
 	}
+
+	//Display data		
+	$('#allDropdown').append(f_Dropdown_list.join(''));
 }
 
 
