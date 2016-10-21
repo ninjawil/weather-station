@@ -78,15 +78,14 @@ function drawGardenSearchBar(garden_data) {
 	$("#filter-btn").click(function(){
 
 		var search_data = {
-			"plant": 	[],
-			"location": [],
+			"plant": 	$( "#plant_sel" ).val(),
+			"location": $( "#loc_sel" ).val(),
 			"year": 	$( "#date_sel" ).val(),
 			"alive": 	$('#alive_check').is(':checked') ? "checked" : "unchecked",
 			"watering": $('#watering_check').is(':checked') ? "checked" : "unchecked"
 		}
 
 		// Return plant guid
-		vsearch_data.plant = $( "#plant_sel" ).val();
 		if($.inArray('All', search_data.plant) !== -1) {
 			search_data.plant = Object.keys(garden_data.plant_tags); 
 		} else {
@@ -96,7 +95,6 @@ function drawGardenSearchBar(garden_data) {
 		}
 
 		// Return location guid
-		search_data.location = $( "#loc_sel" ).val();
 		if($.inArray('All', search_data.location) !== -1) {
 			search_data.location = Object.keys(garden_data.location_tags); 
 		} else {
@@ -105,7 +103,7 @@ function drawGardenSearchBar(garden_data) {
 			}
 		}
 
-		if(search_data.year == 'All') {
+		if($.inArray('All', search_data.year) !== -1) {
 			search_data.year = year_list; 
 		}
 
@@ -163,7 +161,6 @@ function sortGardenData(garden_data, search) {
 			}
 	    }	
     }
-
 
 	console.timeEnd("sort_data");
 
