@@ -34,6 +34,10 @@ function displayTime(timeSinceEpoch) {
 //-------------------------------------------------------------------------------
 function sidebarData(sensors) {
 
+	
+	var HTMLvalueBox = '<div id="%id%" class="row reading-group"><div class="row reading-name">%description%</div></div>';
+	var HTMLvalue = '<div class="row reading-value">%value%<span class="reading-unit"> %unit%</span></div>';
+
 	var formattedValueBox,
 		formattedValue;
 
@@ -81,7 +85,7 @@ function sidebarData(sensors) {
 function formatAllDropdown(sensors) {
 
 	var HTMLallDropdown = '<li><a href="#" onclick="displayHeatMap(%id%)">%name%</a></li>';
-	
+
 	var f_Dropdown,
 		f_Dropdown_list = [];
 
