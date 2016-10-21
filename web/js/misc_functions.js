@@ -151,3 +151,16 @@ function getFileData(loc, type, functionCall, args) {
     });
     
 }
+
+
+
+//-------------------------------------------------------------------------------
+// Return passed object
+//
+//  Author: 
+//  Site:   
+//
+//-------------------------------------------------------------------------------
+function cloneObject(obj) {
+    return jQuery.extend(true, {}, obj);
+}

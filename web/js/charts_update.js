@@ -7,17 +7,11 @@
 // 
 
 //-------------------------------------------------------------------------------
-// Return passed object
-//-------------------------------------------------------------------------------
-function cloneObject(obj) {
-    return jQuery.extend(true, {}, obj);
-}
-
-
-//-------------------------------------------------------------------------------
 // Converts time since last epoch and displays it on the webpage
 //-------------------------------------------------------------------------------
 function displayTime(timeSinceEpoch) {
+
+	var HTMLupdateTime = '<div class="row">%time%</div><div class="row">%date%</div>';
 
 	//Convert time since epoch to human dates (time needs to be in milliseconds)
 	var datetime = new Date(timeSinceEpoch);
@@ -27,12 +21,14 @@ function displayTime(timeSinceEpoch) {
 	var time = datetime.toLocaleTimeString();
 
 	if(datetime.getTimezoneOffset() == "-60") {
-		time = time.concat(" &#x263C;");
+		time += " &#x263C;";
 	}
 
+	var f_HTMLupdateTime =   HTMLupdateTime.replace("%time%", time)
+	f_HTMLupdateTime 	 = f_HTMLupdateTime.replace("%date%", datetime.toUTCString().slice(0, 17));
+
 	//Display time and date
-	$('#update_time').append(HTMLupdateTime.replace("%time%", time));	
-	$('#update_time').append(HTMLupdateDate.replace("%date%", datetime.toUTCString().slice(0, 17)));
+	$('#update_time').append(f_HTMLupdateTime);	
 }
 
 
