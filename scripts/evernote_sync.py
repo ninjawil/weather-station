@@ -39,7 +39,6 @@ def get_tag_guid(tag_list, search_string):
 
     return {tag.guid: tag.name for tag in tag_list if tag.name.find(search_string) > -1}
 
-
 #---------------------------------------------------------------------------
 # Get all children from parent tag
 #---------------------------------------------------------------------------
@@ -121,7 +120,7 @@ def main():
     #---------------------------------------------------------------------------
     try:
 
-        client = EvernoteClient(token=key['AUTH_TOKEN'], sandbox=True)
+        client = EvernoteClient(token=key['AUTH_TOKEN'], sandbox=False)
         
         note_store  = client.get_note_store()
         user_store  = client.get_user_store()
@@ -144,7 +143,6 @@ def main():
         if state.updateCount <= gardening_notes['sync_updateCount']:
             logger.info('Local file is in sync with Evernote. Exiting...')
             # sys.exit()
-
         logger.info('Syncing local data with Evernote...')
 
 
@@ -165,9 +163,12 @@ def main():
         # Get all tags and search for a specific tag
         tags            = note_store.listTags()
         gardening_tag   = get_tag_guid(tags, config['evernote']['GARDENING_TAG'])
+        logger.info(gardening_tag)
         gardening_notes['plant_tags']  = get_tag_guid(tags, config['evernote']['PLANT_TAG_ID'])
       
-        gardening_loc_tag = get_tag_guid(tags, config['evernote']['LOCATION_TAG_ID']).keys()
+        gardening_loc_tag = get_tag_guid(tags, config['evernote']['LOCATION_TAG_ID'])
+        logger.info(gardening_loc_tag)
+        gardening_loc_tag = gardening_loc_tag.keys()
 
         if len(gardening_loc_tag) > 1:
             logger.error("More than one Location Tag Parent found. Exiting...")
@@ -182,8 +183,6 @@ def main():
             sys.exit()
 
         gardening_notes['state_tags']  = get_tag_children(tags, gardening_state_tag[0])
-
-
 
 
         # Get all notes with specific tag
