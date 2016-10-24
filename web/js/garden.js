@@ -34,7 +34,8 @@ function displayGarden() {
 //-------------------------------------------------------------------------------
 function drawGardenSearchBar(garden_data) {
 
-	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar2" class="col-md-4">%bar2%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;;">%bar5%</div>',
+	// var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar2" class="col-md-4">%bar2%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;;">%bar5%</div>',
+	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;;">%bar5%</div>',
 		HTMLplantList = '<form><div class="form-group"><label for="plant_sel">Plant:</label><select multiple class="form-control" id="plant_sel"><option selected>All</option><option>%plant_list%</option></select><br></div></form>',
 		HTMLlocList = '<form><div class="form-group"><label for="loc_sel">Location:</label><select multiple class="form-control" id="loc_sel"><option selected>All</option><option>%loc_list%</option></select><br></div></form>',
 		HTMLdateList = '<form><div class="form-group"><label for="date_sel">Year:</label><select multiple class="form-control" id="date_sel"><option selected>All</option><option>%date_list%</option></select><br></div></form>',
@@ -79,7 +80,7 @@ function drawGardenSearchBar(garden_data) {
 
 		var search_data = {
 			"plant": 	$( "#plant_sel" ).val(),
-			"location": $( "#loc_sel" ).val(),
+			"location": 'All', //$( "#loc_sel" ).val(),
 			"year": 	$( "#date_sel" ).val(),
 			"alive": 	$('#alive_check').is(':checked') ? "checked" : "unchecked",
 			"watering": $('#watering_check').is(':checked') ? "checked" : "unchecked"
@@ -111,8 +112,6 @@ function drawGardenSearchBar(garden_data) {
 
         getFileData('weather_data/state_tags.json', 'json', drawGardenChart, [sorted_data, garden_data]);
 
-
-
     }); 
 
 }
@@ -124,7 +123,11 @@ function drawGardenSearchBar(garden_data) {
 //-------------------------------------------------------------------------------
 function sortGardenData(garden_data, search) {
 
-	console.time("sort_data");
+	var dead_plants = [],
+		dead = false;
+
+	var dead_tag = findKeyfromValue('*dead', garden_data.state_tags);
+
 
     // Filter notes
     var notes_sorted = {};
@@ -137,11 +140,11 @@ function sortGardenData(garden_data, search) {
 
 		var note_tags = garden_data.notes[note].tags;
 
+    	dead = ($.inArray(dead_tag, note_tags) !== -1) ? true : false;
+
     	if ($.inArray(year, search.year) !== -1) {
-
 		    for (var i=0, i_len=search.plant.length; i<i_len; i++) {
-
-			    if ($.inArray(search.plant[i], note_tags) !== -1) {	  
+			    if ($.inArray(search.plant[i], note_tags) !== -1) {	 
 
 		    		// Create object if does not exist
 					if (!notes_sorted.hasOwnProperty(search.plant[i])) {
@@ -156,13 +159,20 @@ function sortGardenData(garden_data, search) {
 					    ];
 					}
 
+			    	if (dead) dead_plants.push(search.plant[i]);
+
 			    	notes_sorted[search.plant[i]][year][week].push(note);
 			    }
 			}
 	    }	
     }
 
-	console.timeEnd("sort_data");
+    // Remove dead plants
+    if (search.alive === "checked") {
+	    for (var i = dead_plants.length - 1; i >= 0; i--) {
+	    	delete notes_sorted[dead_plants[i]];
+	    }
+	}
 
 	return notes_sorted;
 
@@ -174,10 +184,6 @@ function sortGardenData(garden_data, search) {
 //-------------------------------------------------------------------------------
 function drawGardenChart(notes_to_display, garden_data, state) {
 
-	console.time("draw_data");
-	    
-	//var watering_tag = "cfdf9e45-d107-40fa-8852-e15c86a14202";
-	//var dead_tag 	 = "9da9be98-9bf5-4170-9d8c-2a1751d11203";
 
 	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 	var HTML_cell = "<td %cell_colour% nowrap><div style='cursor:pointer' data-toggle='popover' data-placement='auto' data-html='true' title='<b>%popover_title%</b>' data-content='<dl>%popover_body%</dl>'>%plant_symbol%</div>";
@@ -186,29 +192,15 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 	var locations = garden_data.location_tags;
 
-	console.log(locations);
-
 	var today = new Date();
 	today_wk = today.getWeek(); // align to week 0
 	today_yr = today.getFullYear().toString();
 
 
 	// Filter tags
-	for(var key in state) {
-    	if(state[key].name === '*watering') {
-    		var watering_tag = key;
-    		break;
-	    }
-	}
+	dead_tag = findKeyfromValue('*dead', garden_data.state_tags);
 
-	for(var key in state) {
-    	if(state[key].name === '*dead') {
-    		var dead_tag = key;
-    		break;
-	    }
-	}
-
-	if (!$('#watering_check').is(':checked'))  delete state[watering_tag];
+	if (!$('#watering_check').is(':checked'))  delete state[findKeyfromValue('*watering', garden_data.state_tags)];
 
 
 	// Create week number table header
@@ -328,7 +320,6 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 		HTML_row.push('</tr>');
 	}
 
-	console.timeEnd("draw_data");
 
 	// Clear chart area
 	$('#chart-section').empty();
@@ -350,8 +341,14 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	    $('#diary').DataTable( {
         "scrollY": 400,
         "scrollX": true,
-        // "scrollCollapse": true,
-        // "paging":         false,
+        "fixedHeader": {
+	        header: true
+	    },
+	    "search": {
+			"regex": true
+		},
+        "scrollCollapse": true,
+        "paging":         false,
         // "fixedColumns":   {
         //     "leftColumns": 2
         // },
@@ -361,7 +358,5 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	    ]
     } );
 	} );
-
-
 
 }

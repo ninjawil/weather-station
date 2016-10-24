@@ -86,6 +86,21 @@ function containsAny(needles, haystack){
 
 
 //-------------------------------------------------------------------------------
+//  Finds key from value
+//
+//  Author: wdf
+//
+//-------------------------------------------------------------------------------
+function findKeyfromValue(value, object){ 
+  for(var key in object) {
+      if(object[key] === value) return key;
+  } 
+  return false;
+}
+
+
+
+//-------------------------------------------------------------------------------
 //  Get the ISO week date week number
 //
 //  Author: wdf
