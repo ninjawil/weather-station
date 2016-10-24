@@ -35,16 +35,16 @@ function displayTime(timeSinceEpoch) {
 function sidebarData(sensors) {
 
 	
-	var HTMLvalueBox = '<div id="%id%" class="row reading-group"><div class="row reading-name">%description%</div></div>';
-	var HTMLvalue = '<div class="row reading-value">%value%<span class="reading-unit"> %unit%</span></div>';
+	var HTMLvalueBox = '<div id="%id%" class="row reading-group"><div class="row reading-value">%value%<span class="reading-unit"> %unit%</span></div><div class="row reading-name">%description%</div></div>';
+	//var HTMLvalue = '<div class="row reading-value">%value%<span class="reading-unit"> %unit%</span></div>';
 
-	var formattedValueBox,
-		formattedValue;
+	var f_HTMLvalueBox = '',
+		f_HTMLvalue    = '';
 
 	for(var sensor in sensors) {
 
-		formattedValueBox = HTMLvalueBox.replace("%id%", sensor);
-		formattedValueBox = formattedValueBox.replace("%description%", sensors[sensor].description);
+		f_HTMLvalueBox = HTMLvalueBox.replace("%id%", sensor);
+		f_HTMLvalueBox = f_HTMLvalueBox.replace("%description%", sensors[sensor].description);
 
 		var arrayLength = sensors[sensor].readings.length,
 			value = 0;
@@ -65,14 +65,18 @@ function sidebarData(sensors) {
 					value = sensors[sensor].readings[arrayLength-1][1].toPrecision(4);
 			}
 
-			formattedValue = HTMLvalue.replace("%value%", value);
-			formattedValue = formattedValue.replace("%unit%", sensors[sensor].unit);
+			f_HTMLvalueBox = f_HTMLvalueBox.replace("%value%", value);
+			f_HTMLvalueBox = f_HTMLvalueBox.replace("%unit%", sensors[sensor].unit);
 
-			//Display data
-			$("#sidebar").append(formattedValueBox);		
-			$('#' + sensor).prepend(formattedValue);
+
 		}
+		
+		f_HTMLvalue += f_HTMLvalueBox;
 	}
+
+	//Display data
+	$("#sidebar").append(f_HTMLvalue);		
+		// $('#' + sensor).prepend(f_HTMLvalue);
 
 	// Display last update time
 	displayTime(sensors['door_open'].readings[sensors['door_open'].readings.length-1][0]);
@@ -484,12 +488,15 @@ function displayCharts(file_ref) {
 //-------------------------------------------------------------------------------
 function main() {
 
+	console.time('main');
+
 	formatAllDropdown(sensor_setup);
 
 	xmlGetData(dir + '_data/' + dataFiles['1d'], sensor_setup, sidebarData, []);
 
 	displayCharts('1d');
 
+	console.timeEnd('main');
 }
 
 
