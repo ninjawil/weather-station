@@ -88,10 +88,25 @@ def main():
 
     #---------------------------------------------------------------------------
     # CHECK SCRIPT IS NOT ALREADY RUNNING
-    #---------------------------------------------------------------------------    
+    #---------------------------------------------------------------------------  
     if check_process.is_running(script_name):
         # wd_err.set()
         sys.exit()
+
+
+    #---------------------------------------------------------------------------
+    # CHECK USER REQUESTS
+    #---------------------------------------------------------------------------    
+    key_file = 'key.json'
+    sand_box = False
+    force_sync = False
+
+    if len(sys.argv) > 1:
+        if '-s' in sys.argv:
+            key_file = 'key_sand.json'
+            sand_box = True 
+        if '-f' in sys.argv:
+            force_sync = True
 
 
     #---------------------------------------------------------------------------
@@ -100,7 +115,7 @@ def main():
     try:
         with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
-        with open('{fl}/data/key.json'.format(fl= folder_loc), 'r') as f:
+        with open('{fl}/data/{fk}'.format(fl= folder_loc, fk=key_file), 'r') as f:
             key = json.load(f)
     except Exception, e:
         logger.error('Error ({error_v}). Exiting...'.format(error_v=e), exc_info=True)
@@ -120,7 +135,7 @@ def main():
     #---------------------------------------------------------------------------
     try:
 
-        client = EvernoteClient(token=key['AUTH_TOKEN'], sandbox=False)
+        client = EvernoteClient(token=key['AUTH_TOKEN'], sandbox=sand_box)
         
         note_store  = client.get_note_store()
         user_store  = client.get_user_store()
@@ -140,9 +155,9 @@ def main():
 
         # Check sync state
         state = note_store.getSyncState()
-        if state.updateCount <= gardening_notes['sync_updateCount']:
+        if state.updateCount <= gardening_notes['sync_updateCount'] and not force_sync:
             logger.info('Local file is in sync with Evernote. Exiting...')
-            # sys.exit()
+            sys.exit()
         logger.info('Syncing local data with Evernote...')
 
 
@@ -163,11 +178,9 @@ def main():
         # Get all tags and search for a specific tag
         tags            = note_store.listTags()
         gardening_tag   = get_tag_guid(tags, config['evernote']['GARDENING_TAG'])
-        logger.info(gardening_tag)
         gardening_notes['plant_tags']  = get_tag_guid(tags, config['evernote']['PLANT_TAG_ID'])
       
         gardening_loc_tag = get_tag_guid(tags, config['evernote']['LOCATION_TAG_ID'])
-        logger.info(gardening_loc_tag)
         gardening_loc_tag = gardening_loc_tag.keys()
 
         if len(gardening_loc_tag) > 1:
@@ -195,7 +208,9 @@ def main():
         spec.includeTagGuids = True
         spec.includeLargestResourceMime = True
 
+        logger.info('Downloading notes from evernote - START')
         note_list = note_store.findNotesMetadata(key['AUTH_TOKEN'], filter, 0, 10000, spec)
+        logger.info('Downloading notes from evernote - FINISH')
 
         for note in note_list.notes:
             
