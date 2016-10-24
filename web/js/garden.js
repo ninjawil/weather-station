@@ -179,7 +179,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	//var watering_tag = "cfdf9e45-d107-40fa-8852-e15c86a14202";
 	//var dead_tag 	 = "9da9be98-9bf5-4170-9d8c-2a1751d11203";
 
-	var HTMLtable = '<div class="table-responsive"><table class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
+	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 	var HTML_cell = "<td %cell_colour% nowrap><div style='cursor:pointer' data-toggle='popover' data-placement='auto' data-html='true' title='<b>%popover_title%</b>' data-content='<dl>%popover_body%</dl>'>%plant_symbol%</div>";
 	var HTML_popover_img = '<img src="%res_link%" width="200" />';
 	var HTML_popover_link = '<dd><a href="%url%">• %link_text%</a></dd>';
@@ -340,8 +340,27 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 	// Enable popover
 	$(document).ready(function() {
-	    $("#chart-section").popover({ selector: '[data-toggle=popover]' });
+	    $("#chart-section").popover({ 
+	    	selector: '[data-toggle=popover]',
+	    	container : 'body'
+	     });
 	});
+
+	$(document).ready(function() {
+	    $('#diary').DataTable( {
+        "scrollY": 400,
+        "scrollX": true,
+        // "scrollCollapse": true,
+        // "paging":         false,
+        // "fixedColumns":   {
+        //     "leftColumns": 2
+        // },
+        "columnDefs": [
+	        { "targets": [0, 1, 2], "orderable": true},
+	        { "targets": '_all', 	"orderable": false }
+	    ]
+    } );
+	} );
 
 
 
