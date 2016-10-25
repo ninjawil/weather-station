@@ -101,13 +101,14 @@ def main():
     key_file = 'key.json'
     sand_box = False
     force_sync = False
+    force_sync = False
 
     if len(sys.argv) > 1:
         if '-s' in sys.argv:
             key_file = 'key_sand.json'
             sand_box = True 
         if '-f' in sys.argv:
-            force_sync = True
+            force_sync = True 
 
 
     #---------------------------------------------------------------------------
@@ -126,8 +127,22 @@ def main():
     try:
         with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
             gardening_notes = json.load(f)
+
+        afterUSN = gardening_notes['lastUpdateCount']
+
     except Exception, e:
         logger.warning('Error ({error_v}).'.format(error_v=e), exc_info=True)
+
+        afterUSN = 0
+
+        gardening_notes = {
+            'lastUpdateCount': 0, 
+            'plant_tags': {}, 
+            'state_tags': {},
+            'location_tags': {}, 
+            'notes': {}
+        }
+
 
 
 
@@ -160,28 +175,18 @@ def main():
         # Check sync state
         #------------------------------------------------------------------------
         state = note_store.getSyncState()
-        if state.updateCount <= gardening_notes['sync_updateCount'] and not force_sync:
+
+        if force_sync:
+            afterUSN = 0
+
+        if state.updateCount <= afterUSN:
             logger.info('Local file is in sync with Evernote. Exiting...')
             sys.exit()
-        logger.info('Syncing local data with Evernote...')
 
-
-        #------------------------------------------------------------------------
-        # Reset data
-        #------------------------------------------------------------------------
-        gardening_notes = {
-            'sync_updateCount': 0, 
-            'plant_tags': {}, 
-            'state_tags': {},
-            'location_tags': {}, 
-            'notes': {}
-        }
-
-
-        #------------------------------------------------------------------------
-        # Add new update count
-        #------------------------------------------------------------------------
-        gardening_notes['sync_updateCount'] = state.updateCount
+        if afterUSN > 0:
+            logger.info('Sync: INCREMENTAL')
+        else:
+            logger.info('Sync: FULL')
 
 
         #------------------------------------------------------------------------
@@ -195,11 +200,11 @@ def main():
         # Get all plant and location tags
         #------------------------------------------------------------------------
         tags            = note_store.listTags()
-        gardening_tag   = get_guid(tags, config['evernote']['GARDENING_TAG'])
+        gardening_tag   = get_guid(tags, config['evernote']['GARDENING_TAG']).keys()[0]
+
         gardening_notes['plant_tags']  = get_guid(tags, config['evernote']['PLANT_TAG_ID'])
       
-        gardening_loc_tag = get_guid(tags, config['evernote']['LOCATION_TAG_ID'])
-        gardening_loc_tag = gardening_loc_tag.keys()
+        gardening_loc_tag = get_guid(tags, config['evernote']['LOCATION_TAG_ID']).keys()
 
         if len(gardening_loc_tag) > 1:
             logger.error("More than one Location Tag Parent found. Exiting...")
@@ -220,14 +225,8 @@ def main():
         # Get all notes with specific tag from notebook
         #------------------------------------------------------------------------
         filter = NoteStore.NoteFilter()
-        filter.tagGuids     = gardening_tag.keys()
+        filter.tagGuids     = [gardening_tag]
         filter.notebookGuid = notebook_tag
-
-        spec = NoteStore.NotesMetadataResultSpec() 
-        spec.includeTitle = True
-        spec.includeCreated = True
-        spec.includeTagGuids = True
-        spec.includeLargestResourceMime = True
 
         note_count = note_store.findNoteCounts(key['AUTH_TOKEN'], filter, False)
         note_count = note_count.notebookCounts[notebook_tag]
@@ -236,45 +235,82 @@ def main():
             logger.error('No notes found. Exiting...')
             sys.exit()
 
+
+        spec = NoteStore.SyncChunkFilter() 
+        spec.includeNotes = True
+        spec.notebookGuids = [notebook_tag]
+
         logger.debug('Number of notes to download: {count}'.format(count= note_count))
-        logger.debug('Downloading notes from evernote - START')
-        note_list = note_store.findNotesMetadata(key['AUTH_TOKEN'], filter, 0, note_count+1, spec)
-        logger.debug('Downloading notes from evernote - COMPLETE')
-        logger.debug('Number of notes downloaded {count}'.format(count= len(note_list.notes)))
+        logger.debug('Downloading note metadata from evernote - START')
+
+        note_list = []
+
+        # while True:
+        logger.debug('USN {usn} / {count}'.format(usn= afterUSN, count= state.updateCount))
+        download_data = note_store.getFilteredSyncChunk(key['AUTH_TOKEN'], afterUSN, 500, spec)
+
+        afterUSN = download_data.chunkHighUSN
+
+        note_list += download_data.notes
+            
+            # if afterUSN >= state.updateCount or not afterUSN:
+            #     break
+
+        logger.debug('Number of notes downloaded {count}'.format(count= len(download_data.notes)))
+        
+        logger.debug('Downloading note metadata from evernote - COMPLETE')
+
+
+        #------------------------------------------------------------------------
+        # Add new update count
+        #------------------------------------------------------------------------
+        gardening_notes['lastUpdateCount'] = download_data.updateCount
+
+        note_list = [note for note in note_list if note.tagGuids in gardening_notes['plant_tags'].keys()]
 
 
         #------------------------------------------------------------------------
         # Organize data and write to file
         #------------------------------------------------------------------------
-        for note in note_list.notes:
-            
-            res_guid = []
+        for note in note_list:
 
-            if note.largestResourceMime == 'image/jpeg':
-                logger.debug('Downloading note: {nt}'.format(nt=note.guid))
-                note_detail = note_store.getNote(key['AUTH_TOKEN'], note.guid, False, False, False, False)
+            if gardening_tag in note.tagGuids and notebook_tag in note.notebookGuid:
 
-                for resource in note_detail.resources:
-                    res_guid.append('{user}res/{r_guid}'.format(user= user_public.webApiUrlPrefix, r_guid= resource.guid))
+                #if note.updateSequenceNum > gardening_notes['notes'][note.guid]['USN']:
+
+                print note.title
+                print note.resources
+                print note.notebookGuid
+
+                res_guid = []
+
+                # if note.largestResourceMime == 'image/jpeg':
+                #     logger.debug('Downloading note: {nt}'.format(nt=note.guid))
+                #     note_detail = note_store.getNote(key['AUTH_TOKEN'], note.guid, False, False, False, False)
+
+                #     for resource in note_detail.resources:
+                #         res_guid.append('{user}res/{r_guid}'.format(user= user_public.webApiUrlPrefix, r_guid= resource.guid))
 
 
-            gardening_notes['notes'][note.guid] = {
-                'created':  note.created,
-                'title':    note.title,
-                'tags':     note.tagGuids,
-                'res':      res_guid,
-                'link':     'https://{service}/shard/{shardId}/nl/{userId}/{noteGuid}/'.format(
-                                    service= key['SERVICE'],
-                                    shardId= user.shardId,
-                                    userId= user.id,
-                                    noteGuid= note.guid)
-            }
+                gardening_notes['notes'][note.guid] = {
+                    'created':  note.created,
+                    'title':    note.title,
+                    'tags':     note.tagGuids,
+                    'res':      res_guid,
+                    'USN':      note.updateSequenceNum
+                    # 'link':     'https://{service}/shard/{shardId}/nl/{userId}/{noteGuid}/'.format(
+                    #                     service= key['SERVICE'],
+                    #                     shardId= user.shardId,
+                    #                     userId= user.id,
+                    #                     noteGuid= note.guid)
+                }
+    
+        logger.debug('Sorting data: COMPLETE')
 
-        
-        logger.debug('Writting to file - START')
+
         with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
             json.dump(gardening_notes, f)
-        logger.debug('Writting to file - COMPLETE')
+        logger.debug('Writting data to file: COMPLETE')
 
 
         logger.info('Sync Complete')
