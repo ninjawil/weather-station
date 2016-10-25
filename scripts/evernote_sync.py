@@ -101,7 +101,6 @@ def main():
     key_file = 'key.json'
     sand_box = False
     force_sync = False
-    force_sync = False
 
     if len(sys.argv) > 1:
         if '-s' in sys.argv:
@@ -266,7 +265,7 @@ def main():
         #------------------------------------------------------------------------
         gardening_notes['lastUpdateCount'] = download_data.updateCount
 
-        note_list = [note for note in note_list if note.tagGuids in gardening_notes['plant_tags'].keys()]
+        note_list = [note for note in note_list for tag in note.tagGuids if tag in gardening_notes['plant_tags'].keys()]
 
 
         #------------------------------------------------------------------------
