@@ -16,6 +16,7 @@ import binascii
 import evernote.edam.notestore.NoteStore as NoteStore
 import evernote.edam.userstore.constants as UserStoreConstants
 import evernote.edam.type.ttypes as Types
+import evernote.edam.error.ttypes as Errors
 from evernote.api.client import EvernoteClient
 
 # Application modules
@@ -28,16 +29,16 @@ import check_process
 #---------------------------------------------------------------------------
 # Get guid for tag
 #---------------------------------------------------------------------------
-def get_tag_guid(tag_list, search_string):
+def get_guid(items, search_string):
     '''
-    Function returns the tag guid from a list
+    Function returns the guid from a evernote list
 
-    tag_list        Struct: Tag as defined by Evernote
+    items           Struct: List item as defined by Evernote
     search_string   string of tag name to search 
 
     '''
 
-    return {tag.guid: tag.name for tag in tag_list if tag.name.find(search_string) > -1}
+    return {item.guid: item.name for item in items if item.name.find(search_string) > -1}
 
 #---------------------------------------------------------------------------
 # Get all children from parent tag
@@ -143,7 +144,9 @@ def main():
         user_public = user_store.getPublicUserInfo(user.username)
 
 
+        #------------------------------------------------------------------------
         # Check evernote API
+        #------------------------------------------------------------------------
         version_ok = user_store.checkVersion(
             "Evernote EDAMTest (Python)",
             UserStoreConstants.EDAM_VERSION_MAJOR,
@@ -153,7 +156,9 @@ def main():
             logger.warning("Evernote API version is not up to date.")
 
 
+        #------------------------------------------------------------------------
         # Check sync state
+        #------------------------------------------------------------------------
         state = note_store.getSyncState()
         if state.updateCount <= gardening_notes['sync_updateCount'] and not force_sync:
             logger.info('Local file is in sync with Evernote. Exiting...')
@@ -161,7 +166,9 @@ def main():
         logger.info('Syncing local data with Evernote...')
 
 
+        #------------------------------------------------------------------------
         # Reset data
+        #------------------------------------------------------------------------
         gardening_notes = {
             'sync_updateCount': 0, 
             'plant_tags': {}, 
@@ -171,16 +178,27 @@ def main():
         }
 
 
+        #------------------------------------------------------------------------
         # Add new update count
+        #------------------------------------------------------------------------
         gardening_notes['sync_updateCount'] = state.updateCount
 
 
-        # Get all tags and search for a specific tag
+        #------------------------------------------------------------------------
+        # Find notebook
+        #------------------------------------------------------------------------
+        notebooks       = note_store.listNotebooks()
+        notebook_tag    = get_guid(notebooks, config['evernote']['NOTEBOOK']).keys()[0]
+
+
+        #------------------------------------------------------------------------
+        # Get all plant and location tags
+        #------------------------------------------------------------------------
         tags            = note_store.listTags()
-        gardening_tag   = get_tag_guid(tags, config['evernote']['GARDENING_TAG'])
-        gardening_notes['plant_tags']  = get_tag_guid(tags, config['evernote']['PLANT_TAG_ID'])
+        gardening_tag   = get_guid(tags, config['evernote']['GARDENING_TAG'])
+        gardening_notes['plant_tags']  = get_guid(tags, config['evernote']['PLANT_TAG_ID'])
       
-        gardening_loc_tag = get_tag_guid(tags, config['evernote']['LOCATION_TAG_ID'])
+        gardening_loc_tag = get_guid(tags, config['evernote']['LOCATION_TAG_ID'])
         gardening_loc_tag = gardening_loc_tag.keys()
 
         if len(gardening_loc_tag) > 1:
@@ -189,7 +207,7 @@ def main():
 
         gardening_notes['location_tags']  = get_tag_children(tags, gardening_loc_tag[0])
 
-        gardening_state_tag = get_tag_guid(tags, config['evernote']['STATE_TAG_ID']).keys()
+        gardening_state_tag = get_guid(tags, config['evernote']['STATE_TAG_ID']).keys()
 
         if len(gardening_state_tag) > 1:
             logger.error("More than one State Tag Parent found. Exiting...")
@@ -198,26 +216,42 @@ def main():
         gardening_notes['state_tags']  = get_tag_children(tags, gardening_state_tag[0])
 
 
-        # Get all notes with specific tag
+        #------------------------------------------------------------------------
+        # Get all notes with specific tag from notebook
+        #------------------------------------------------------------------------
         filter = NoteStore.NoteFilter()
         filter.tagGuids     = gardening_tag.keys()
-        filter.notebookGuid = notebook_tag.keys()
+        filter.notebookGuid = notebook_tag
 
-        spec = NoteStore.NotesMetadataResultSpec()
+        spec = NoteStore.NotesMetadataResultSpec() 
         spec.includeTitle = True
         spec.includeCreated = True
         spec.includeTagGuids = True
         spec.includeLargestResourceMime = True
 
-        logger.info('Downloading notes from evernote - START')
-        note_list = note_store.findNotesMetadata(key['AUTH_TOKEN'], filter, 0, 10000, spec)
-        logger.info('Downloading notes from evernote - FINISH')
+        note_count = note_store.findNoteCounts(key['AUTH_TOKEN'], filter, False)
+        note_count = note_count.notebookCounts[notebook_tag]
 
+        if note_count <= 0:
+            logger.error('No notes found. Exiting...')
+            sys.exit()
+
+        logger.debug('Number of notes to download: {count}'.format(count= note_count))
+        logger.debug('Downloading notes from evernote - START')
+        note_list = note_store.findNotesMetadata(key['AUTH_TOKEN'], filter, 0, note_count+1, spec)
+        logger.debug('Downloading notes from evernote - COMPLETE')
+        logger.debug('Number of notes downloaded {count}'.format(count= len(note_list.notes)))
+
+
+        #------------------------------------------------------------------------
+        # Organize data and write to file
+        #------------------------------------------------------------------------
         for note in note_list.notes:
             
             res_guid = []
 
             if note.largestResourceMime == 'image/jpeg':
+                logger.debug('Downloading note: {nt}'.format(nt=note.guid))
                 note_detail = note_store.getNote(key['AUTH_TOKEN'], note.guid, False, False, False, False)
 
                 for resource in note_detail.resources:
@@ -236,20 +270,31 @@ def main():
                                     noteGuid= note.guid)
             }
 
-
-        # Write gardening data to 
+        
+        logger.debug('Writting to file - START')
         with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
             json.dump(gardening_notes, f)
+        logger.debug('Writting to file - COMPLETE')
 
 
         logger.info('Sync Complete')
 
+
+    #---------------------------------------------------------------------------
+    # Exit and Error Handling
+    #---------------------------------------------------------------------------
+    except Errors.EDAMSystemException, e:
+        if e.errorCode == Errors.EDAMErrorCode.RATE_LIMIT_REACHED:
+            logger.error("Rate limit reached")
+            logger.error("Retry your request in %d seconds" % e.rateLimitDuration)
+            sys.exit()
 
     except Exception, e:
         logger.error('Script error ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
         # wd_err.set()
         sys.exit()
+    
 
     finally:
         logger.info('--- Script Finished ---')
