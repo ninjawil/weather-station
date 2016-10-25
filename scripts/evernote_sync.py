@@ -200,7 +200,8 @@ def main():
 
         # Get all notes with specific tag
         filter = NoteStore.NoteFilter()
-        filter.tagGuids = gardening_tag.keys()
+        filter.tagGuids     = gardening_tag.keys()
+        filter.notebookGuid = notebook_tag.keys()
 
         spec = NoteStore.NotesMetadataResultSpec()
         spec.includeTitle = True
