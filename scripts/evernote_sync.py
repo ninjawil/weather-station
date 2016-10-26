@@ -237,6 +237,7 @@ def main():
 
         spec = NoteStore.SyncChunkFilter() 
         spec.includeNotes = True
+        spec.includeNoteResources = True
         spec.notebookGuids = [notebook_tag]
 
         logger.debug('Number of notes to download: {count}'.format(count= note_count))
@@ -244,19 +245,20 @@ def main():
 
         note_list = []
 
-        # while True:
-        logger.debug('USN {usn} / {count}'.format(usn= afterUSN, count= state.updateCount))
-        download_data = note_store.getFilteredSyncChunk(key['AUTH_TOKEN'], afterUSN, 500, spec)
+        while True:
+            logger.debug('USN {usn} / {count}'.format(usn= afterUSN, count= state.updateCount))
+            download_data = note_store.getFilteredSyncChunk(key['AUTH_TOKEN'], afterUSN, 500, spec)
 
-        afterUSN = download_data.chunkHighUSN
+            afterUSN = download_data.chunkHighUSN
 
-        note_list += download_data.notes
+            if download_data.notes:
+                note_list += download_data.notes
+                logger.debug('Number of notes downloaded {count}'.format(count= len(download_data.notes)))
             
-            # if afterUSN >= state.updateCount or not afterUSN:
-            #     break
+            if afterUSN >= state.updateCount or not afterUSN:
+                break
 
-        logger.debug('Number of notes downloaded {count}'.format(count= len(download_data.notes)))
-        
+    
         logger.debug('Downloading note metadata from evernote - COMPLETE')
 
 
@@ -265,46 +267,55 @@ def main():
         #------------------------------------------------------------------------
         gardening_notes['lastUpdateCount'] = download_data.updateCount
 
-        note_list = [note for note in note_list for tag in note.tagGuids if tag in gardening_notes['plant_tags'].keys()]
-
 
         #------------------------------------------------------------------------
         # Organize data and write to file
         #------------------------------------------------------------------------
         for note in note_list:
 
-            if gardening_tag in note.tagGuids and notebook_tag in note.notebookGuid:
+            if note.deleted:
+                continue
 
-                #if note.updateSequenceNum > gardening_notes['notes'][note.guid]['USN']:
+            if notebook_tag not in note.notebookGuid:
+                continue
 
-                print note.title
-                print note.resources
-                print note.notebookGuid
+            if gardening_tag not in note.tagGuids:
+                continue
 
-                res_guid = []
+            plant_tags = [tag for tag in note.tagGuids if tag in gardening_notes['plant_tags'].keys()]
+            if not plant_tags:
+                continue
 
-                # if note.largestResourceMime == 'image/jpeg':
-                #     logger.debug('Downloading note: {nt}'.format(nt=note.guid))
-                #     note_detail = note_store.getNote(key['AUTH_TOKEN'], note.guid, False, False, False, False)
+            if note.updateSequenceNum < gardening_notes['notes'][note.guid]['USN']:
+                continue
 
-                #     for resource in note_detail.resources:
-                #         res_guid.append('{user}res/{r_guid}'.format(user= user_public.webApiUrlPrefix, r_guid= resource.guid))
+            res_guid = []
+            if note.resources:
+                for i in xrange(len(note.resources)):
+                    if note.resources[i].mime == 'image/jpeg':
+                        res_guid.append('{user}res/{r_guid}'.format(
+                            user= user_public.webApiUrlPrefix, 
+                            r_guid= note.resources[i].guid))
 
 
-                gardening_notes['notes'][note.guid] = {
-                    'created':  note.created,
-                    'title':    note.title,
-                    'tags':     note.tagGuids,
-                    'res':      res_guid,
-                    'USN':      note.updateSequenceNum
-                    # 'link':     'https://{service}/shard/{shardId}/nl/{userId}/{noteGuid}/'.format(
-                    #                     service= key['SERVICE'],
-                    #                     shardId= user.shardId,
-                    #                     userId= user.id,
-                    #                     noteGuid= note.guid)
-                }
+            gardening_notes['notes'][note.guid] = {
+                'created':  note.created,
+                'title':    note.title,
+                'tags':     note.tagGuids,
+                'res':      res_guid,
+                'USN':      note.updateSequenceNum,
+                'link':     'https://{service}/shard/{shardId}/nl/{userId}/{noteGuid}/'.format(
+                                    service= key['SERVICE'],
+                                    shardId= user.shardId,
+                                    userId= user.id,
+                                    noteGuid= note.guid)
+            }
+    
     
         logger.debug('Sorting data: COMPLETE')
+        logger.debug('Notes stored: {stored_no} / {total_no}'.format(
+                                stored_no= len(gardening_notes['notes']),
+                                total_no= note_count))
 
 
         with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
