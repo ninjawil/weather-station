@@ -83,7 +83,7 @@ function updateSettingsModal(config_data) {
 
 
 //-------------------------------------------------------------------------------
-// Once config data is loaded, draw it in Settings Modal
+// Save data to JSON file
 //-------------------------------------------------------------------------------
 function saveSettings() {
 
