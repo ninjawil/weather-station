@@ -42,7 +42,8 @@ function drawGardenSearchBar(garden_data) {
 		HTMLlocList = '<form><div class="form-group"><label for="loc_sel">Location:</label><select multiple class="form-control" id="loc_sel"><option selected>All</option><option>%loc_list%</option></select><br></div></form>',
 		HTMLdateList = '<form><div class="form-group"><label for="date_sel">Year:</label><select multiple class="form-control" id="date_sel"><option selected>All</option><option>%date_list%</option></select><br></div></form>',
 		HTMLoptionsList = '<form><div class="form-group"><label for="options_sel">Options:</label><div class="checkbox"><label><input type="checkbox" value="" checked="checked" id="alive_check">Alive</label></div><div class="checkbox"><label><input type="checkbox" value="" id="watering_check">Watering</label></div></div></form>',
-		HTMLfilterButton = '<button type="button" class="btn btn-secondary" id="filter-btn"><span class="glyphicon glyphicon-filter"></span></button>';
+		HTMLfilterButton = '<button type="button" class="btn btn-secondary" id="filter-btn" style="margin-bottom: 10px"><span class="glyphicon glyphicon-filter"></span></button>';
+		HTMLstateButton = '<button type="button" class="btn btn-secondary" id="state-btn"><span class="glyphicon glyphicon-th-list" data-toggle="modal" data-target="#modal_plant_state"></span></button>';
 
 
 	// Prepare plant list
@@ -73,7 +74,7 @@ function drawGardenSearchBar(garden_data) {
 	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar2%', HTMLlocList.replace("%loc_list%", locations.join('</option><option>')));
 	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar3%', HTMLdateList.replace("%date_list%", year_list.join('</option><option>')));
 	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar4%', HTMLoptionsList)
-	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar5%', HTMLfilterButton)
+	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar5%', HTMLfilterButton + HTMLstateButton)
 
 	$('#garden-input-bar-section').empty();
 	$(f_HTMLPlantFilter).appendTo('#garden-input-bar-section');
@@ -317,9 +318,10 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 						}
 
 						// Create popover or append if multiple notes in a single week
-						popover_title = popover_title !== '' ? 'Multiple notes this week' : garden_data.notes[note[i]].title;
+						title = garden_data.notes[note[i]].title.replace(/"/g, "'");
+						popover_title = popover_title !== '' ? 'Multiple notes this week' : title;
 						popover_body  = popover_body + HTML_popover_link.replace('%url%', garden_data.notes[note[i]].link);
-						popover_body  = popover_body.replace('%link_text%', garden_data.notes[note[i]].title);
+						popover_body  = popover_body.replace('%link_text%', title);
 
 					}
 	
