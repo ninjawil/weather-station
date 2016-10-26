@@ -37,7 +37,7 @@ function drawGardenSearchBar(garden_data) {
 	console.time("search_bar");
 
 	// var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar2" class="col-md-4">%bar2%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;;">%bar5%</div>',
-	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;;">%bar5%</div>',
+	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;">%bar5%</div>',
 		HTMLplantList = '<form><div class="form-group"><label for="plant_sel">Plant:</label><select multiple class="form-control" id="plant_sel"><option selected>All</option><option>%plant_list%</option></select><br></div></form>',
 		HTMLlocList = '<form><div class="form-group"><label for="loc_sel">Location:</label><select multiple class="form-control" id="loc_sel"><option selected>All</option><option>%loc_list%</option></select><br></div></form>',
 		HTMLdateList = '<form><div class="form-group"><label for="date_sel">Year:</label><select multiple class="form-control" id="date_sel"><option selected>All</option><option>%date_list%</option></select><br></div></form>',
@@ -207,7 +207,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 
 	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-	var HTML_cell = '<td %cell_colour% nowrap><div style="cursor:pointer" data-toggle="popover" data-placement="auto" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>"%plant_symbol%</div>';
+	var HTML_cell = '<td %cell_colour% nowrap><div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="auto" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
 	var HTML_popover_img = "<img src='%res_link%' width='200' />";
 	var HTML_popover_link = "<dd><a href='%url%'>• %link_text%</a></dd>";
 
