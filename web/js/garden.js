@@ -74,7 +74,7 @@ function drawGardenSearchBar(garden_data) {
 	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar2%', HTMLlocList.replace("%loc_list%", locations.join('</option><option>')));
 	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar3%', HTMLdateList.replace("%date_list%", year_list.join('</option><option>')));
 	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar4%', HTMLoptionsList)
-	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar5%', HTMLfilterButton + HTMLstateButton)
+	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar5%', HTMLfilterButton)
 
 	$('#garden-input-bar-section').empty();
 	$(f_HTMLPlantFilter).appendTo('#garden-input-bar-section');
