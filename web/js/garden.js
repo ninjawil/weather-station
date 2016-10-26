@@ -34,6 +34,8 @@ function displayGarden() {
 //-------------------------------------------------------------------------------
 function drawGardenSearchBar(garden_data) {
 
+	console.time("search_bar");
+
 	// var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar2" class="col-md-4">%bar2%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;;">%bar5%</div>',
 	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;;">%bar5%</div>',
 		HTMLplantList = '<form><div class="form-group"><label for="plant_sel">Plant:</label><select multiple class="form-control" id="plant_sel"><option selected>All</option><option>%plant_list%</option></select><br></div></form>',
@@ -75,6 +77,8 @@ function drawGardenSearchBar(garden_data) {
 
 	$('#garden-input-bar-section').empty();
 	$(f_HTMLPlantFilter).appendTo('#garden-input-bar-section');
+
+	console.timeEnd("search_bar");
 
 	$("#filter-btn").click(function(){
 
@@ -123,6 +127,8 @@ function drawGardenSearchBar(garden_data) {
 //-------------------------------------------------------------------------------
 function sortGardenData(garden_data, search) {
 
+	console.time("sort_data");
+
 	var dead_plants = [],
 		dead = false;
 
@@ -149,6 +155,9 @@ function sortGardenData(garden_data, search) {
 		    		// Create object if does not exist
 					if (!notes_sorted.hasOwnProperty(search.plant[i])) {
 						notes_sorted[search.plant[i]] = {};
+					}
+
+					if (!notes_sorted[search.plant[i]].hasOwnProperty(year)) {
 					    notes_sorted[search.plant[i]][year] = [ 
 					    	[], [], [], [], [], [], [], [], [], [],
 					    	[], [], [], [], [], [], [], [], [], [],
@@ -160,6 +169,12 @@ function sortGardenData(garden_data, search) {
 					}
 
 			    	if (dead) dead_plants.push(search.plant[i]);
+
+			    	// console.log(notes_sorted[search.plant[i]]);
+			    	// console.log(garden_data.notes[note].title);
+			    	// console.log(garden_data.plant_tags[search.plant[i]]);
+			    	// console.log(year);
+			    	// console.log(week);
 
 			    	notes_sorted[search.plant[i]][year][week].push(note);
 			    }
@@ -174,6 +189,8 @@ function sortGardenData(garden_data, search) {
 	    }
 	}
 
+	console.timeEnd("sort_data");
+
 	return notes_sorted;
 
 }
@@ -185,10 +202,13 @@ function sortGardenData(garden_data, search) {
 function drawGardenChart(notes_to_display, garden_data, state) {
 
 
+	console.time("draw_chart");
+
+
 	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-	var HTML_cell = "<td %cell_colour% nowrap><div style='cursor:pointer' data-toggle='popover' data-placement='auto' data-html='true' title='<b>%popover_title%</b>' data-content='<dl>%popover_body%</dl>'>%plant_symbol%</div>";
-	var HTML_popover_img = '<img src="%res_link%" width="200" />';
-	var HTML_popover_link = '<dd><a href="%url%">• %link_text%</a></dd>';
+	var HTML_cell = '<td %cell_colour% nowrap><div style="cursor:pointer" data-toggle="popover" data-placement="auto" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>"%plant_symbol%</div>';
+	var HTML_popover_img = "<img src='%res_link%' width='200' />";
+	var HTML_popover_link = "<dd><a href='%url%'>• %link_text%</a></dd>";
 
 	var locations = garden_data.location_tags;
 
@@ -217,18 +237,19 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	for (var plant in notes_to_display) {
     	if (!notes_to_display.hasOwnProperty(plant)) continue;
 
-		HTML_row.push('<tr><td nowrap>');
-		HTML_row.push(garden_data.plant_tags[plant]);
-		HTML_row.push('</td><td>');
-		HTML_row.push('%location%');
-		HTML_row.push('</td>');
+		var cell_colour = '';
 
 		for (var year in notes_to_display[plant]) {
 	    	if (!notes_to_display[plant].hasOwnProperty(year)) continue;
 
+			HTML_row.push('<tr><td nowrap>');
+			HTML_row.push(garden_data.plant_tags[plant]);
+			HTML_row.push('</td><td nowrap>');
+			HTML_row.push('%location%');
+			HTML_row.push('</td>');
+
 			// Reset variables
-			var cell_colour = '',
-				location    = '',
+			var location    = '',
 				popover_img = '',
 				plant_dead  = false;
 
@@ -279,6 +300,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 								// Populate symbols for cell
 								cell_symbols = cell_symbols + state[tag].symbol;
+
+								console.log(cell_symbols);
 
 								// Add image if present in note
 								if(garden_data.notes[note[i]].res.length > 0) {
@@ -340,7 +363,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	$(document).ready(function() {
 	    $('#diary').DataTable( {
         "scrollY": 400,
-        "scrollX": true,
+        "scrollX": 400,
         "fixedHeader": {
 	        header: true
 	    },
@@ -348,7 +371,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 			"regex": true
 		},
         "scrollCollapse": true,
-        "paging":         false,
+        "paging":         true,
         // "fixedColumns":   {
         //     "leftColumns": 2
         // },
@@ -358,5 +381,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	    ]
     } );
 	} );
+
+
+	console.timeEnd("draw_chart");
 
 }
