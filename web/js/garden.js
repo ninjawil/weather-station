@@ -207,7 +207,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 
 	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-	var HTML_cell = '<td %cell_colour% nowrap><div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="auto" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
+	var HTML_cell = '<td %cell_colour% nowrap><div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
 	var HTML_popover_img = "<img src='%res_link%' width='200' />";
 	var HTML_popover_link = "<dd><a href='%url%'>• %link_text%</a></dd>";
 
@@ -238,7 +238,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	for (var plant in notes_to_display) {
     	if (!notes_to_display.hasOwnProperty(plant)) continue;
 
-		var cell_colour = '';
+		var cell_colour = '',
+			this_cell_colour = '';
 
 		for (var year in notes_to_display[plant]) {
 	    	if (!notes_to_display[plant].hasOwnProperty(year)) continue;
@@ -265,6 +266,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 				var formatted_HTML_cell = '<td %cell_colour%></td>';
 
+				this_cell_colour = cell_colour;
+
 				// Clear cell contents for future weeks
 				if((week > today_wk && year === today_yr) || plant_dead ){
 					formatted_HTML_cell = '<td></td>';
@@ -275,7 +278,10 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 						popover_title 	= '',
 						popover_body 	= '';
 
-					if (cell_colour === '') cell_colour = 'class="success"';
+					if (this_cell_colour === '') {
+						this_cell_colour = 'class="success"';
+						cell_colour = this_cell_colour;
+					}
 
 					// Loop through all notes in the week
 					for (var i=0, note_len=note.length; i<note_len; i++) {
@@ -294,15 +300,17 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 								// Set cell color depending on plant state
 								if( state[tag].color !== '' ) {
-									cell_colour = 'class="';
-									cell_colour += state[tag].color + '"';
-									cell_colour += '"';
+									this_cell_colour = 'class="';
+									this_cell_colour += state[tag].color + '"';
+									this_cell_colour += '"';
+								
+									if( state[tag].event === 'continous' ) cell_colour = this_cell_colour;
 								}
 
 								// Populate symbols for cell
-								cell_symbols = cell_symbols + state[tag].symbol;
-
-								console.log(cell_symbols);
+								if (cell_symbols.indexOf(state[tag].symbol) === -1) {
+									cell_symbols = cell_symbols + state[tag].symbol;
+								}
 
 								// Add image if present in note
 								if(garden_data.notes[note[i]].res.length > 0) {
@@ -334,7 +342,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 				}
 
-				formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  cell_colour);
+				formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  this_cell_colour);
 				HTML_row.push(formatted_HTML_cell);
 			}	
 			
