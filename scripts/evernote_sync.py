@@ -397,13 +397,13 @@ def main():
     #---------------------------------------------------------------------------
     # CHECK USER REQUESTS
     #---------------------------------------------------------------------------    
-    key_file = 'key.json'
+    key_file = 'evernote.json'
     sand_box = False
     force_sync = False
 
     if len(sys.argv) > 1:
         if '-s' in sys.argv:
-            key_file = 'key_sand.json'
+            key_file = 'evernote_sand.json'
             sand_box = True 
         if '-f' in sys.argv:
             force_sync = True 
@@ -452,7 +452,6 @@ def main():
             json.dump(gardening_notes, f)
 
         logger.debug('Writting data to file: COMPLETE')
-
 
         check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
    
