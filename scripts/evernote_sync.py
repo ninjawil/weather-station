@@ -286,8 +286,14 @@ def get_evernote_data(key, gardening_notes, cfg):
             if gardening_tag not in note.tagGuids:
                 continue
 
-            plant_tags = [tag for tag in note.tagGuids if tag in gardening_notes['plant_tags'].keys()]
+            all_plant_tags = gardening_notes['plant_tags'].keys()
+            plant_tags = [tag for tag in note.tagGuids if tag in all_plant_tags]
             if not plant_tags:
+                continue
+
+            all_loc_tags = gardening_notes['location_tags'].keys()
+            loc_tags = [tag for tag in note.tagGuids if loc in all_loc_tags]
+            if not loc_tags:
                 continue
 
             if note.updateSequenceNum < gardening_notes['notes'][note.guid]['USN']:
