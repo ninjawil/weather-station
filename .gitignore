@@ -46,3 +46,4 @@ Thumbs.db
 =======
 *.py[cod]
 *$py.class
+/keys/
