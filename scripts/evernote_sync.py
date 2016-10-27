@@ -146,7 +146,6 @@ def get_evernote_data(key, gardening_notes, cfg):
     #---------------------------------------------------------------------------
     logger = logging.getLogger('root')
 
-
     #---------------------------------------------------------------------------
     # GET EVERNOTE DATA AND WRITE TO FILE
     #---------------------------------------------------------------------------
@@ -158,7 +157,6 @@ def get_evernote_data(key, gardening_notes, cfg):
         user_store  = client.get_user_store()
         user        = user_store.getUser()
         user_public = user_store.getPublicUserInfo(user.username)
-
 
         #------------------------------------------------------------------------
         # Check evernote API
@@ -342,7 +340,12 @@ def get_evernote_data(key, gardening_notes, cfg):
         if e.errorCode == Errors.EDAMErrorCode.RATE_LIMIT_REACHED:
             logger.error("Rate limit reached")
             logger.error("Retry your request in %d seconds" % e.rateLimitDuration)
-            sys.exit()
+            
+        if e.errorCode == Errors.EDAMErrorCode.INVALID_AUTH:
+            logger.error("Invalid Authentication")
+
+
+        sys.exit()
 
     except Exception, e:
         logger.error('Script error ({error_v}). Exiting...'.format(
@@ -428,7 +431,7 @@ def main():
         with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
 
-        with open('{fl}/data/{fk}'.format(fl= folder_loc, fk=key_file), 'r') as f:
+        with open('{fl}keys/{fk}'.format(fl= folder_loc, fk=key_file), 'r') as f:
             key = json.load(f)
 
 
@@ -438,8 +441,8 @@ def main():
             "plant_tag_id":     config['evernote']['PLANT_TAG_ID'],
             "location_tag_id":  config['evernote']['LOCATION_TAG_ID'],
             "state_tag_id":     config['evernote']['STATE_TAG_ID'],
-            "sand_box":         False, 
-            "force_sync":       False
+            "sand_box":         sand_box, 
+            "force_sync":       force_sync
         }
 
 
