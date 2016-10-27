@@ -149,38 +149,40 @@ function sortGardenData(garden_data, search) {
 
     	dead = ($.inArray(dead_tag, note_tags) !== -1) ? true : false;
 
-    	if ($.inArray(year, search.year) !== -1) {
-		    for (var i=0, i_len=search.plant.length; i<i_len; i++) {
-			    if ($.inArray(search.plant[i], note_tags) !== -1) {	 
+    	if ($.inArray(year, search.year) === -1) continue
 
-		    		// Create object if does not exist
-					if (!notes_sorted.hasOwnProperty(search.plant[i])) {
-						notes_sorted[search.plant[i]] = {};
-					}
+    	//if ($.inArray(year, search.location) === -1) continue   	
 
-					if (!notes_sorted[search.plant[i]].hasOwnProperty(year)) {
-					    notes_sorted[search.plant[i]][year] = [ 
-					    	[], [], [], [], [], [], [], [], [], [],
-					    	[], [], [], [], [], [], [], [], [], [],
-					    	[], [], [], [], [], [], [], [], [], [],
-					    	[], [], [], [], [], [], [], [], [], [],
-					    	[], [], [], [], [], [], [], [], [], [],
-					    	[], [], [], []
-					    ];
-					}
+	    for (var i=0, i_len=search.plant.length; i<i_len; i++) {
+		    if ($.inArray(search.plant[i], note_tags) === -1) continue	 
 
-			    	if (dead) dead_plants.push(search.plant[i]);
-
-			    	// console.log(notes_sorted[search.plant[i]]);
-			    	// console.log(garden_data.notes[note].title);
-			    	// console.log(garden_data.plant_tags[search.plant[i]]);
-			    	// console.log(year);
-			    	// console.log(week);
-
-			    	notes_sorted[search.plant[i]][year][week].push(note);
-			    }
+    		// Create object if does not exist
+			if (!notes_sorted.hasOwnProperty(search.plant[i])) {
+				notes_sorted[search.plant[i]] = {};
 			}
-	    }	
+
+			if (!notes_sorted[search.plant[i]].hasOwnProperty(year)) {
+			    notes_sorted[search.plant[i]][year] = [ 
+			    	[], [], [], [], [], [], [], [], [], [],
+			    	[], [], [], [], [], [], [], [], [], [],
+			    	[], [], [], [], [], [], [], [], [], [],
+			    	[], [], [], [], [], [], [], [], [], [],
+			    	[], [], [], [], [], [], [], [], [], [],
+			    	[], [], [], []
+			    ];
+			}
+
+	    	if (dead) dead_plants.push(search.plant[i]);
+
+	    	// console.log(notes_sorted[search.plant[i]]);
+	    	// console.log(garden_data.notes[note].title);
+	    	// console.log(garden_data.plant_tags[search.plant[i]]);
+	    	// console.log(year);
+	    	// console.log(week);
+
+	    	notes_sorted[search.plant[i]][year][week].push(note);
+		    
+		}	
     }
 
     // Remove dead plants
