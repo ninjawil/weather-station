@@ -144,7 +144,7 @@ function saveSettings() {
 		  	"GARDENING_TAG": 		$('#settingsForm').find('[name="garden-tag"]').val(),
 		  	"PLANT_TAG_ID": 		$('#settingsForm').find('[name="plant-tag-id"]').val(),
 		  	"LOCATION_TAG_ID": 		$('#settingsForm').find('[name="location-tag-id"]').val(),
-		  	"STATE_TAG_ID": 		$('#settingsForm').find('[name="state-tag-id"]').val()
+		  	"STATE_TAG_ID": 		$('#settingsForm').find('[name="state-tag-id"]').val(),
 		  	"NOTEBOOK": 			$('#settingsForm').find('[name="notebook"]').val()
   		}
 	};
