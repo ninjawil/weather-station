@@ -205,6 +205,20 @@ function sortGardenData(garden_data, search) {
 function drawGardenChart(notes_to_display, garden_data, state) {
 
 
+	// Colors based on google's material design palette
+	// https://material.google.com/style/color.html#color-color-palette
+	var colors = {
+		"purple": "#E1BEE7", 
+		"red": "#EF9A9A", 
+		"lgreen": "#C5E1A5",
+		"green": "#7CB342",
+		"yellow": "#FFF176",
+		"brown": "#8D6E63",
+		"orange": "#FFB74D",
+		"grey": "#E0E0E0"
+	}
+
+
 	console.time("draw_chart");
 
 
@@ -281,7 +295,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 						popover_body 	= '';
 
 					if (this_cell_colour === '') {
-						this_cell_colour = 'class="success"';
+						this_cell_colour = 'bgcolor="' + colors['lgreen'] + '"';
 						cell_colour = this_cell_colour;
 					}
 
@@ -302,8 +316,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 								// Set cell color depending on plant state
 								if( state[tag].color !== '' ) {
-									this_cell_colour = 'class="';
-									this_cell_colour += state[tag].color + '"';
+									this_cell_colour = 'bgcolor="';
+									this_cell_colour += colors[state[tag].color] + '"';
 									this_cell_colour += '"';
 								
 									if( state[tag].event === 'continous' ) cell_colour = this_cell_colour;
