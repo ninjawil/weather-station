@@ -297,8 +297,9 @@ def get_evernote_data(key, gardening_notes, cfg):
             if not plant_tags and not loc_tags:
                 continue
 
-            if note.updateSequenceNum < gardening_notes['notes'][note.guid]['USN']:
-                continue
+            if note.guid in gardening_notes['notes']:
+                if note.updateSequenceNum < gardening_notes['notes'][note.guid]['USN']:
+                    continue
 
             res_guid = []
             if note.resources:
@@ -397,13 +398,13 @@ def main():
     #---------------------------------------------------------------------------
     # CHECK USER REQUESTS
     #---------------------------------------------------------------------------    
-    key_file = 'evernote.json'
+    key_file = 'evernote_key.json'
     sand_box = False
     force_sync = False
 
     if len(sys.argv) > 1:
         if '-s' in sys.argv:
-            key_file = 'evernote_sand.json'
+            key_file = 'evernote_key_sand.json'
             sand_box = True 
         if '-f' in sys.argv:
             force_sync = True 
