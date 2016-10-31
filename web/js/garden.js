@@ -215,15 +215,29 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 		"yellow": "#FFF176",
 		"brown": "#8D6E63",
 		"orange": "#FFB74D",
+		"blue": "#3949AB",
 		"grey": "#E0E0E0"
 	}
+
+	var location_colors = {
+		"1c5facd7-7bbd-4b97-8af2-a46a522e2ba7": "purple", 
+		"5fad5a58-d839-4da7-a23b-eec95fae4ad4": "red", 
+		"326b7a7c-4298-4e08-9330-199a4b9ddff3": "lgreen",
+		"21305133-7020-4c0c-8a4e-a4b11b37eb4f": "green",
+		"52c6eaac-26b4-4479-827f-6df0bd728226": "yellow",
+		"f03fa0eb-a5ec-4ab0-b87d-6eedffd10d92": "brown",
+		"89e011c2-8a63-4a5c-be18-f8fe6b5e5e19": "orange",
+		"0fd778c4-b5ee-4c5a-849f-776dbd99dc21": "blue",
+		"ff340368-9f93-432e-8495-9dc9f2269212": "grey"
+	}
+
 
 
 	console.time("draw_chart");
 
 
 	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-	var HTML_cell = '<td %cell_colour% nowrap><div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
+	var HTML_cell = '<td %cell_colour% %border% nowrap><div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
 	var HTML_popover_img = "<img src='%res_link%' width='200' />";
 	var HTML_popover_link = "<dd><a href='%url%'>• %link_text%</a></dd>";
 
@@ -280,7 +294,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 				var note = notes_to_display[plant][year][week];
 
-				var formatted_HTML_cell = '<td %cell_colour%></td>';
+				var formatted_HTML_cell = '<td %cell_colour% %border%></td>';
 
 				this_cell_colour = cell_colour;
 
@@ -359,6 +373,9 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 				}
 
 				formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  this_cell_colour);
+				if (location){
+					formatted_HTML_cell = formatted_HTML_cell.replace('%border%',  'style="border-bottom: 5px solid '+location_colors[location]+';"');
+				}
 				HTML_row.push(formatted_HTML_cell);
 			}	
 			
