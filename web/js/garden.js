@@ -208,7 +208,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	// Colors based on google's material design palette
 	// https://material.google.com/style/color.html#color-color-palette
 	var colors = {
-		"purple": "#E1BEE7", 
+		"light_purple": "#E1BEE7", 
+		"purple": "#9C27B0", 
 		"red": "#EF9A9A", 
 		"lgreen": "#C5E1A5",
 		"green": "#7CB342",
@@ -216,19 +217,28 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 		"brown": "#8D6E63",
 		"orange": "#FFB74D",
 		"blue": "#3949AB",
-		"grey": "#E0E0E0"
+		"grey": "#E0E0E0",
+		"teal": "#009688",
+		"lime": "#CDDC39",
+		"deep_orange": "#FF5722",
+		"blue_grey": "#607D8B",
+		"cyan": "#00BCD4",
+		"pink": "#E91E63",
+		"indigo": "#3F51B5",
+		"amber": "#FFC107"
+
 	}
 
 	var location_colors = {
-		"1c5facd7-7bbd-4b97-8af2-a46a522e2ba7": "purple", 
-		"5fad5a58-d839-4da7-a23b-eec95fae4ad4": "red", 
-		"326b7a7c-4298-4e08-9330-199a4b9ddff3": "lgreen",
-		"21305133-7020-4c0c-8a4e-a4b11b37eb4f": "green",
-		"52c6eaac-26b4-4479-827f-6df0bd728226": "yellow",
-		"f03fa0eb-a5ec-4ab0-b87d-6eedffd10d92": "brown",
-		"89e011c2-8a63-4a5c-be18-f8fe6b5e5e19": "orange",
-		"0fd778c4-b5ee-4c5a-849f-776dbd99dc21": "blue",
-		"ff340368-9f93-432e-8495-9dc9f2269212": "grey"
+		"1c5facd7-7bbd-4b97-8af2-a46a522e2ba7": "cyan", 
+		"5fad5a58-d839-4da7-a23b-eec95fae4ad4": "lime", 
+		"326b7a7c-4298-4e08-9330-199a4b9ddff3": "indigo",
+		"21305133-7020-4c0c-8a4e-a4b11b37eb4f": "deep_orange",
+		"52c6eaac-26b4-4479-827f-6df0bd728226": "pink",
+		"f03fa0eb-a5ec-4ab0-b87d-6eedffd10d92": "purple",
+		"89e011c2-8a63-4a5c-be18-f8fe6b5e5e19": "blue_grey",
+		"0fd778c4-b5ee-4c5a-849f-776dbd99dc21": "teal",
+		"ff340368-9f93-432e-8495-9dc9f2269212": "amber"
 	}
 
 
@@ -238,6 +248,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 	var HTML_cell = '<td %cell_colour% %border% nowrap><div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
+	var HTML_loc_popover = '<div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>Location Color Key</b>" data-content="<dl>%popover_body%</dl>">';
 	var HTML_popover_img = "<img src='%res_link%' width='200' />";
 	var HTML_popover_link = "<dd><a href='%url%'>• %link_text%</a></dd>";
 
@@ -246,6 +257,17 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	var today = new Date();
 	today_wk = today.getWeek(); // align to week 0
 	today_yr = today.getFullYear().toString();
+
+	//Sort location color key popover
+	color_loc = [];
+	for (var guid in location_colors) {
+		color_loc.push("<font color='%color%'><b>".replace('%color%', colors[location_colors[guid]]));
+		color_loc.push(locations[guid]);
+		color_loc.push('</b></font><br>');
+	}
+	color_loc = color_loc.join('');
+	HTML_loc_popover = HTML_loc_popover.replace('%popover_body%', color_loc);
+	console.log(HTML_loc_popover);
 
 
 	// Filter tags
@@ -268,7 +290,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	for (var plant in notes_to_display) {
     	if (!notes_to_display.hasOwnProperty(plant)) continue;
 
-		var cell_colour = '',
+		var location    = '',
+			cell_colour = '',
 			this_cell_colour = '';
 
 		for (var year in notes_to_display[plant]) {
@@ -277,12 +300,12 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 			HTML_row.push('<tr><td nowrap>');
 			HTML_row.push(garden_data.plant_tags[plant]);
 			HTML_row.push('</td><td nowrap>');
+			HTML_row.push(HTML_loc_popover);
 			HTML_row.push('%location%');
-			HTML_row.push('</td>');
+			HTML_row.push('</div></td>');
 
 			// Reset variables
-			var location    = '',
-				popover_img = '',
+			var popover_img = '',
 				plant_dead  = false;
 
 			HTML_row.push('<td>');
@@ -374,7 +397,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 				formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  this_cell_colour);
 				if (location){
-					formatted_HTML_cell = formatted_HTML_cell.replace('%border%',  'style="border-bottom: 5px solid '+location_colors[location]+';"');
+					formatted_HTML_cell = formatted_HTML_cell.replace('%border%',  'style="border-bottom: 5px solid '+ colors[location_colors[location]]+';"');
 				}
 				HTML_row.push(formatted_HTML_cell);
 			}	
