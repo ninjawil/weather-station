@@ -276,7 +276,6 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 	if (!$('#watering_check').is(':checked'))  delete state[findKeyfromValue('*watering', garden_data.state_tags)];
 
-
 	// Create week number table header
 	var week_numbers = [];
 	for (i = 0; i < 54; i++) {
@@ -307,8 +306,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 			HTML_row.push('</td>');
 
 			// Reset variables
-			var popover_img = '',
-				plant_dead  = false;
+			var plant_dead  = false;
 
 			HTML_row.push('<td>');
 			HTML_row.push(year);
@@ -329,7 +327,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 				} else if (note.length > 0) {
 
-					var cell_symbols 	= '',
+					var popover_img 	= '',
+						cell_symbols 	= '',
 						popover_title 	= '',
 						popover_body 	= '';
 
@@ -375,16 +374,16 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 								// Stop shading cells if plant has died
 								if ( tag === dead_tag ) plant_dead = true;
 								
+								// Create popover or append if multiple notes in a single week
+								title = garden_data.notes[note[i]].title.replace(/"/g, "'");
+								popover_title = popover_title !== '' ? 'Multiple notes this week' : title;
+								popover_body  = popover_body + HTML_popover_link.replace('%url%', garden_data.notes[note[i]].link);
+								popover_body  = popover_body.replace('%link_text%', title);
+
 							} else if ( locations.hasOwnProperty(tag) && (location === '' || $.inArray(moved_tag, tags) !== -1)) {
 								location = tag;
 							}
 						}
-
-						// Create popover or append if multiple notes in a single week
-						title = garden_data.notes[note[i]].title.replace(/"/g, "'");
-						popover_title = popover_title !== '' ? 'Multiple notes this week' : title;
-						popover_body  = popover_body + HTML_popover_link.replace('%url%', garden_data.notes[note[i]].link);
-						popover_body  = popover_body.replace('%link_text%', title);
 
 					}
 	
@@ -392,7 +391,6 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 					formatted_HTML_cell = HTML_cell.replace('%popover_title%', popover_title);
 					formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
 					formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', cell_symbols);
-
 				}
 
 				formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  this_cell_colour);
