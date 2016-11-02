@@ -36,8 +36,7 @@ function drawGardenSearchBar(garden_data) {
 
 	console.time("search_bar");
 
-	// var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar2" class="col-md-4">%bar2%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;;">%bar5%</div>',
-	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar3" class="col-md-2">%bar3%</div><div id="bar4" class="col-md-1">%bar4%</div><div id="bar5" class="col-md-1" style="top: 25px;">%bar5%</div>',
+	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar2" class="col-md-2">%bar2%</div><div id="bar3" class="col-md-1">%bar3%</div><div id="bar4" class="col-md-1" style="top: 25px;">%bar4%</div><div id="bar5" class="col-md-4"></div>',
 		HTMLplantList = '<form><div class="form-group"><label for="plant_sel">Plant:</label><select multiple class="form-control" id="plant_sel"><option selected>All</option><option>%plant_list%</option></select><br></div></form>',
 		HTMLlocList = '<form><div class="form-group"><label for="loc_sel">Location:</label><select multiple class="form-control" id="loc_sel"><option selected>All</option><option>%loc_list%</option></select><br></div></form>',
 		HTMLdateList = '<form><div class="form-group"><label for="date_sel">Year:</label><select multiple class="form-control" id="date_sel"><option selected>All</option><option>%date_list%</option></select><br></div></form>',
@@ -71,10 +70,9 @@ function drawGardenSearchBar(garden_data) {
 
 	// Draw filter options
 	var f_HTMLPlantFilter 	=   HTMLPlantFilter.replace('%bar1%', HTMLplantList.replace("%plant_list%", plants.join('</option><option>')));
-	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar2%', HTMLlocList.replace("%loc_list%", locations.join('</option><option>')));
-	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar3%', HTMLdateList.replace("%date_list%", year_list.join('</option><option>')));
-	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar4%', HTMLoptionsList)
-	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar5%', HTMLfilterButton)
+	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar2%', HTMLdateList.replace("%date_list%", year_list.join('</option><option>')));
+	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar3%', HTMLoptionsList)
+	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar4%', HTMLfilterButton)
 
 	$('#garden-input-bar-section').empty();
 	$(f_HTMLPlantFilter).appendTo('#garden-input-bar-section');
@@ -210,20 +208,22 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	var colors = {
 		"light_purple": "#E1BEE7", 
 		"purple": "#9C27B0", 
-		"red": "#EF9A9A", 
+		"red": "#EF5350", 
 		"lgreen": "#C5E1A5",
 		"green": "#7CB342",
 		"yellow": "#FFF176",
-		"brown": "#8D6E63",
+		"brown": "#BCAAA4",
 		"orange": "#FFB74D",
 		"blue": "#3949AB",
 		"grey": "#E0E0E0",
 		"teal": "#009688",
 		"lime": "#CDDC39",
+		"ldeep_orange": "#FFAB91",
 		"deep_orange": "#FF5722",
 		"blue_grey": "#607D8B",
 		"cyan": "#00BCD4",
 		"pink": "#E91E63",
+		"lpink": "#F48FB1",
 		"indigo": "#3F51B5",
 		"amber": "#FFC107"
 
@@ -248,9 +248,10 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 	var HTML_cell = '<td %cell_colour% %border% nowrap><div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
-	var HTML_loc_popover = '<div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>Location Color Key</b>" data-content="<dl>%popover_body%</dl>">';
+	var HTML_loc_popover = '<a href="#" style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>Location Color Key</b>" data-content="<dl>%popover_body%</dl>">KEY</a>';
 	var HTML_popover_img = "<img src='%res_link%' width='200' />";
 	var HTML_popover_link = "<dd><a href='%url%'>• %link_text%</a></dd>";
+
 
 	var locations = garden_data.location_tags;
 
@@ -267,11 +268,11 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	}
 	color_loc = color_loc.join('');
 	HTML_loc_popover = HTML_loc_popover.replace('%popover_body%', color_loc);
-	console.log(HTML_loc_popover);
-
 
 	// Filter tags
 	dead_tag = findKeyfromValue('*dead', garden_data.state_tags);
+	moved_tag = findKeyfromValue('*moved', garden_data.state_tags);
+	end_tag = findKeyfromValue('*end', garden_data.state_tags);
 
 	if (!$('#watering_check').is(':checked'))  delete state[findKeyfromValue('*watering', garden_data.state_tags)];
 
@@ -300,9 +301,10 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 			HTML_row.push('<tr><td nowrap>');
 			HTML_row.push(garden_data.plant_tags[plant]);
 			HTML_row.push('</td><td nowrap>');
-			HTML_row.push(HTML_loc_popover);
+			//HTML_row.push(HTML_loc_popover);
 			HTML_row.push('%location%');
-			HTML_row.push('</div></td>');
+			// HTML_row.push('</div>');
+			HTML_row.push('</td>');
 
 			// Reset variables
 			var popover_img = '',
@@ -373,7 +375,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 								// Stop shading cells if plant has died
 								if ( tag === dead_tag ) plant_dead = true;
 								
-							} else if ( locations.hasOwnProperty(tag) ){
+							} else if ( locations.hasOwnProperty(tag) && (location === '' || $.inArray(moved_tag, tags) !== -1)) {
 								location = tag;
 							}
 						}
@@ -386,11 +388,9 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 					}
 	
-					// Create popover			
+					// Draw cell
 					formatted_HTML_cell = HTML_cell.replace('%popover_title%', popover_title);
 					formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
-					
-					// Draw cell
 					formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', cell_symbols);
 
 				}
@@ -417,6 +417,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
     formattedHTMLtable = HTMLtable.replace("%week_no%", HTML_header_week_no);
     formattedHTMLtable = formattedHTMLtable.replace("%plants%", HTML_row.join(''));
 	$('#chart-section').append(formattedHTMLtable);
+	// $('#diary_length').append(HTML_loc_popover);
 
 	// Enable popover
 	$(document).ready(function() {
