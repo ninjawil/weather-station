@@ -198,29 +198,24 @@ def get_evernote_data(key, gardening_notes, cfg):
 
 
         #------------------------------------------------------------------------
-        # Get all plant and location tags
+        # Get all tags
         #------------------------------------------------------------------------
         tags            = note_store.listTags()
-        gardening_tag   = get_guid(tags, cfg['gardening_tag']).keys()[0]
 
-        gardening_notes['plant_tags']  = get_guid(tags, cfg['plant_tag_id'])
-      
-        gardening_loc_tag = get_guid(tags, cfg['location_tag_id']).keys()
+        gardening_notes['plant_tags']   = get_guid(tags, cfg['plant_tag_id'])
+        gardening_tag                   = get_guid(tags, cfg['gardening_tag']).keys()[0]
+        gardening_loc_tag               = get_guid(tags, cfg['location_tag_id']).keys()
+        gardening_state_tag             = get_guid(tags, cfg['state_tag_id']).keys()     
+        p_number_tag                    = get_guid(tags, cfg['plant_no_id']).keys()
 
-        if len(gardening_loc_tag) > 1:
-            logger.error("More than one Location Tag Parent found. Exiting...")
+        if len(gardening_state_tag) > 1 or len(gardening_loc_tag) > 1 or len(gardening_loc_tag) > 1:
+            logger.error("More than one Tag Parent found. Exiting...")
             sys.exit()
 
-        gardening_notes['location_tags']  = get_tag_children(tags, gardening_loc_tag[0])
-
-        gardening_state_tag = get_guid(tags, cfg['state_tag_id']).keys()
-
-        if len(gardening_state_tag) > 1:
-            logger.error("More than one State Tag Parent found. Exiting...")
-            sys.exit()
-
-        gardening_notes['state_tags']  = get_tag_children(tags, gardening_state_tag[0])
-
+        gardening_notes['location_tags']    = get_tag_children(tags, gardening_loc_tag[0])
+        gardening_notes['state_tags']       = get_tag_children(tags, gardening_state_tag[0])
+        gardening_notes['p_number_tags']    = get_tag_children(tags, p_number_tag[0])
+        
 
         #------------------------------------------------------------------------
         # Get all notes with specific tag from notebook
@@ -425,6 +420,7 @@ def main():
             'plant_tags': {}, 
             'state_tags': {},
             'location_tags': {}, 
+            'p_number_tags': {}, 
             'notes': {}
         }
 
@@ -442,6 +438,7 @@ def main():
             "plant_tag_id":     config['evernote']['PLANT_TAG_ID'],
             "location_tag_id":  config['evernote']['LOCATION_TAG_ID'],
             "state_tag_id":     config['evernote']['STATE_TAG_ID'],
+            "plant_no_id":      '+plants', #config['evernote']['PLANT_NO_TAG_ID'],
             "sand_box":         sand_box, 
             "force_sync":       force_sync
         }
