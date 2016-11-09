@@ -119,6 +119,31 @@ def check_state_tags(tag_list, filename):
     logger.debug('Writting state configuration to file: COMPLETE')
 
 
+#---------------------------------------------------------------------------
+# Get evernote data
+#---------------------------------------------------------------------------
+def new_entry(key, note_data):
+    '''
+    Function gets evernote data and updates gardening JSON file
+
+    key
+
+    '''
+
+    #---------------------------------------------------------------------------
+    # SET UP LOGGER
+    #---------------------------------------------------------------------------
+    logger = logging.getLogger('root')
+
+    #---------------------------------------------------------------------------
+    # GET EVERNOTE DATA AND WRITE TO FILE
+    #---------------------------------------------------------------------------
+    client = EvernoteClient(token=key['AUTH_TOKEN'], sandbox=cfg['sand_box'])
+    
+    note_store  = client.get_note_store()
+    user_store  = client.get_user_store()
+    user        = user_store.getUser()
+    user_public = user_store.getPublicUserInfo(user.username)
 
 
 #---------------------------------------------------------------------------
@@ -396,6 +421,7 @@ def main():
     key_file = 'evernote_key.json'
     sand_box = False
     force_sync = False
+    data_entry = False
 
     if len(sys.argv) > 1:
         if '-s' in sys.argv:
@@ -403,27 +429,14 @@ def main():
             sand_box = True 
         if '-f' in sys.argv:
             force_sync = True 
+        if '-n' in sys.argv:
+            data_entry = True
+
 
 
     #---------------------------------------------------------------------------
-    # GET CONFIG & GARDENING DATA
+    # GET CONFIG DATA
     #---------------------------------------------------------------------------
-    try:
-        with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
-            gardening_notes = json.load(f)
-
-    except Exception, e:
-        logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
-
-        gardening_notes = {
-            'lastUpdateCount': 0, 
-            'plant_tags': {}, 
-            'state_tags': {},
-            'location_tags': {}, 
-            'p_number_tags': {}, 
-            'notes': {}
-        }
-
     try:
         with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
@@ -432,26 +445,58 @@ def main():
             key = json.load(f)
 
 
-        cfg = { 
-            "gardening_tag":    config['evernote']['GARDENING_TAG'],
-            "notebook":         config['evernote']['NOTEBOOK'],
-            "plant_tag_id":     config['evernote']['PLANT_TAG_ID'],
-            "location_tag_id":  config['evernote']['LOCATION_TAG_ID'],
-            "state_tag_id":     config['evernote']['STATE_TAG_ID'],
-            "plant_no_id":      '+plants', #config['evernote']['PLANT_NO_TAG_ID'],
-            "sand_box":         sand_box, 
-            "force_sync":       force_sync
-        }
+        #---------------------------------------------------------------------------
+        # WRITE ENTRY OTHERWISE UPDATE DATA FILE
+        #---------------------------------------------------------------------------
+        if data_entry:
+            note_data = {
+                'date':     date,
+                'title':    title
+            }
 
+            new_entry(key, note_data)
 
-        gardening_notes = get_evernote_data(key, gardening_notes, cfg)
+        else:
 
-        with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
-            json.dump(gardening_notes, f)
+            #---------------------------------------------------------------------------
+            # READ DATA AND WRITE TO FILE
+            #---------------------------------------------------------------------------
+            try:
+                with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
+                    gardening_notes = json.load(f)
 
-        logger.debug('Writting data to file: COMPLETE')
+            except Exception, e:
+                logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
 
-        check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
+                gardening_notes = {
+                    'lastUpdateCount': 0, 
+                    'plant_tags': {}, 
+                    'state_tags': {},
+                    'location_tags': {}, 
+                    'p_number_tags': {}, 
+                    'notes': {}
+                }
+
+            cfg = { 
+                "gardening_tag":    config['evernote']['GARDENING_TAG'],
+                "notebook":         config['evernote']['NOTEBOOK'],
+                "plant_tag_id":     config['evernote']['PLANT_TAG_ID'],
+                "location_tag_id":  config['evernote']['LOCATION_TAG_ID'],
+                "state_tag_id":     config['evernote']['STATE_TAG_ID'],
+                "plant_no_id":      '+plants', #config['evernote']['PLANT_NO_TAG_ID'],
+                "sand_box":         sand_box, 
+                "force_sync":       force_sync
+            }
+
+            gardening_notes = get_evernote_data(key, gardening_notes, cfg)
+
+            with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
+                json.dump(gardening_notes, f)
+
+            logger.debug('Writting data to file: COMPLETE')
+
+            check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
+
    
     except Exception, e:
         logger.error('Error ({error_v}). Exiting...'.format(error_v=e), exc_info=True)
