@@ -9,6 +9,7 @@ import sys
 import datetime
 import time
 import json
+import getopt
 
 # Third party modules
 import hashlib
@@ -177,7 +178,7 @@ class EvernoteAcc:
         ourNote = Types.Note()
         ourNote.title       = note_data['title']
         ourNote.content     = nBody 
-        ourNote.created     = note_data['created'] 
+        #ourNote.created     = note_data['created'] 
 
         # ## parentNotebook is optional; if omitted, default notebook is used
         # if note_data['notebook'] and hasattr(note_data['notebook'], 'guid'):
@@ -491,11 +492,19 @@ def main():
     #---------------------------------------------------------------------------    
     try:
 
+        try:
+            opts, args = getopt.getopt(sys.argv,"n:psf",["notetitle="])
+        except getopt.GetoptError:
+            print 'test.py -i <inputfile> -o <outputfile>'
+            sys.exit(2)
+
+        print opts
+        
         key_file = 'evernote_key.json'
         sand_box = False
         force_sync = False
 
-        if '-p' in sys.argv:
+        if '-p' in opts:
             key_file = 'evernote_key_sand.json'
             sand_box = True 
 
@@ -505,57 +514,56 @@ def main():
         EnAcc = EvernoteAcc(key, config, sand_box)
 
         
-        if len(sys.argv) > 1:
-            #---------------------------------------------------------------------------
-            # WRITE ENTRY OTHERWISE UPDATE DATA FILE
-            #---------------------------------------------------------------------------
-            if '-n' in sys.argv:
 
-                note_data = {
-                    'created':  '2014-10-09',
-                    'title':    'dormant',
-                    'body':     'test',
-                    'notebook': None
+        #---------------------------------------------------------------------------
+        # WRITE ENTRY OTHERWISE UPDATE DATA FILE
+        #---------------------------------------------------------------------------
+        if '-n' in opts:
+
+            note_data = {
+                'created':  '2014-10-09',
+                'title':    'next test',
+                'body':     'test',
+                'notebook': None
+            }
+
+            note = EnAcc.new_entry(note_data)
+            sys.exit()
+
+        #---------------------------------------------------------------------------
+        # READ DATA FROM EN AND WRITE TO FILE
+        #---------------------------------------------------------------------------
+        if '-s' in opts:
+
+            if '-f' in opts:
+                force_sync = True 
+
+            try:
+                with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
+                    gardening_notes = json.load(f)
+
+            except Exception, e:
+                logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
+
+                gardening_notes = {
+                    'lastUpdateCount': 0, 
+                    'plant_tags': {}, 
+                    'state_tags': {},
+                    'location_tags': {}, 
+                    'p_number_tags': {}, 
+                    'notes': {}
                 }
 
-                note = EnAcc.new_entry(note_data)
-                sys.exit()
+            gardening_notes = EnAcc.sync_data(gardening_notes, force_sync)
 
-            #---------------------------------------------------------------------------
-            # READ DATA FROM EN AND WRITE TO FILE
-            #---------------------------------------------------------------------------
-            if '-s' in sys.argv:
+            with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
+                json.dump(gardening_notes, f)
+
+            logger.debug('Writting data to file: COMPLETE')
+
+            check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
 
 
-                if '-f' in sys.argv:
-                    force_sync = True 
-
-                try:
-                    with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
-                        gardening_notes = json.load(f)
-
-                except Exception, e:
-                    logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
-
-                    gardening_notes = {
-                        'lastUpdateCount': 0, 
-                        'plant_tags': {}, 
-                        'state_tags': {},
-                        'location_tags': {}, 
-                        'p_number_tags': {}, 
-                        'notes': {}
-                    }
-
-                gardening_notes = EnAcc.sync_data(gardening_notes, force_sync)
-
-                with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
-                    json.dump(gardening_notes, f)
-
-                logger.debug('Writting data to file: COMPLETE')
-
-                check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
-
-   
     except Exception, e:
         logger.error('Error ({error_v}). Exiting...'.format(error_v=e), exc_info=True)
         # wd_err.set()
