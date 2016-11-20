@@ -144,9 +144,10 @@ function drawGardenSearchBar(garden_data) {
 			search_data.year = year_list; 
 		}
 
-        var sorted_data = sortGardenData(garden_data);
+        //var sorted_data = sortGardenData(garden_data);
 
-        getFileData('weather_data/state_tags.json', 'json', drawGardenChart, [sorted_data, garden_data]);
+        //getFileData('weather_data/state_tags.json', 'json', drawGardenChart, [sorted_data, garden_data]);
+        getFileData('weather_data/state_tags.json', 'json', sortGardenData, [garden_data]);
 
     }); 
 
@@ -161,8 +162,17 @@ function sortGardenData(garden_data) {
 
 	console.time("sort_data");
 
-	var p_number_tags = garden_data.p_number_tags;
 	var plant_tags = Object.keys(garden_data.plant_tags);
+	var state_tags = Object.keys(garden_data.state_tags);
+	var location_tags = Object.keys(garden_data.location_tags);
+	var p_number_tags = Object.keys(garden_data.p_number_tags);
+
+	for (var p in garden_data.p_number_tags) {
+		if (garden_data.p_number_tags[p] === '+p01.00') {
+			var first_p_no = p;
+			break;
+		}
+	}
 
 
     // Filter notes
@@ -171,48 +181,80 @@ function sortGardenData(garden_data) {
 		if (!garden_data.notes.hasOwnProperty(note)) continue;
 
 		var note_tags = garden_data.notes[note].tags;
- 
+
+		// Prepare note date 
     	var date = new Date(Number(garden_data.notes[note].created));
     	var year = date.getFullYear().toString();
 		var week = date.getWeek();
 
-		p_numbers = !containsAny(Object.keys(p_number_tags), note_tags) ? {'default':'01'} : p_number_tags;
+		// If no plant number then make it +p01.00
+		if(!containsAny(p_number_tags, note_tags)) note_tags.push(first_p_no);
 
-	    for (var i=0, i_len=plant_tags.length; i<i_len; i++) {
-			if ($.inArray(plant_tags[i], note_tags) === -1) continue; 
+	    // Find all tags for plant states
+		var states = [],
+			locations = [],
+			plants = [];
+
+	    for (var i=0, i_len=note_tags.length; i<i_len; i++) {
+	    	if ($.inArray(note_tags[i], state_tags) !== -1) {
+				states.push(note_tags[i]);
+			} else if ($.inArray(note_tags[i], location_tags) !== -1) {
+				locations.push(note_tags[i]);
+			} else if ($.inArray(note_tags[i], plant_tags) !== -1) {
+				plants.push(note_tags[i]);
+			}
+		}
+
+		// Find all plant tags and create a record
+	    for (var i=0, i_len=plants.length; i<i_len; i++) {
+	    	var plant = plants[i];	
 	    	
-	    	for (var no in p_numbers) {
-	    		if ($.inArray(no, note_tags) === -1) continue;
-
-	    		var p_no = p_numbers[no];
+	    	// Loop per plant
+	    	for (var j=0, j_len=p_number_tags.length; j<j_len; j++) {
+	    		var p_no = p_number_tags[j];
+				if ($.inArray(p_no, note_tags) === -1) continue; 
 
 	    		// Create object if does not exist
-				if (!notes_sorted.hasOwnProperty(plant_tags[i])) {
-					notes_sorted[plant_tags[i]] = {};
-				}
+				if (!notes_sorted.hasOwnProperty(plant)) 		notes_sorted[plant] = {};
+				if (!notes_sorted[plant].hasOwnProperty(p_no)) 	notes_sorted[plant][p_no] = {};
 
-				if (!notes_sorted[plant_tags[i]].hasOwnProperty(p_no)) {
-					notes_sorted[plant_tags[i]][p_no] = {};
-				}
-
-				if (!notes_sorted[plant_tags[i]][p_no].hasOwnProperty(year)) {
-				    notes_sorted[plant_tags[i]][p_no][year] = new Array(53);
-				    for (var j = 0; j < 54; j++) {
-				    	notes_sorted[plant_tags[i]][p_no][year][j] = {'notes': [], 'state':'', 'location': ''};
+				if (!notes_sorted[plant][p_no].hasOwnProperty(year)) {
+				    notes_sorted[plant][p_no][year] = new Array(53);
+				    for (var k = 0; k < 54; k++) {
+				    	notes_sorted[plant][p_no][year][k] = {'notes': [], 'state':[], 'location': ''};
 				    }
 				}
+			    
+			    notes_sorted[plant][p_no][year][week].notes.push(note);
 
-		    	notes_sorted[plant_tags[i]][p_no][year][week].notes.push(note);
+			    for (var k=0, k_len=states.length; k<k_len; k++) {
+			    	if ($.inArray(states[k], notes_sorted[plant][p_no][year][week].state) !== -1) continue;
+			    	notes_sorted[plant][p_no][year][week].state.push(states[k]);
+			    }
+
+			    // for (var k=0, k_len=locations.length; k<k_len; k++) {
+			    // 	if ($.inArray(locations[k], notes_sorted[plant][p_no][year][week].location) !== -1) continue;
+			    // 	notes_sorted[plant][p_no][year][week].location.push(locations[k]);
+			    // }
+			    if (locations.length > 0) {
+				    for (var wk=week; wk<54; wk++){
+				    	notes_sorted[plant][p_no][year][wk].location = locations;
+				    }
+			    }
 	    		
 	    	}
-
-
 		}	
+    }
+
+    for (var plant in notes_sorted) {
+
     }
 
 	console.timeEnd("sort_data");
 
 	console.log(notes_sorted['7808a9a7-8ecc-472f-a06f-63290091d1ae']);
+	console.log(notes_sorted['d7741d56-d4f3-4b0f-8a49-37c893f19db6']);
+	console.log(notes_sorted);
 
 	return notes_sorted;
 
