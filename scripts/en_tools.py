@@ -149,7 +149,7 @@ def new_entry(key, note_data):
 #---------------------------------------------------------------------------
 # Get evernote data
 #---------------------------------------------------------------------------
-def get_evernote_data(key, gardening_notes, cfg):
+def sync_evernote_data(key, gardening_notes, cfg):
     '''
     Function gets evernote data and updates gardening JSON file
 
@@ -375,6 +375,40 @@ def get_evernote_data(key, gardening_notes, cfg):
         sys.exit()
 
 
+#---------------------------------------------------------------------------
+# Get evernote data
+#---------------------------------------------------------------------------
+def get_en_cfg(key_file, cfg_file):
+    '''
+    Function gets evernote configuration data
+
+    key             Key file location and name
+    cfg             Configuration file location and name
+
+    '''
+
+    #---------------------------------------------------------------------------
+    # SET UP LOGGER
+    #---------------------------------------------------------------------------
+    logger = logging.getLogger('root')
+
+    #---------------------------------------------------------------------------
+    # GET EVERNOTE DATA AND WRITE TO FILE
+    #---------------------------------------------------------------------------
+    try:
+        with open(cfg_file, 'r') as f:
+            config = json.load(f)
+
+        with open(key_file, 'r') as f:
+            key = json.load(f)
+
+        return config, key
+   
+    except Exception, e:
+        logger.error('Error ({error_v}). Exiting...'.format(error_v=e), exc_info=True)
+        # wd_err.set()
+        sys.exit()
+
 
 #===============================================================================
 # MAIN
@@ -421,81 +455,75 @@ def main():
     key_file = 'evernote_key.json'
     sand_box = False
     force_sync = False
-    data_entry = False
-
-    if len(sys.argv) > 1:
-        if '-s' in sys.argv:
-            key_file = 'evernote_key_sand.json'
-            sand_box = True 
-        if '-f' in sys.argv:
-            force_sync = True 
-        if '-n' in sys.argv:
-            data_entry = True
 
 
-
-    #---------------------------------------------------------------------------
-    # GET CONFIG DATA
-    #---------------------------------------------------------------------------
     try:
-        with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
-            config = json.load(f)
-
-        with open('{fl}keys/{fk}'.format(fl= folder_loc, fk=key_file), 'r') as f:
-            key = json.load(f)
-
-
-        #---------------------------------------------------------------------------
-        # WRITE ENTRY OTHERWISE UPDATE DATA FILE
-        #---------------------------------------------------------------------------
-        if data_entry:
-            note_data = {
-                'date':     date,
-                'title':    title
-            }
-
-            new_entry(key, note_data)
-
-        else:
-
+        if len(sys.argv) > 1:
             #---------------------------------------------------------------------------
-            # READ DATA AND WRITE TO FILE
+            # WRITE ENTRY OTHERWISE UPDATE DATA FILE
             #---------------------------------------------------------------------------
-            try:
-                with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
-                    gardening_notes = json.load(f)
+            if '-n' in sys.argv:
 
-            except Exception, e:
-                logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
-
-                gardening_notes = {
-                    'lastUpdateCount': 0, 
-                    'plant_tags': {}, 
-                    'state_tags': {},
-                    'location_tags': {}, 
-                    'p_number_tags': {}, 
-                    'notes': {}
+                note_data = {
+                    'date':     date,
+                    'title':    title
                 }
 
-            cfg = { 
-                "gardening_tag":    config['evernote']['GARDENING_TAG'],
-                "notebook":         config['evernote']['NOTEBOOK'],
-                "plant_tag_id":     config['evernote']['PLANT_TAG_ID'],
-                "location_tag_id":  config['evernote']['LOCATION_TAG_ID'],
-                "state_tag_id":     config['evernote']['STATE_TAG_ID'],
-                "plant_no_id":      '+plants', #config['evernote']['PLANT_NO_TAG_ID'],
-                "sand_box":         sand_box, 
-                "force_sync":       force_sync
-            }
+                new_entry(key, note_data)
+                sys.exit()
 
-            gardening_notes = get_evernote_data(key, gardening_notes, cfg)
+            if '-p' in sys.argv:
+                key_file = 'evernote_key_sand.json'
+                sand_box = True 
 
-            with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
-                json.dump(gardening_notes, f)
+            if '-f' in sys.argv:
+                force_sync = True 
 
-            logger.debug('Writting data to file: COMPLETE')
+            #---------------------------------------------------------------------------
+            # READ DATA FROM EN AND WRITE TO FILE
+            #---------------------------------------------------------------------------
+            if '-s' in sys.argv:
 
-            check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
+                print('test')  
+
+                config, key =   get_en_cfg( cfg_file= '{fl}/data/config.json'.format(fl= folder_loc), 
+                                            key_file= '{fl}keys/{fk}'.format(fl= folder_loc, fk=key_file))
+       
+                try:
+                    with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
+                        gardening_notes = json.load(f)
+
+                except Exception, e:
+                    logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
+
+                    gardening_notes = {
+                        'lastUpdateCount': 0, 
+                        'plant_tags': {}, 
+                        'state_tags': {},
+                        'location_tags': {}, 
+                        'p_number_tags': {}, 
+                        'notes': {}
+                    }
+
+                cfg = { 
+                    "gardening_tag":    config['evernote']['GARDENING_TAG'],
+                    "notebook":         config['evernote']['NOTEBOOK'],
+                    "plant_tag_id":     config['evernote']['PLANT_TAG_ID'],
+                    "location_tag_id":  config['evernote']['LOCATION_TAG_ID'],
+                    "state_tag_id":     config['evernote']['STATE_TAG_ID'],
+                    "plant_no_id":      '+plants', #config['evernote']['PLANT_NO_TAG_ID'],
+                    "sand_box":         sand_box, 
+                    "force_sync":       force_sync
+                }
+
+                gardening_notes = sync_evernote_data(key, gardening_notes, cfg)
+
+                with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
+                    json.dump(gardening_notes, f)
+
+                logger.debug('Writting data to file: COMPLETE')
+
+                check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
 
    
     except Exception, e:
