@@ -122,15 +122,14 @@ def check_state_tags(tag_list, filename):
 #===============================================================================
 class EvernoteAcc:
  
-    '''Sets up the Evernote Account '''
- 
+    #---------------------------------------------------------------------------
+    # Sets up the Evernote Account 
+    #--------------------------------------------------------------------------- 
     def __init__(self, key, config, sand_box= False):
 
-        self.key = key
-        
+        self.key    = key     
         self.logger = logging.getLogger('root')
-        
-        self.cfg = { 
+        self.cfg    = { 
             "gardening_tag":    config['evernote']['GARDENING_TAG'],
             "notebook":         config['evernote']['NOTEBOOK'],
             "plant_tag_id":     config['evernote']['PLANT_TAG_ID'],
@@ -141,65 +140,61 @@ class EvernoteAcc:
             "force_sync":       False
         }
 
+        #------------------------------------------------------------------------
+        # Get Account Info
+        #------------------------------------------------------------------------
         client = EvernoteClient(token=self.key['AUTH_TOKEN'], sandbox=sand_box)
-        
         self.note_store  = client.get_note_store()
         self.user_store  = client.get_user_store()
 
+        #------------------------------------------------------------------------
+        # Check evernote API
+        #------------------------------------------------------------------------
+        version_ok = self.user_store.checkVersion(
+            "Evernote EDAMTest (Python)",
+            UserStoreConstants.EDAM_VERSION_MAJOR,
+            UserStoreConstants.EDAM_VERSION_MINOR)
 
- 
+        if not version_ok:
+            self.logger.warning("Evernote API version is not up to date.")
+
+
 
     #---------------------------------------------------------------------------
     # Get evernote data
     #---------------------------------------------------------------------------
-    def new_entry(self, key, note_data):
+    def new_entry(self, note_data):
         '''
         Function gets evernote data and updates gardening JSON file
 
-        key
-
         '''
-
-        #---------------------------------------------------------------------------
-        # SET UP LOGGER
-        #---------------------------------------------------------------------------
-        logger = logging.getLogger('root')
-
-        #---------------------------------------------------------------------------
-        # GET EVERNOTE DATA AND WRITE TO FILE
-        #---------------------------------------------------------------------------
-        client = EvernoteClient(token=key['AUTH_TOKEN'], sandbox=cfg['sand_box'])
-        
-        note_store  = client.get_note_store()
-        user_store  = client.get_user_store()
-        user        = user_store.getUser()
-        user_public = user_store.getPublicUserInfo(user.username)
 
         nBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         nBody += "<!DOCTYPE en-note SYSTEM \"http://xml.evernote.com/pub/enml2.dtd\">"
-        nBody += "<en-note>%s</en-note>" % noteBody
+        nBody += "<en-note>%s</en-note>" % note_data['body']
 
         ## Create note object
         ourNote = Types.Note()
-        ourNote.title = noteTitle
-        ourNote.content = nBody
+        ourNote.title       = note_data['title']
+        ourNote.content     = nBody 
+        ourNote.created     = note_data['created'] 
 
-        ## parentNotebook is optional; if omitted, default notebook is used
-        if parentNotebook and hasattr(parentNotebook, 'guid'):
-            ourNote.notebookGuid = parentNotebook.guid
+        # ## parentNotebook is optional; if omitted, default notebook is used
+        # if note_data['notebook'] and hasattr(note_data['notebook'], 'guid'):
+        #     ourNote.notebookGuid = parentNotebook.guid
 
         ## Attempt to create note in Evernote account
         try:
-            note = noteStore.createNote(authToken, ourNote)
+            note = self.note_store.createNote(self.key['AUTH_TOKEN'], ourNote)
         except Errors.EDAMUserException, edue:
             ## Something was wrong with the note data
             ## See EDAMErrorCode enumeration for error code explanation
             ## http://dev.evernote.com/documentation/reference/Errors.html#Enum_EDAMErrorCode
-            print "EDAMUserException:", edue
+            self.logger.error("EDAMUserException: {err}".format(err=edue))
             return None
         except Errors.EDAMNotFoundException, ednfe:
             ## Parent Notebook GUID doesn't correspond to an actual notebook
-            print "EDAMNotFoundException: Invalid parent notebook GUID"
+            self.logger.error("EDAMNotFoundException: Invalid parent notebook GUID")
             return None
         ## Return created note object
         return note
@@ -234,17 +229,6 @@ class EvernoteAcc:
 
             user        = self.user_store.getUser()
             user_public = self.user_store.getPublicUserInfo(user.username)
-
-            #------------------------------------------------------------------------
-            # Check evernote API
-            #------------------------------------------------------------------------
-            version_ok = self.user_store.checkVersion(
-                "Evernote EDAMTest (Python)",
-                UserStoreConstants.EDAM_VERSION_MAJOR,
-                UserStoreConstants.EDAM_VERSION_MINOR)
-
-            if not version_ok:
-                logger.warning("Evernote API version is not up to date.")
 
 
             #------------------------------------------------------------------------
@@ -520,11 +504,6 @@ def main():
 
         EnAcc = EvernoteAcc(key, config, sand_box)
 
-
-
-
-
-
         
         if len(sys.argv) > 1:
             #---------------------------------------------------------------------------
@@ -533,11 +512,13 @@ def main():
             if '-n' in sys.argv:
 
                 note_data = {
-                    'date':     date,
-                    'title':    title
+                    'created':  '2014-10-09',
+                    'title':    'dormant',
+                    'body':     'test',
+                    'notebook': None
                 }
 
-                new_entry(key, note_data)
+                note = EnAcc.new_entry(note_data)
                 sys.exit()
 
             #---------------------------------------------------------------------------
