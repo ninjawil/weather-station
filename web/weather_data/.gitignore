@@ -8,3 +8,6 @@
 *.json
 *.xml
 *.log.*
+/Weather_station_msgs.ods
+/shed temp.csv
+/shed temp.csv.ods
