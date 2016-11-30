@@ -341,6 +341,7 @@ function drawCharts(chart_names, drawDayNight, sensors) {
 	                color: sensors[sensor].color, ///Highcharts.getOptions().colors[sensors[sensor].color],
 	                fillOpacity: 0.3,
 	                marker: sensors[sensor].marker,
+	                zIndex: sensors[sensor].zIndex,
 	                lineWidth: sensors[sensor].lineWidth,
 	                tooltip: {
 	                    valueSuffix: ' ' + sensors[sensor].unit,
@@ -434,9 +435,11 @@ function prepareYearCharts(chart_names, values) {
 
 			sensors[sensor + '_min_max'].readings = []; 
 			sensors[sensor + '_min_max'].description = 'Range';
-			sensors[sensor + '_min_max'].graph = 'areasplinerange';
-			sensors[sensor + '_min_max'].lineWidth = 0;
-			sensors[sensor + '_min_max'].fillOpacity = 0.1;
+			sensors[sensor + '_min_max'].graph = 'arearange';
+			sensors[sensor + '_min_max'].color = sensors[sensor + '_min_max'].color.replace(/\%,.*\%\)/gi, '%, 80%)');
+			sensors[sensor + '_min_max'].zIndex = 0;
+			sensors[sensor + '_min_max'].lineWidth = 2;
+			sensors[sensor + '_min_max'].fillOpacity = 0.3;
 
 			for(var j = 0; j < values[sensor + '_min'].length; j++) {
 				values[sensor + '_min'][j].push(values[sensor + '_max'][j][1]);
@@ -504,7 +507,7 @@ function main() {
 //===============================================================================
 // Constants
 //===============================================================================
-var 	COLOR_BLUE		= 'hsl(198, 95%, 40%)', 	//'#058DC7',
+var 	COLOR_BLUE		= 'hsl(210, 95%, 40%)', 	//'#058DC7',
  		COLOR_L_BLUE	= 'hsl(188, 79%, 52%)',		//'#24CBE5',
 		COLOR_GREEN 	= 'hsl(106, 57%, 45%)',		//'#50B432',
 		COLOR_L_GREEN 	= 'hsl(127, 71%, 65%)',		//'#64E572',
@@ -513,7 +516,7 @@ var 	COLOR_BLUE		= 'hsl(198, 95%, 40%)', 	//'#058DC7',
 		COLOR_PURPLE	= 'hsl(285, 100%, 40%)',	//'#9900cc',
 		COLOR_PINK		= 'hsl(340, 100%, 70%)',	//'#ff6699',
 		COLOR_YELLOW	= 'hsl(61, 100%, 44%)',		//'#DDDF00',
-		COLOR_RED		= 'hsl(17, 85%, 52%)',		//'#ED561B',
+		COLOR_RED		= 'hsl(5, 85%, 52%)',		//'#ED561B',
 		COLOR_ACQUA		= 'hsl(158, 92%, 70%)',		//'#6AF9C4',
 		COLOR_BLACK		= 'hsl(0, 0%, 0%)',			//'#000000',
 		COLOR_L_GREY	= 'hsl(0, 0%, 70%)',		//'#b3b3b3',
@@ -524,13 +527,15 @@ var 	COLOR_BLUE		= 'hsl(198, 95%, 40%)', 	//'#058DC7',
 //===============================================================================
 // Set up
 //===============================================================================
+var d = new Date();
+var n = d.getFullYear();
 var dir = 'weather',
 	dataFiles = {'1d': 'wd_last_1d.xml',
 				 '2d': 'wd_avg_2d.xml',
 				 '1w': 'wd_avg_1w.xml',
 				 '1m': 'wd_avg_1m.xml',
 				 '3m': 'wd_avg_3m.xml',
-				 '1y': 'wd_all_1y.xml'
+				 '1y': 'wd_all_'+ n + '.xml'
 			    },
 	sensor_setup = { 'outside_temp': {
 					description: 'Outside Temperature',
@@ -548,7 +553,8 @@ var dir = 'weather',
 					},
 					lineWidth: 2,
 					fillOpacity: 0.75,
-					readings: []
+					readings: [],
+					zIndex: 6
 				},
 				'inside_temp': {
 					description: 'Inside Temperature',
@@ -566,7 +572,8 @@ var dir = 'weather',
 					},
 					lineWidth: 2,
 					fillOpacity: 0.75,
-					readings: []
+					readings: [],
+					zIndex: 6
 				},
 				'inside_hum': {
 					description: 'Inside Humidity',
@@ -584,7 +591,8 @@ var dir = 'weather',
 					},
 					lineWidth: 2,
 					fillOpacity: 0.75,
-					readings: []
+					readings: [],
+					zIndex: 6
 				},
 				'precip_rate': {
 					description: 'Precipitation Rate',
@@ -602,7 +610,8 @@ var dir = 'weather',
 					},
 					lineWidth: 2,
 					fillOpacity: 0.75,
-					readings: []
+					readings: [],
+					zIndex: 6
 				},
 				'precip_acc': {
 					description: 'Accumulated Precipitation',
@@ -620,7 +629,8 @@ var dir = 'weather',
 					},
 					lineWidth: 2,
 					fillOpacity: 0.75,
-					readings: []
+					readings: [],
+					zIndex: 6
 				},
 				'door_open': {
 					description: 'Door Status',
@@ -638,7 +648,8 @@ var dir = 'weather',
 					},
 					lineWidth: 2,
 					fillOpacity: 0.75,
-					readings: []
+					readings: [],
+					zIndex: 6
 				},
 				'sw_status': {
 					description: 'Switch Status',
@@ -656,7 +667,8 @@ var dir = 'weather',
 					},
 					lineWidth: 2,
 					fillOpacity: 0.75,
-					readings: []
+					readings: [],
+					zIndex: 6
 				},
 				'sw_power': {
 					description: 'Switch Power',
@@ -673,7 +685,8 @@ var dir = 'weather',
 						symbol: 'circle'
 					},
 					lineWidth: 2,
-					readings: []
+					readings: [],
+					zIndex: 6
 				}
 			};
 
