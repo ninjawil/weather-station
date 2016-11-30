@@ -514,13 +514,15 @@ var 	COLOR_BLUE		= 'hsl(198, 95%, 40%)', 	//'#058DC7',
 //===============================================================================
 // Set up
 //===============================================================================
+var d = new Date();
+var n = d.getFullYear();
 var dir = 'weather',
 	dataFiles = {'1d': 'wd_last_1d.xml',
 				 '2d': 'wd_avg_2d.xml',
 				 '1w': 'wd_avg_1w.xml',
 				 '1m': 'wd_avg_1m.xml',
 				 '3m': 'wd_avg_3m.xml',
-				 '1y': 'wd_all_1y.xml'
+				 '1y': 'wd_all_'+ n + '.xml'
 			    },
 	sensor_setup = { 'outside_temp': {
 					description: 'Outside Temperature',
