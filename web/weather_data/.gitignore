@@ -1,0 +1,13 @@
+/error.json
+/wd_all_1y.xml
+/wd_avg_1y.xml
+/wd_last_1d.xml
+/wd_last_3h.xml
+/wd_max_1y.xml
+/wd_min_1y.xml
+*.json
+*.xml
+*.log.*
+/Weather_station_msgs.ods
+/shed temp.csv
+/shed temp.csv.ods
