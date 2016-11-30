@@ -133,6 +133,8 @@ def main():
 
     time.sleep(3)
 
+    year_xml = 'wd_all_{year}.xml'.format(year= time.strftime("%Y"))
+
     rrd_tools.avg_max_min_to_xml('{fd1}/data/{fd2}'.format(fd1= s.SYS_FOLDER, 
                                                             fd2= 'wd_max_1y.xml'), 
                                  '{fd1}/data/{fd2}'.format(fd1= s.SYS_FOLDER, 
@@ -140,7 +142,7 @@ def main():
                                  '{fd1}/data/{fd2}'.format(fd1= s.SYS_FOLDER, 
                                                             fd2= 'wd_avg_1y.xml'), 
                                  '{fd1}/data/{fd2}'.format(fd1= s.SYS_FOLDER, 
-                                                            fd2= 'wd_all_1y.xml'))
+                                                            fd2= year_xml))
 
 
 #===============================================================================
