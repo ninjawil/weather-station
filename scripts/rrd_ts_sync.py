@@ -17,7 +17,7 @@ import json
 import thingspeak.thingspeak as thingspeak
 import rrd_tools
 import settings as s
-import log
+import log, logging
 import check_process
 import watchdog as wd
 
@@ -25,7 +25,7 @@ import watchdog as wd
 #===============================================================================
 # SYNC
 #===============================================================================
-def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file, send_sync_err= True):
+def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file, send_sync_err, err_file):
 
     '''
     Synchronizes thingspeak account with the data in the local Round Robin
@@ -54,7 +54,6 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file, send_sync_e
     #---------------------------------------------------------------------------
     logger = logging.getLogger('root')
     
-    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
     wd_err      = wd.ErrorCode(err_file, '0007')
     sync_err    = wd.ErrorCode(err_file, '0008')
   
@@ -177,7 +176,7 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file, send_sync_e
     except Exception, e:
         logger.error('Update failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
-         wd_err.set()
+        wd_err.set()
         sys.exit()
 
 
@@ -188,7 +187,7 @@ def main():
     
     '''
     Passed arguments:
-        --nosyncerr     - disables reporting of sync errors 
+        --syncerr     - disables reporting of sync errors 
     '''
 
     script_name = os.path.basename(sys.argv[0])
@@ -218,10 +217,11 @@ def main():
         #-------------------------------------------------------------------
         # Check and action passed arguments
         #-------------------------------------------------------------------
+        sync_err = False
         if len(sys.argv) > 1:
-            if '--nosyncerr' in sys.argv:
+            if '--syncerr' in sys.argv:
                 logger.info('User requested NO ERROR feedback.')
-                sync_err = False
+                sync_err = True
  
 
         #-------------------------------------------------------------------
@@ -246,7 +246,8 @@ def main():
                 '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
                                         fd2= s.DATA_FOLDER,
                                         fl= s.RRDTOOL_RRD_FILE),
-                sync_err)
+                sync_err,
+                '{fl}/data/error.json'.format(fl= folder_loc))
 
     except Exception, e:
         logger.error('Update failed ({error_v}). Exiting...'.format(
