@@ -10,6 +10,7 @@ import datetime
 import time
 import json
 import getopt
+import collections
 
 # Third party modules
 import hashlib
@@ -449,10 +450,50 @@ def get_config_data(key_file, cfg_file):
         sys.exit()
 
 #---------------------------------------------------------------------------
-# Get evernote data
+# Displays help
 #---------------------------------------------------------------------------
 def usage():
     print('en_tools.py')
+
+
+def nested_dict():
+    return collections.defaultdict(nested_dict)
+
+#---------------------------------------------------------------------------
+# Sort gardening data for web page
+#---------------------------------------------------------------------------
+def web_format(data):
+    '''
+    Formats data into a usable json for the web page
+    '''
+
+    plants = data['plant_tags']
+    states = data['state_tags']
+    locations = data['location_tags']
+    plant_no = data['p_number_tags']
+
+    d = nested_dict()
+
+    for note_id in data['notes']:
+        note = data['notes'][note_id]
+        date = datetime.datetime.fromtimestamp(note['created']/1000)
+        year = date.strftime('%Y')
+        week = date.isocalendar()[1]
+
+        note_states = [tag for tag in note['tags'] if tag in states]
+        note_location = [tag for tag in note['tags'] if tag in locations]
+        note_plants_no = [tag for tag in note['tags'] if tag in plant_no]
+
+        for tag in note['tags']:
+            if tag in plants:
+                d[tag][year] = [0]*5
+
+    print d
+
+    
+
+    return formatted_data
+
 
 
 #===============================================================================
@@ -501,9 +542,10 @@ def main():
 
         key_file = 'evernote_key.json'
         sand_box = False
-        sync = True
+        sync = False
         force_sync = False
         new_note = False
+        format_into_web = False
         note_data = {
                 'created':  int(datetime.datetime.now().strftime("%s")) * 1000,
                 'title':    'new note',
@@ -512,8 +554,8 @@ def main():
             }
  
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hfbt:c:',
-                ['help', 'force-sync', 'sandbox', 'new', 'title=', 'created='])
+            opts, args = getopt.getopt(sys.argv[1:],'hwfbt:c:',
+                ['help', 'web', 'force-sync', 'sandbox', 'new', 'title=', 'created='])
         except getopt.GetoptError:
             usage()
             sys.exit(2)
@@ -524,6 +566,11 @@ def main():
                 logger.info('Using Evernote sandbox')
                 sand_box = True 
                 continue
+
+            if opt in ('-w', '--web'):
+                logger.info('Organize garden data into web format')
+                format_into_web = True
+                break
 
             if opt in ('-f', '--force-sync'):
                 logger.info('Force sync requested')
@@ -558,27 +605,33 @@ def main():
             note = EnAcc.new_entry(note_data)
             sys.exit()
 
+
+
+
         #---------------------------------------------------------------------------
         # READ DATA FROM EN AND WRITE TO FILE
         #---------------------------------------------------------------------------
-        if sync:
+        try:
+            with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
+                gardening_notes = json.load(f)
 
-            try:
-                with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
-                    gardening_notes = json.load(f)
+        except Exception, e:
+            if format_into_web:
+                logger.error('Error ({error_v}). Exiting...'.format(error_v=e), exc_info=True)
+                sys.exit()
 
-            except Exception, e:
+            if sync:
                 logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
-
                 gardening_notes = {
-                    'lastUpdateCount': 0, 
-                    'plant_tags': {}, 
-                    'state_tags': {},
-                    'location_tags': {}, 
-                    'p_number_tags': {}, 
-                    'notes': {}
-                }
+                        'lastUpdateCount': 0, 
+                        'plant_tags': {}, 
+                        'state_tags': {},
+                        'location_tags': {}, 
+                        'p_number_tags': {}, 
+                        'notes': {}
+                    }
 
+        if sync:
             gardening_notes = EnAcc.sync_data(gardening_notes, force_sync)
 
             with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
@@ -587,6 +640,13 @@ def main():
             logger.debug('Writting data to file: COMPLETE')
 
             check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
+            
+
+        if format_into_web:
+            formatted_gardening_notes = web_format(gardening_notes)
+
+            with open('{fl}/data/gardening_web.json'.format(fl= folder_loc), 'w') as f:
+                json.dump(formatted_gardening_notes, f)
 
 
     except Exception, e:
