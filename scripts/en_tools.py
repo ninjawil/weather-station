@@ -166,7 +166,8 @@ class EvernoteAcc:
     #---------------------------------------------------------------------------
     def new_entry(self, note_data):
         '''
-        Function gets evernote data and updates gardening JSON file
+        Function gets evernote data and updates gardening JSON file.
+        Taken from evernote developers page and slightly adapted for this function.
 
         '''
 
@@ -178,7 +179,7 @@ class EvernoteAcc:
         ourNote = Types.Note()
         ourNote.title       = note_data['title']
         ourNote.content     = nBody 
-        #ourNote.created     = note_data['created'] 
+        ourNote.created     = note_data['created'] 
 
         # ## parentNotebook is optional; if omitted, default notebook is used
         # if note_data['notebook'] and hasattr(note_data['notebook'], 'guid'):
@@ -187,6 +188,7 @@ class EvernoteAcc:
         ## Attempt to create note in Evernote account
         try:
             note = self.note_store.createNote(self.key['AUTH_TOKEN'], ourNote)
+            self.logger.info('Note Created')
         except Errors.EDAMUserException, edue:
             ## Something was wrong with the note data
             ## See EDAMErrorCode enumeration for error code explanation
@@ -414,7 +416,7 @@ class EvernoteAcc:
 #---------------------------------------------------------------------------
 # Get evernote data
 #---------------------------------------------------------------------------
-def get_en_cfg(key_file, cfg_file):
+def get_config_data(key_file, cfg_file):
     '''
     Function gets evernote configuration data
 
@@ -445,6 +447,12 @@ def get_en_cfg(key_file, cfg_file):
         logger.error('Error ({error_v}). Exiting...'.format(error_v=e), exc_info=True)
         # wd_err.set()
         sys.exit()
+
+#---------------------------------------------------------------------------
+# Get evernote data
+#---------------------------------------------------------------------------
+def usage():
+    print('en_tools.py')
 
 
 #===============================================================================
@@ -486,57 +494,74 @@ def main():
         sys.exit()
 
 
-
     #---------------------------------------------------------------------------
     # CHECK USER REQUESTS
     #---------------------------------------------------------------------------    
     try:
 
-        try:
-            opts, args = getopt.getopt(sys.argv,"n:psf",["notetitle="])
-        except getopt.GetoptError:
-            print 'test.py -i <inputfile> -o <outputfile>'
-            sys.exit(2)
-
-        print opts
-        
         key_file = 'evernote_key.json'
         sand_box = False
+        sync = True
         force_sync = False
+        new_note = False
+        note_data = {
+                'created':  int(datetime.datetime.now().strftime("%s")) * 1000,
+                'title':    'new note',
+                'body':     '',
+                'notebook': None
+            }
+ 
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hfbt:c:',
+                ['help', 'force-sync', 'sandbox', 'new', 'title=', 'created='])
+        except getopt.GetoptError:
+            usage()
+            sys.exit(2)
 
-        if '-p' in opts:
-            key_file = 'evernote_key_sand.json'
-            sand_box = True 
+        for opt, arg in opts:
+            if opt in ('-b', '--sandbox'):
+                key_file = 'evernote_key_sand.json'
+                logger.info('Using Evernote sandbox')
+                sand_box = True 
+                continue
 
-        config, key =   get_en_cfg( cfg_file= '{fl}/data/config.json'.format(fl= folder_loc), 
-                                    key_file= '{fl}keys/{fk}'.format(fl= folder_loc, fk=key_file))
+            if opt in ('-f', '--force-sync'):
+                logger.info('Force sync requested')
+                force_sync = True
+                break
+
+            if opt in ('-h', '--help'):
+                usage()
+                sys.exit()
+
+            if opt in ('-t', '--title'):
+                note_data['title'] = arg
+                sync = False
+                new_note = True
+                continue
+
+            if opt in ("-c", "--created"):
+                note_data['created'] = int(datetime.datetime.strptime(arg, '%Y-%m-%d').strftime("%s")) * 1000
+                break
+
+        config, key =   get_config_data(cfg_file= '{fl}/data/config.json'.format(fl= folder_loc), 
+                                        key_file= '{fl}keys/{fk}'.format(fl= folder_loc, 
+                                                                         fk=key_file))
 
         EnAcc = EvernoteAcc(key, config, sand_box)
 
-        
 
         #---------------------------------------------------------------------------
         # WRITE ENTRY OTHERWISE UPDATE DATA FILE
         #---------------------------------------------------------------------------
-        if '-n' in opts:
-
-            note_data = {
-                'created':  '2014-10-09',
-                'title':    'next test',
-                'body':     'test',
-                'notebook': None
-            }
-
+        if new_note:
             note = EnAcc.new_entry(note_data)
             sys.exit()
 
         #---------------------------------------------------------------------------
         # READ DATA FROM EN AND WRITE TO FILE
         #---------------------------------------------------------------------------
-        if '-s' in opts:
-
-            if '-f' in opts:
-                force_sync = True 
+        if sync:
 
             try:
                 with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'r') as f:
