@@ -169,10 +169,12 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file, send_sync_e
                     #Thingspeak update rate is limited to 15s per entry
                     time.sleep(20)
 
+    except gaierror, e:
+        logger.error('Unable to connect ({error_v}). Exiting...'.format(
+            error_v=e), exc_info=True)
+        if send_sync_err: sync_err.set()
+        sys.exit()
         
-        logger.info('--- Script Finished ---')
-
-
     except Exception, e:
         logger.error('Update failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
@@ -253,6 +255,9 @@ def main():
         logger.error('Update failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
         sys.exit()
+        
+    finally:
+        logger.info('--- Script Finished ---')
 
 
 
