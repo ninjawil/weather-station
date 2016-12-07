@@ -480,19 +480,50 @@ def web_format(data):
         year = date.strftime('%Y')
         week = date.isocalendar()[1]
 
-        note_states = [tag for tag in note['tags'] if tag in states]
-        note_location = [tag for tag in note['tags'] if tag in locations]
-        note_plants_no = [tag for tag in note['tags'] if tag in plant_no]
+        image_link = note['res'][0] if note['res'] else ''
+        
+        note_plants_no =    [tag for tag in note['tags'] if tag in plant_no]
+        note_states =       [tag for tag in note['tags'] if tag in states]
+        note_locations =    [tag for tag in note['tags'] if tag in locations]
+
+        if not note_plants_no:
+            note_plants_no = ['+p01.00']
 
         for tag in note['tags']:
             if tag in plants:
-                d[tag][year] = [0]*5
+                for p in note_plants_no:
+                    if year not in d[tag][p].keys():
+                        # Create new record if not present
+                        d[tag][p][year] = [None]*53
+                    
+                    if not d[tag][p][year][week-1]:
+                        #Add note data to week
+                        d[tag][p][year][week-1] = {
+                            'note_id':      [note_id],
+                            'states':       note_states,
+                            'locations':    note_locations,
+                            'color':        '',
+                            'symbols':      '',
+                            'link':         note['link'],
+                            'image':        image_link
+                        }
+                    else:
+                        # Add new note items
+                        # but remove duplicate items by using sets
+                        week_d = d[tag][p][year][week-1]
+                        week_d['note_id'].append(note_id)
+                        week_d['states'] = list(set(week_d['states'])|set(note_states))
+                        week_d['locations'] = list(set(week_d['locations'])|set(note_locations))
+                        week_d['symbols'] += ''
 
-    print d
+
+    #print d['644f1488-5a31-458a-b2e1-921a92243048'] # acer palmantum
+    print d['00abd749-a69a-4177-8df5-def0697a2b4a'] 
 
     
 
-    return formatted_data
+
+    return d
 
 
 
@@ -645,8 +676,8 @@ def main():
         if format_into_web:
             formatted_gardening_notes = web_format(gardening_notes)
 
-            with open('{fl}/data/gardening_web.json'.format(fl= folder_loc), 'w') as f:
-                json.dump(formatted_gardening_notes, f)
+            # with open('{fl}/data/gardening_web.json'.format(fl= folder_loc), 'w') as f:
+            #     json.dump(formatted_gardening_notes, f)
 
 
     except Exception, e:
