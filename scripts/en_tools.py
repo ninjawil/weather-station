@@ -476,10 +476,13 @@ def web_format(data):
 
     for note_id in data['notes']:
         note = data['notes'][note_id]
+
+        # Prepare dates
         date = datetime.datetime.fromtimestamp(note['created']/1000)
         year = date.strftime('%Y')
         week = date.isocalendar()[1]
 
+        # Get note information
         image_link = note['res'][0] if note['res'] else ''
         
         note_plants_no =    [tag for tag in note['tags'] if tag in plant_no]
@@ -489,6 +492,7 @@ def web_format(data):
         if not note_plants_no:
             note_plants_no = ['+p01.00']
 
+        # Create a timeline for each plant tagged in a note
         for tag in note['tags']:
             if tag in plants:
                 for p in note_plants_no:
