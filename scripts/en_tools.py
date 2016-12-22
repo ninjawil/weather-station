@@ -121,6 +121,9 @@ def check_state_tags(tag_list, filename):
     logger.debug('Writting state configuration to file: COMPLETE')
 
 
+    return state_config
+
+
 #===============================================================================
 class EvernoteAcc:
  
@@ -456,16 +459,27 @@ def usage():
     print('en_tools.py')
 
 
+#---------------------------------------------------------------------------
+# Nested dictionaries
+#---------------------------------------------------------------------------
 def nested_dict():
     return collections.defaultdict(nested_dict)
+
 
 #---------------------------------------------------------------------------
 # Sort gardening data for web page
 #---------------------------------------------------------------------------
-def web_format(data):
+def web_format(data, state_data):
     '''
     Formats data into a usable json for the web page
     '''
+
+
+    # Set up logger
+    logger = logging.getLogger('root')
+
+
+    routine_start = datetime.datetime.now();
 
     plants = data['plant_tags']
     states = data['state_tags']
@@ -487,6 +501,8 @@ def web_format(data):
         
         note_plants_no =    [tag for tag in note['tags'] if tag in plant_no]
         note_states =       [tag for tag in note['tags'] if tag in states]
+        note_symbols =      [state_data[tag]['symbol'] for tag in note['tags'] if tag in states]
+        note_color =        [state_data[tag]['color'] for tag in note['tags'] if tag in states if state_data[tag]['color']]
         note_locations =    [tag for tag in note['tags'] if tag in locations]
 
         if not note_plants_no:
@@ -506,8 +522,8 @@ def web_format(data):
                             'note_id':      [note_id],
                             'states':       note_states,
                             'locations':    note_locations,
-                            'color':        '',
-                            'symbols':      '',
+                            'color':        note_color,
+                            'symbols':      note_symbols,
                             'link':         note['link'],
                             'image':        image_link
                         }
@@ -518,14 +534,14 @@ def web_format(data):
                         week_d['note_id'].append(note_id)
                         week_d['states'] = list(set(week_d['states'])|set(note_states))
                         week_d['locations'] = list(set(week_d['locations'])|set(note_locations))
-                        week_d['symbols'] += ''
+                        week_d['symbols'] = list(set(week_d['symbols'])|set(note_symbols))
+                        week_d['color'] = list(set(week_d['color'])|set(note_color))
 
+    routine_end = datetime.datetime.now()
+
+    logger.debug('Time taken {duration}'.format(duration= routine_end-routine_start))
 
     #print d['644f1488-5a31-458a-b2e1-921a92243048'] # acer palmantum
-    print d['00abd749-a69a-4177-8df5-def0697a2b4a'] 
-
-    
-
 
     return d
 
@@ -674,14 +690,19 @@ def main():
 
             logger.debug('Writting data to file: COMPLETE')
 
-            check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
+            state_config = check_state_tags(gardening_notes['state_tags'], '{fl}/data/state_tags.json'.format(fl= folder_loc))
             
 
         if format_into_web:
-            formatted_gardening_notes = web_format(gardening_notes)
 
-            # with open('{fl}/data/gardening_web.json'.format(fl= folder_loc), 'w') as f:
-            #     json.dump(formatted_gardening_notes, f)
+            if not sync:
+                with open('{fl}/data/state_tags.json'.format(fl= folder_loc), 'r') as f:
+                    state_config = json.load(f)
+
+            formatted_gardening_notes = web_format(gardening_notes, state_config)
+
+            with open('{fl}/data/gardening_web.json'.format(fl= folder_loc), 'w') as f:
+                json.dump(formatted_gardening_notes, f)
 
 
     except Exception, e:
