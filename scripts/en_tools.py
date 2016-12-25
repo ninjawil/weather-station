@@ -699,7 +699,11 @@ def main():
                 with open('{fl}/data/state_tags.json'.format(fl= folder_loc), 'r') as f:
                     state_config = json.load(f)
 
-            formatted_gardening_notes = web_format(gardening_notes, state_config)
+            formatted_gardening_notes = {}
+            formatted_gardening_notes['diary'] = web_format(gardening_notes, state_config)
+            formatted_gardening_notes['plant_tags'] = gardening_notes['plant_tags']
+            formatted_gardening_notes['location_tags'] = gardening_notes['location_tags']
+
 
             with open('{fl}/data/gardening_web.json'.format(fl= folder_loc), 'w') as f:
                 json.dump(formatted_gardening_notes, f)
