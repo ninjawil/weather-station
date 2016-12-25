@@ -25,7 +25,7 @@ function displayGarden() {
 
 
     //getFileData('weather_data/gardening.json', 'json', minimumSearchBar, []);
-     getFileData('weather_data/gardening.json', 'json', drawGardenSearchBar, []);
+     getFileData('weather_data/gardening_web.json', 'json', drawGardenSearchBar, []);
 
 }
 
@@ -67,6 +67,7 @@ function minimumSearchBar(garden_data) {
 //-------------------------------------------------------------------------------
 function drawGardenSearchBar(garden_data) {
 
+	console.log(garden_data);
 	console.time("search_bar");
 
 	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar2" class="col-md-2">%bar2%</div><div id="bar3" class="col-md-1">%bar3%</div><div id="bar4" class="col-md-1" style="top: 25px;">%bar4%</div><div id="bar5" class="col-md-4"></div>',
