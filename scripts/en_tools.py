@@ -519,19 +519,23 @@ def web_format(data, state_data):
                     if not d[tag][p][year][week-1]:
                         #Add note data to week
                         d[tag][p][year][week-1] = {
-                            'note_id':      [note_id],
+                            #'note_id':      [note_id],
+                            'title':        note['title'],
+                            'body':         [[note['title'], note['link']]],
                             'states':       note_states,
                             'locations':    note_locations,
                             'color':        note_color,
                             'symbols':      note_symbols,
-                            'link':         note['link'],
+                            #'link':         note['link'],
                             'image':        image_link
                         }
                     else:
                         # Add new note items
                         # but remove duplicate items by using sets
                         week_d = d[tag][p][year][week-1]
-                        week_d['note_id'].append(note_id)
+                        #week_d['note_id'].append(note_id)
+                        week_d['title'] = 'Multiple Notes'
+                        week_d['body'].append([note['title'], note['link']])
                         week_d['states'] = list(set(week_d['states'])|set(note_states))
                         week_d['locations'] = list(set(week_d['locations'])|set(note_locations))
                         week_d['symbols'] = list(set(week_d['symbols'])|set(note_symbols))

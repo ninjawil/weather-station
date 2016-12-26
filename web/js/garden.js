@@ -409,10 +409,12 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 
 					// Draw cell
-					popover_img = HTML_popover_img.replace('%res_link%', week_entry.image);
+					var popover_img = HTML_popover_img.replace('%res_link%', week_entry.image);
+					var popover_body  = HTML_popover_link.replace('%url%', week_entry.body[0][1]);
+					popover_body  = popover_body.replace('%link_text%', week_entry.body[0][0]);
 
-					formatted_HTML_cell = HTML_cell.replace('%popover_title%', 'test');
-					formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', 'test' + popover_img);
+					formatted_HTML_cell = HTML_cell.replace('%popover_title%', week_entry.title);
+					formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
 					formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', week_entry.symbols[0]);
 					formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  this_cell_colour);
 
