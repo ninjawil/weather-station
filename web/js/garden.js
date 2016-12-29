@@ -25,7 +25,7 @@ function displayGarden() {
 
 
     //getFileData('weather_data/gardening.json', 'json', minimumSearchBar, []);
-     getFileData('weather_data/gardening_web.json', 'json', drawGardenSearchBar, []);
+    getFileData('weather_data/gardening_web.json', 'json', drawGardenSearchBar, []);
 
 
 }
@@ -203,11 +203,12 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	console.time("draw_chart");
 
 
-	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
-	var HTML_cell = '<td %cell_colour% %border% nowrap><div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
-	var HTML_loc_popover = '<a href="#" style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>Location Color Key</b>" data-content="<dl>%popover_body%</dl>">KEY</a>';
-	var HTML_popover_img = "<img src='%res_link%' width='200' />";
-	var HTML_popover_link = "<dd><a href='%url%'>• %link_text%</a></dd>";
+	var HTMLtable 			= '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
+	var HTML_cell 			= '<td %cell_colour% %border% nowrap>%cell_contents%</td>'
+	var HTML_cell_content 	= '<div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
+	var HTML_loc_popover 	= '<a href="#" style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>Location Color Key</b>" data-content="<dl>%popover_body%</dl>">KEY</a>';
+	var HTML_popover_img 	= "<img src='%res_link%' width='200' />";
+	var HTML_popover_link 	= "<dd><a href='%url%'>• %link_text%</a></dd>";
 
 
 	var locations = garden_data.location_tags;
@@ -235,7 +236,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 	// Create week number table header
 	var week_numbers = [];
-	for (i = 0; i < 54; i++) {
+	for (i = 1; i < 54; i++) {
 		week_numbers.push('00'.substring(i.toString().length) + i.toString());
 	}
 	var HTML_header_week_no  = '<th>';
@@ -369,7 +370,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 	console.log(notes_to_display);
 
-	var this_cell_colour = '';
+	var this_cell_colour = '',
+		cell_colour = '';
 
 	for(plant_no in notes_to_display[plant]) {
 		if (!notes_to_display.hasOwnProperty(plant)) continue;
@@ -393,37 +395,44 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 			HTML_row.push('</td>');
 
 			// Loop through each week
-			for (var week=0, week_len=notes_to_display[plant][plant_no][year].length; week<=week_len; week++) {
-				var week_entry = notes_to_display[plant][plant_no][year][week];
+			for (var week=1, week_len=notes_to_display[plant][plant_no][year].length; week<=week_len; week++) {
+				
+				var week_entry = notes_to_display[plant][plant_no][year][week-1];
+
+				this_cell_colour = cell_colour;
 
 				if (week_entry){
 
 					// Set cell color depending on plant state
-					if( week_entry.color[0] !== '' ) {
+					if( week_entry.color[0] != null ) {
 						this_cell_colour = 'bgcolor="';
 						this_cell_colour += colors[week_entry.color[0]] + '"';
 						this_cell_colour += '"';
 					
-						//if( state[tag].event === 'continous' ) cell_colour = this_cell_colour;
+						if( week_entry.event == 'continous' ) cell_colour = this_cell_colour;
 					}
 
-
 					// Draw cell
+					var popover_body  = '';
+					for (var t=0, t_len=week_entry.body.length; t<t_len; t++){
+						popover_body += HTML_popover_link.replace('%url%', week_entry.body[t][1]);
+						popover_body  = popover_body.replace('%link_text%', week_entry.body[t][0]);
+					}
+					
 					var popover_img = HTML_popover_img.replace('%res_link%', week_entry.image);
-					var popover_body  = HTML_popover_link.replace('%url%', week_entry.body[0][1]);
-					popover_body  = popover_body.replace('%link_text%', week_entry.body[0][0]);
 
-					formatted_HTML_cell = HTML_cell.replace('%popover_title%', week_entry.title);
+					formatted_HTML_cell = HTML_cell.replace('%cell_contents%', HTML_cell_content);
+					formatted_HTML_cell = formatted_HTML_cell.replace('%popover_title%', week_entry.title);
 					formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
-					formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', week_entry.symbols[0]);
-					formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  this_cell_colour);
-
-					HTML_row.push(formatted_HTML_cell);
+					formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', week_entry.symbols.join(' '));
 
 				} else {
-					HTML_row.push('<td></td>');
+					formatted_HTML_cell = HTML_cell.replace('%cell_contents%', '');
+					formatted_HTML_cell = formatted_HTML_cell.replace('%border%', '');
 				}
  
+				formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  this_cell_colour);
+				HTML_row.push(formatted_HTML_cell);
 			}
 		}
 

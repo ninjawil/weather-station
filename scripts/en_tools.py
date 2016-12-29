@@ -508,6 +508,15 @@ def web_format(data, state_data):
         if not note_plants_no:
             note_plants_no = ['+p01.00']
 
+        note_event = [state_data[state]['event'] for state in note_states if state_data[state]['event'] is not 'single']
+        
+        if 'dead' in note_event:      
+            note_event = 'dead'
+        elif 'continous' in note_event:      
+            note_event = 'continous'
+        else:
+            note_event = ''
+
         # Create a timeline for each plant tagged in a note
         for tag in note['tags']:
             if tag in plants:
@@ -519,27 +528,29 @@ def web_format(data, state_data):
                     if not d[tag][p][year][week-1]:
                         #Add note data to week
                         d[tag][p][year][week-1] = {
-                            #'note_id':      [note_id],
                             'title':        note['title'],
                             'body':         [[note['title'], note['link']]],
                             'states':       note_states,
                             'locations':    note_locations,
                             'color':        note_color,
+                            'event':        note_event,    
                             'symbols':      note_symbols,
-                            #'link':         note['link'],
                             'image':        image_link
                         }
                     else:
                         # Add new note items
                         # but remove duplicate items by using sets
                         week_d = d[tag][p][year][week-1]
-                        #week_d['note_id'].append(note_id)
-                        week_d['title'] = 'Multiple Notes'
+                        week_d['title']     = 'Multiple Notes'
                         week_d['body'].append([note['title'], note['link']])
-                        week_d['states'] = list(set(week_d['states'])|set(note_states))
+                        week_d['states']    = list(set(week_d['states'])|set(note_states))
                         week_d['locations'] = list(set(week_d['locations'])|set(note_locations))
-                        week_d['symbols'] = list(set(week_d['symbols'])|set(note_symbols))
-                        week_d['color'] = list(set(week_d['color'])|set(note_color))
+                        week_d['symbols']   = list(set(week_d['symbols'])|set(note_symbols))
+                        week_d['color']     = list(set(week_d['color'])|set(note_color))
+                        if note_event:
+                            week_d['event'] = note_event
+                        if not image_link:
+                            week_d['image'] = image_link
 
     routine_end = datetime.datetime.now()
 
@@ -597,7 +608,7 @@ def main():
 
         key_file = 'evernote_key.json'
         sand_box = False
-        sync = False
+        sync = True
         force_sync = False
         new_note = False
         format_into_web = False
@@ -609,8 +620,8 @@ def main():
             }
  
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hwfbt:c:',
-                ['help', 'web', 'force-sync', 'sandbox', 'new', 'title=', 'created='])
+            opts, args = getopt.getopt(sys.argv[1:],'hxwfbt:c:',
+                ['help', 'sync-off', 'web', 'force-sync', 'sandbox', 'new', 'title=', 'created='])
         except getopt.GetoptError:
             usage()
             sys.exit(2)
@@ -622,14 +633,18 @@ def main():
                 sand_box = True 
                 continue
 
-            if opt in ('-w', '--web'):
-                logger.info('Organize garden data into web format')
-                format_into_web = True
-                break
-
             if opt in ('-f', '--force-sync'):
                 logger.info('Force sync requested')
                 force_sync = True
+                break
+
+            if opt in ('-x', '--sync-off'):
+                logger.info('No sync requested')
+                sync = False
+                continue
+
+            if opt in ('-w', '--web'):
+                format_into_web = True
                 break
 
             if opt in ('-h', '--help'):
@@ -657,6 +672,8 @@ def main():
         # WRITE ENTRY OTHERWISE UPDATE DATA FILE
         #---------------------------------------------------------------------------
         if new_note:
+            logger.info('New note date: {d}'.format(d=note_data['created']))
+            logger.info('New note title: {t}'.format(t=note_data['title']))
             note = EnAcc.new_entry(note_data)
             sys.exit()
 
@@ -671,7 +688,7 @@ def main():
                 gardening_notes = json.load(f)
 
         except Exception, e:
-            if format_into_web:
+            if format_into_web and not sync:
                 logger.error('Error ({error_v}). Exiting...'.format(error_v=e), exc_info=True)
                 sys.exit()
 
@@ -687,6 +704,8 @@ def main():
                     }
 
         if sync:
+            logger.info('Synchronizing with evernote.')
+
             gardening_notes = EnAcc.sync_data(gardening_notes, force_sync)
 
             with open('{fl}/data/gardening.json'.format(fl= folder_loc), 'w') as f:
@@ -698,6 +717,7 @@ def main():
             
 
         if format_into_web:
+            logger.info('Organize garden data into web format')
 
             if not sync:
                 with open('{fl}/data/state_tags.json'.format(fl= folder_loc), 'r') as f:
