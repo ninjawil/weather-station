@@ -645,7 +645,7 @@ def main():
 
             if opt in ('-w', '--web'):
                 format_into_web = True
-                break
+                continue
 
             if opt in ('-h', '--help'):
                 usage()
