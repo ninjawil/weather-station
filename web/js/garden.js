@@ -25,7 +25,9 @@ function displayGarden() {
 
 
     //getFileData('weather_data/gardening.json', 'json', minimumSearchBar, []);
-    getFileData('weather_data/gardening_web.json', 'json', drawGardenSearchBar, []);
+    // getFileData('weather_data/gardening_web.json', 'json', drawGardenSearchBar, []);
+    getFileData('weather_data/gardening_web.json', 'json', drawGardenChart, []);
+	//getFileData('weather_data/state_tags.json', 'json', drawGardenChart, [sorted_data, garden_data]);
 
 
 }
@@ -157,7 +159,7 @@ function drawGardenSearchBar(garden_data) {
 //-------------------------------------------------------------------------------
 // Draw charts
 //-------------------------------------------------------------------------------
-function drawGardenChart(notes_to_display, garden_data, state) {
+function drawGardenChart(notes_to_display) {
 
 
 	// Colors based on google's material design palette
@@ -211,7 +213,8 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	var HTML_popover_link 	= "<dd><a href='%url%'>• %link_text%</a></dd>";
 
 
-	var locations = garden_data.location_tags;
+	var locations = notes_to_display.location_tags;
+	var plants = notes_to_display.plant_tags;
 
 	var today = new Date();
 	today_wk = today.getWeek(); // align to week 0
@@ -228,11 +231,11 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 	HTML_loc_popover = HTML_loc_popover.replace('%popover_body%', color_loc);
 
 	// Filter tags
-	dead_tag = findKeyfromValue('*dead', garden_data.state_tags);
-	moved_tag = findKeyfromValue('*moved', garden_data.state_tags);
-	end_tag = findKeyfromValue('*end', garden_data.state_tags);
+	// dead_tag = findKeyfromValue('*dead', garden_data.state_tags);
+	// moved_tag = findKeyfromValue('*moved', garden_data.state_tags);
+	// end_tag = findKeyfromValue('*end', garden_data.state_tags);
 
-	if (!$('#watering_check').is(':checked'))  delete state[findKeyfromValue('*watering', garden_data.state_tags)];
+	//if (!$('#watering_check').is(':checked'))  delete state[findKeyfromValue('*watering', garden_data.state_tags)];
 
 	// Create week number table header
 	var week_numbers = [];
@@ -246,11 +249,15 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 
 	var HTML_row = [];
 
-	// var plant = '644f1488-5a31-458a-b2e1-921a92243048'; // Acer palmatum
-	// var plant = '88925827-d549-4142-9408-02bc8ed4fb7b'; // Acer 'unknown'
-	//var plant = '38a557af-4e6f-4d65-b0a1-b84674246434'; // abies koreana
-	var plant = '79dd2419-c744-4889-9ba1-3c1fb4e3bcd3'; //achillea 'terracota'
-	//notes_to_display = notes_to_display[plant]
+	// var plant = '644f1488-5a31-458a-b2e1-921a92243048'; 	// Acer palmatum
+	// var plant = '88925827-d549-4142-9408-02bc8ed4fb7b'; 	// Acer 'unknown'
+	//var plant = '38a557af-4e6f-4d65-b0a1-b84674246434'; 	// abies koreana
+	// var plant = '79dd2419-c744-4889-9ba1-3c1fb4e3bcd3'; 	//achillea 'terracota'
+	//var plant = '553aaad1-5852-45fc-b3ce-492ba27cf817'; 		// #agapanthus 'dr brouwer'
+	// var plant = '0dc6cb1f-f616-4bfb-a1c6-89bd1a90fda7'; 		// #Ageratina altissima	Chocolate
+	var plant = 'dfbaaa4f-ad84-4abd-8bbf-d09c5d69e0b5'; 		// #Allium oreophilum
+
+	notes_to_display = notes_to_display.diary;
 
 	// for(plant in notes_to_display) {
 	// 	if (!notes_to_display.hasOwnProperty(plant)) continue;
@@ -272,7 +279,7 @@ function drawGardenChart(notes_to_display, garden_data, state) {
 				year = years[i];
 
 				HTML_row.push('<tr><td nowrap>');
-				HTML_row.push(garden_data.plant_tags[plant]);
+				HTML_row.push(plants[plant]);
 				HTML_row.push('</td><td nowrap>');
 				HTML_row.push(plant_no);
 				HTML_row.push('</td><td nowrap>');
