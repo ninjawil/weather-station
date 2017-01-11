@@ -661,7 +661,7 @@ def main():
                 note_data['created'] = int(datetime.datetime.strptime(arg, '%Y-%m-%d').strftime("%s")) * 1000
                 break
 
-        config, key =   get_config_data(cfg_file= '{fl}/data/config.json'.format(fl= folder_loc), 
+        config, key =   get_config_data(cfg_file= '{fl}data/config.json'.format(fl= folder_loc), 
                                         key_file= '{fl}keys/{fk}'.format(fl= folder_loc, 
                                                                          fk=key_file))
 
