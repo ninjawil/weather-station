@@ -537,9 +537,11 @@ def web_format(data, state_data):
                     
                     if not d[tag][p][year][week-1]:
                         #Add note data to week
+
+                        title = note['title'].replace('\"', "'")
                         d[tag][p][year][week-1] = {
-                            'title':        note['title'],
-                            'body':         [[note['title'], note['link']]],
+                            'title':        title,
+                            'body':         [[title, note['link']]],
                             'states':       note_states,
                             'locations':    note_locations,
                             'color':        note_color,
