@@ -203,6 +203,7 @@ function drawGardenChart(notes_to_display) {
 
 
 	console.time("draw_chart");
+	console.log(notes_to_display);
 
 
 	var HTMLtable 			= '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
