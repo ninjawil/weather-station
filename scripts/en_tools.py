@@ -222,7 +222,7 @@ class EvernoteAcc:
                             "plant_tag_id":     Evernote plant tag parent
                             "location_tag_id":  Evernote location tag parent
                             "state_tag_id":     Evernote plant state tag parent
-                            "sand_box":         Use Evernote sandbox account, 
+                            "sand_box":         Use Evernote sandbox account
                             "force_sync":       Force sync
 
         '''
@@ -283,13 +283,13 @@ class EvernoteAcc:
             gardening_notes['location_tags']    = get_tag_children(tags, gardening_loc_tag[0])
             gardening_notes['state_tags']       = get_tag_children(tags, gardening_state_tag[0])
             gardening_notes['p_number_tags']    = get_tag_children(tags, p_number_tag[0])
-            
+
 
             #------------------------------------------------------------------------
             # Get all notes with specific tag from notebook
             #------------------------------------------------------------------------
             filter = NoteStore.NoteFilter()
-            filter.tagGuids     = [gardening_tag]
+            filter.tagGuids = [gardening_tag]
             filter.notebookGuid = notebook_tag
 
             note_count = self.note_store.findNoteCounts(self.key['AUTH_TOKEN'], filter, False)
@@ -300,30 +300,35 @@ class EvernoteAcc:
                 sys.exit()
 
 
-            spec = NoteStore.SyncChunkFilter() 
+            spec = NoteStore.SyncChunkFilter()
             spec.includeNotes = True
             spec.includeNoteResources = True
             spec.notebookGuids = [notebook_tag]
 
-            self.logger.debug('Number of gardening notes found: {count}'.format(count= note_count))
+            self.logger.debug('Number of gardening notes found: {count}'.format(count=note_count))
             self.logger.debug('Downloading note metadata from evernote - START')
 
             note_list = []
 
             while True:
-                self.logger.debug('USN {usn} / {count}'.format(usn= afterUSN, count= state.updateCount))
-                download_data = self.note_store.getFilteredSyncChunk(self.key['AUTH_TOKEN'], afterUSN, 500, spec)
+                self.logger.debug('USN {usn}/{count}'.format(usn=afterUSN, count=state.updateCount))
+                download_data = self.note_store.getFilteredSyncChunk(
+                    self.key['AUTH_TOKEN'],
+                    afterUSN,
+                    500,
+                    spec)
 
                 afterUSN = download_data.chunkHighUSN
 
                 if download_data.notes:
                     note_list += download_data.notes
-                    self.logger.debug('Number of notes downloaded {count}'.format(count= len(download_data.notes)))
-                
+                    self.logger.debug('Number of notes downloaded {count}'.format(
+                        count=len(download_data.notes)))
+
                 if afterUSN >= state.updateCount or not afterUSN:
                     break
 
-        
+
             self.logger.debug('Downloading note metadata from evernote - COMPLETE')
 
 
@@ -339,6 +344,11 @@ class EvernoteAcc:
             for note in note_list:
 
                 if note.deleted:
+                    if note.guid in gardening_notes['notes']:
+                        del gardening_notes['notes'][note.guid]
+                        self.logger.info('Deleted note: {guid} - {title}'.format(
+                            guid=note.guid,
+                            title=note.title))
                     continue
 
                 if notebook_tag not in note.notebookGuid:
@@ -352,9 +362,9 @@ class EvernoteAcc:
                 plant_tags = []
                 loc_tags = []
                 for tag in note.tagGuids:
-                    if tag in all_plant_tags: 
+                    if tag in all_plant_tags:
                         plant_tags.append(tag)
-                    elif tag in all_plant_tags: 
+                    elif tag in all_plant_tags:
                         loc_tags.append(tag)
 
                 if not plant_tags and not loc_tags:
@@ -369,10 +379,10 @@ class EvernoteAcc:
                     for i in xrange(len(note.resources)):
                         if note.resources[i].mime == 'image/jpeg':
                             res_guid.append('{user}res/{r_guid}'.format(
-                                user= user_public.webApiUrlPrefix, 
-                                r_guid= note.resources[i].guid))
+                                user=user_public.webApiUrlPrefix,
+                                r_guid=note.resources[i].guid))
 
-                self.logger.info('Note updated: {guid} - {title}'.format(guid= note.guid, title=note.title))
+                self.logger.info('Note updated: {guid} - {title}'.format(guid=note.guid, title=note.title))
 
                 gardening_notes['notes'][note.guid] = {
                     'created':  note.created,
@@ -381,10 +391,10 @@ class EvernoteAcc:
                     'res':      res_guid,
                     'USN':      note.updateSequenceNum,
                     'link':     'https://{service}/shard/{shardId}/nl/{userId}/{noteGuid}/'.format(
-                                        service= self.key['SERVICE'],
-                                        shardId= user.shardId,
-                                        userId= user.id,
-                                        noteGuid= note.guid)
+                                        service=self.key['SERVICE'],
+                                        shardId=user.shardId,
+                                        userId=user.id,
+                                        noteGuid=note.guid)
                 }  
         
             self.logger.debug('Sorting data: COMPLETE')
