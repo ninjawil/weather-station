@@ -201,7 +201,6 @@ function drawGardenChart(notes_to_display) {
 	}
 
 
-
 	console.time("draw_chart");
 
 	var HTMLtable 			= '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
@@ -229,12 +228,6 @@ function drawGardenChart(notes_to_display) {
 	color_loc = color_loc.join('');
 	HTML_loc_popover = HTML_loc_popover.replace('%popover_body%', color_loc);
 
-	// Filter tags
-	// dead_tag = findKeyfromValue('*dead', garden_data.state_tags);
-	// moved_tag = findKeyfromValue('*moved', garden_data.state_tags);
-	// end_tag = findKeyfromValue('*end', garden_data.state_tags);
-
-	//if (!$('#watering_check').is(':checked'))  delete state[findKeyfromValue('*watering', garden_data.state_tags)];
 
 	// Create week number table header
 	var week_numbers = [];
@@ -245,7 +238,6 @@ function drawGardenChart(notes_to_display) {
 	HTML_header_week_no 	+= week_numbers.join('</th><th>');
 	HTML_header_week_no 	+= '</th>';
 
-
 	var HTML_row = [];
 
 	// var plant = '644f1488-5a31-458a-b2e1-921a92243048'; 	// Acer palmatum
@@ -255,7 +247,8 @@ function drawGardenChart(notes_to_display) {
 	//var plant = '553aaad1-5852-45fc-b3ce-492ba27cf817'; 		// #agapanthus 'dr brouwer'
 	// var plant = '0dc6cb1f-f616-4bfb-a1c6-89bd1a90fda7'; 		// #Ageratina altissima	Chocolate
 	// var plant = 'dfbaaa4f-ad84-4abd-8bbf-d09c5d69e0b5'; 		// #Allium oreophilum
-	var plant = 'b89ed552-3837-4b0c-872b-d73a9e361533'; 		// #allium cristophii "star of persia"
+	// var plant = 'b89ed552-3837-4b0c-872b-d73a9e361533'; 		// #allium cristophii "star of persia"
+	var plant = "e789f7e5-4a4c-4a38-934b-aa1d996509d0"; 		// #allium 'gladiator'
 
 	notes_to_display = notes_to_display.diary;
 
