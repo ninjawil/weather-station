@@ -203,8 +203,6 @@ function drawGardenChart(notes_to_display) {
 
 
 	console.time("draw_chart");
-	console.log(notes_to_display);
-
 
 	var HTMLtable 			= '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 	var HTML_cell 			= '<td %cell_colour% %border% nowrap>%cell_contents%</td>'
@@ -256,7 +254,8 @@ function drawGardenChart(notes_to_display) {
 	// var plant = '79dd2419-c744-4889-9ba1-3c1fb4e3bcd3'; 	//achillea 'terracota'
 	//var plant = '553aaad1-5852-45fc-b3ce-492ba27cf817'; 		// #agapanthus 'dr brouwer'
 	// var plant = '0dc6cb1f-f616-4bfb-a1c6-89bd1a90fda7'; 		// #Ageratina altissima	Chocolate
-	var plant = 'dfbaaa4f-ad84-4abd-8bbf-d09c5d69e0b5'; 		// #Allium oreophilum
+	// var plant = 'dfbaaa4f-ad84-4abd-8bbf-d09c5d69e0b5'; 		// #Allium oreophilum
+	var plant = 'b89ed552-3837-4b0c-872b-d73a9e361533'; 		// #allium cristophii "star of persia"
 
 	notes_to_display = notes_to_display.diary;
 
@@ -303,11 +302,12 @@ function drawGardenChart(notes_to_display) {
 					
 					if (notes_to_display[plant][plant_no].hasOwnProperty(year)){
 						week_entry = notes_to_display[plant][plant_no][year][week-1];
-					} else if (week == today_wk+1) {
-
+					} 
+					
+					if (week >= today_wk+1 && year == today_yr) {
 						// Clear week colors for future weeks
 						cell_colour = '';
-					}
+					}			
 
 					this_cell_colour = cell_colour;
 
