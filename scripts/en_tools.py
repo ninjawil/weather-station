@@ -522,7 +522,7 @@ def web_format(data, state_data):
         # Get note information
         image_link = note['res'][0] if note['res'] else ''
         
-        note_plants_no =    [tag for tag in note['tags'] if tag in plant_no]
+        note_plants_no =    [plant_no[tag] for tag in note['tags'] if tag in plant_no]
         note_states =       [tag for tag in note['tags'] if tag in states]
         note_symbols =      [state_data[tag]['symbol'] for tag in note['tags'] if tag in states]
         note_color =        [state_data[tag]['color'] for tag in note['tags'] if tag in states if state_data[tag]['color']]

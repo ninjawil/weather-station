@@ -248,12 +248,12 @@ function drawGardenChart(notes_to_display) {
 	// var plant = '0dc6cb1f-f616-4bfb-a1c6-89bd1a90fda7'; 		// #Ageratina altissima	Chocolate
 	// var plant = 'dfbaaa4f-ad84-4abd-8bbf-d09c5d69e0b5'; 		// #Allium oreophilum
 	// var plant = 'b89ed552-3837-4b0c-872b-d73a9e361533'; 		// #allium cristophii "star of persia"
-	var plant = "e789f7e5-4a4c-4a38-934b-aa1d996509d0"; 		// #allium 'gladiator'
+	// var plant = "e789f7e5-4a4c-4a38-934b-aa1d996509d0"; 		// #allium 'gladiator'
 
 	notes_to_display = notes_to_display.diary;
 
-	// for(plant in notes_to_display) {
-	// 	if (!notes_to_display.hasOwnProperty(plant)) continue;
+	for(plant in notes_to_display) {
+		if (!notes_to_display.hasOwnProperty(plant)) continue;
 
 		var this_cell_colour = '',
 			cell_colour = '',
@@ -350,7 +350,7 @@ function drawGardenChart(notes_to_display) {
 				HTML_row[HTML_row.indexOf('%location%')] = locations[this_location];
 			}
 		}
-	//}
+	}
 
 
 
