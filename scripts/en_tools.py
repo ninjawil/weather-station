@@ -338,11 +338,19 @@ class EvernoteAcc:
             gardening_notes['lastUpdateCount'] = download_data.updateCount
 
 
+
             #------------------------------------------------------------------------
             # Organize data and write to file
             #------------------------------------------------------------------------
+            
+            # Grab all plant and location tags
+            all_plant_tags = gardening_notes['plant_tags'].keys()
+            all_loc_tags = gardening_notes['location_tags'].keys()
+
+            # Loop through all notes
             for note in note_list:
 
+                # Check if note has been deleted
                 if note.deleted:
                     if note.guid in gardening_notes['notes']:
                         del gardening_notes['notes'][note.guid]
@@ -351,14 +359,20 @@ class EvernoteAcc:
                             title=note.title))
                     continue
 
+                # Ignore note if updated prior to current sequence number
+                if note.guid in gardening_notes['notes']:
+                    if note.updateSequenceNum < gardening_notes['notes'][note.guid]['USN']:
+                        continue
+
+                # Ignore if note not in designated notebook
                 if notebook_tag not in note.notebookGuid:
                     continue
 
+                # Ignore if gardening tag is not present
                 if gardening_tag not in note.tagGuids:
                     continue
 
-                all_plant_tags = gardening_notes['plant_tags'].keys()
-                all_loc_tags = gardening_notes['location_tags'].keys()
+                # Populate list of plant and location tags in note
                 plant_tags = []
                 loc_tags = []
                 for tag in note.tagGuids:
@@ -367,13 +381,11 @@ class EvernoteAcc:
                     elif tag in all_plant_tags:
                         loc_tags.append(tag)
 
+                # Ignore if no plant or location tags
                 if not plant_tags and not loc_tags:
                     continue
 
-                if note.guid in gardening_notes['notes']:
-                    if note.updateSequenceNum < gardening_notes['notes'][note.guid]['USN']:
-                        continue
-
+                # Grab image
                 res_guid = []
                 if note.resources:
                     for i in xrange(len(note.resources)):
@@ -382,6 +394,7 @@ class EvernoteAcc:
                                 user=user_public.webApiUrlPrefix,
                                 r_guid=note.resources[i].guid))
 
+                # Update list
                 self.logger.info('Note updated: {guid} - {title}'.format(guid=note.guid, title=note.title))
 
                 gardening_notes['notes'][note.guid] = {
