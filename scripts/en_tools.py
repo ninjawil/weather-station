@@ -543,16 +543,21 @@ def web_format(data, state_data):
         # Create a timeline for each plant tagged in a note
         for tag in note['tags']:
             if tag in plants:
-                for p in note_plants_no:
-                    if year not in d[tag][p].keys():
-                        # Create new record if not present
-                        d[tag][p][year] = [None]*53
-                    
-                    if not d[tag][p][year][week-1]:
-                        #Add note data to week
+                if note_event == 'dead':
+                    d[tag][p]['status'] = 'dead'
 
-                        title = note['title'].replace('\"', "'")
-                        d[tag][p][year][week-1] = {
+                for p in note_plants_no:
+                    
+                    # Create new record if not present
+                    if year not in d[tag][p]['timeline'].keys():
+                        d[tag][p]['timeline'][year] = [None]*53
+                    
+                    # Replace " as it causes issues with the html later
+                    title = note['title'].replace('\"', "'")
+                    
+                    #Add note data to week
+                    if not d[tag][p]['timeline'][year][week-1]:
+                        d[tag][p]['timeline'][year][week-1] = {
                             'title':        title,
                             'body':         [[title, note['link']]],
                             'states':       note_states,
@@ -565,16 +570,16 @@ def web_format(data, state_data):
                     else:
                         # Add new note items
                         # but remove duplicate items by using sets
-                        week_d = d[tag][p][year][week-1]
+                        week_d = d[tag][p]['timeline'][year][week-1]
                         week_d['title']     = 'Multiple Notes'
-                        week_d['body'].append([note['title'], note['link']])
+                        week_d['body'].append([title, note['link']])
                         week_d['states']    = list(set(week_d['states'])|set(note_states))
                         week_d['locations'] = list(set(week_d['locations'])|set(note_locations))
                         week_d['symbols']   = list(set(week_d['symbols'])|set(note_symbols))
                         week_d['color']     = list(set(week_d['color'])|set(note_color))
                         if note_event:
                             week_d['event'] = note_event
-                        if not image_link:
+                        if not week_d['image']:
                             week_d['image'] = image_link
 
     routine_end = datetime.datetime.now()

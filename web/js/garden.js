@@ -263,8 +263,12 @@ function drawGardenChart(notes_to_display) {
 			if (!notes_to_display[plant].hasOwnProperty(plant_no)) continue;
 
 			// Collate all years and if current year not there then add it
-			years = Object.keys(notes_to_display[plant][plant_no]);
-			if (years.indexOf(today_yr) == -1) years.push(today_yr);
+			years = Object.keys(notes_to_display[plant][plant_no]['timeline']);
+						
+			if (years.indexOf(today_yr) == -1 && 
+				notes_to_display[plant][plant_no]['status'] != 'dead') {
+				years.push(today_yr);
+			}
 
 			
 			for (i=0, i_len=years.length; i<i_len; i++) {
@@ -277,12 +281,7 @@ function drawGardenChart(notes_to_display) {
 				HTML_row.push(plant_no);
 				HTML_row.push('</td><td nowrap>');
 				HTML_row.push('%location%');
-				HTML_row.push('</td>');
-
-				// Reset variables
-				var plant_dead  = false;
-
-				HTML_row.push('<td>');
+				HTML_row.push('</td><td>');
 				HTML_row.push(year);
 				HTML_row.push('</td>');
 
@@ -293,8 +292,8 @@ function drawGardenChart(notes_to_display) {
 
 					var week_entry = '';
 					
-					if (notes_to_display[plant][plant_no].hasOwnProperty(year)){
-						week_entry = notes_to_display[plant][plant_no][year][week-1];
+					if (notes_to_display[plant][plant_no]['timeline'].hasOwnProperty(year)){
+						week_entry = notes_to_display[plant][plant_no]['timeline'][year][week-1];
 					} 
 					
 					if (week >= today_wk+1 && year == today_yr) {
@@ -305,6 +304,9 @@ function drawGardenChart(notes_to_display) {
 					this_cell_colour = cell_colour;
 
 					if (week_entry) {
+
+						// Reset variables
+						var plant_dead  = false;
 
 						// Set cell color depending on plant state
 						if( week_entry.color.length > 0 ) {
@@ -318,6 +320,10 @@ function drawGardenChart(notes_to_display) {
 							this_cell_colour += '"';
 						
 							if( week_entry.event == 'continous' ) cell_colour = this_cell_colour;
+							if( week_entry.event == 'dead' ) {
+								plant_dead  = true;								
+								cell_colour = '';
+							}
 						}
 
 						// Set location
@@ -348,6 +354,7 @@ function drawGardenChart(notes_to_display) {
 
 				// Update with final year's location
 				HTML_row[HTML_row.indexOf('%location%')] = locations[this_location];
+
 			}
 		}
 	}
