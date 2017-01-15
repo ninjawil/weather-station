@@ -201,7 +201,7 @@ function drawGardenChart(notes_to_display) {
 	}
 
 
-	console.time("draw_chart");
+	console.time("sort_data");
 
 	var HTMLtable 			= '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
 	var HTML_cell 			= '<td %cell_colour% %border% nowrap>%cell_contents%</td>'
@@ -359,10 +359,11 @@ function drawGardenChart(notes_to_display) {
 		}
 	}
 
-
-
 	// Draw row
 	HTML_row.push('</tr>');
+
+	console.timeEnd("sort_data");
+	console.time("draw_chart");
 
 	// Clear chart area
 	$('#chart-section').empty();
@@ -385,26 +386,25 @@ function drawGardenChart(notes_to_display) {
 
 	$(document).ready(function() {
 	    $('#diary').DataTable( {
-        "scrollY": 400,
-        "scrollX": 400,
-        "fixedHeader": {
-	        header: true
-	    },
-	    "search": {
-			"regex": true
-		},
-        "scrollCollapse": true,
-        "paging":         true,
-        // "fixedColumns":   {
-        //     "leftColumns": 2
-        // },
-        "columnDefs": [
-	        { "targets": [0, 1, 2], "orderable": true},
-	        { "targets": '_all', 	"orderable": false }
-	    ]
-    } );
+			"scrollY": 400,
+			"scrollX": 400,
+			"fixedHeader": {
+				header: true
+			},
+			"search": {
+				"regex": true
+			},
+			"scrollCollapse": true,
+			"paging":         true,
+			// "fixedColumns":   {
+			//     "leftColumns": 2
+			// },
+			"columnDefs": [
+				{ "targets": [0, 1, 2], "orderable": true},
+				{ "targets": '_all', 	"orderable": false }
+			]
+		} );
 	} );
-
 
 	console.timeEnd("draw_chart");
 
