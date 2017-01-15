@@ -240,16 +240,6 @@ function drawGardenChart(notes_to_display) {
 
 	var HTML_row = [];
 
-	// var plant = '644f1488-5a31-458a-b2e1-921a92243048'; 	// Acer palmatum
-	// var plant = '88925827-d549-4142-9408-02bc8ed4fb7b'; 	// Acer 'unknown'
-	//var plant = '38a557af-4e6f-4d65-b0a1-b84674246434'; 	// abies koreana
-	// var plant = '79dd2419-c744-4889-9ba1-3c1fb4e3bcd3'; 	//achillea 'terracota'
-	//var plant = '553aaad1-5852-45fc-b3ce-492ba27cf817'; 		// #agapanthus 'dr brouwer'
-	// var plant = '0dc6cb1f-f616-4bfb-a1c6-89bd1a90fda7'; 		// #Ageratina altissima	Chocolate
-	// var plant = 'dfbaaa4f-ad84-4abd-8bbf-d09c5d69e0b5'; 		// #Allium oreophilum
-	// var plant = 'b89ed552-3837-4b0c-872b-d73a9e361533'; 		// #allium cristophii "star of persia"
-	// var plant = "e789f7e5-4a4c-4a38-934b-aa1d996509d0"; 		// #allium 'gladiator'
-
 	notes_to_display = notes_to_display.diary;
 
 	for(plant in notes_to_display) {
@@ -270,7 +260,7 @@ function drawGardenChart(notes_to_display) {
 				years.push(today_yr);
 			}
 
-			
+			// Loop through the years
 			for (i=0, i_len=years.length; i<i_len; i++) {
 
 				year = years[i];
@@ -342,7 +332,7 @@ function drawGardenChart(notes_to_display) {
 						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_title%', week_entry.title);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', week_entry.symbols.join(' '));
-
+						formatted_HTML_cell = formatted_HTML_cell.replace('%border%',  'style="border-bottom: 5px solid '+ colors[location_colors[location]]+';"');
 					} else {
 						formatted_HTML_cell = HTML_cell.replace('%cell_contents%', '');
 						formatted_HTML_cell = formatted_HTML_cell.replace('%border%', '');
