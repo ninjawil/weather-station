@@ -528,6 +528,10 @@ def web_format(data, state_data):
         note_color =        [state_data[tag]['color'] for tag in note['tags'] if tag in states if state_data[tag]['color']]
         note_locations =    [tag for tag in note['tags'] if tag in locations]
 
+        # Move to next note if no state tagged 
+        if not note_states:
+            continue
+        
         if not note_plants_no:
             note_plants_no = ['+p01.00']
 
@@ -543,6 +547,7 @@ def web_format(data, state_data):
         # Create a timeline for each plant tagged in a note
         for tag in note['tags']:
             if tag in plants:
+
                 if note_event == 'dead':
                     d[tag][p]['status'] = 'dead'
 
