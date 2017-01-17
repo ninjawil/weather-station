@@ -536,9 +536,12 @@ def web_format(data, state_data):
             note_plants_no = ['+p01.00']
 
         note_event = [state_data[state]['event'] for state in note_states if state_data[state]['event'] is not 'single']
-        
+
+        # These are ordered in priority of event        
         if 'dead' in note_event:      
             note_event = 'dead'
+        elif 'end' in note_event:      
+            note_event = 'end'
         elif 'continous' in note_event:      
             note_event = 'continous'
         else:
