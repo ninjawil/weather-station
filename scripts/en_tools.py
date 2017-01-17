@@ -551,8 +551,8 @@ def web_format(data, state_data):
         for tag in note['tags']:
             if tag in plants:
 
-                if note_event == 'dead':
-                    d[tag][p]['status'] = 'dead'
+                # if note_event == 'dead':
+                #     d[tag][p]['status'] = 'dead'
 
                 for p in note_plants_no:
                     

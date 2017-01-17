@@ -215,8 +215,8 @@ function drawGardenChart(notes_to_display) {
 	var plants = notes_to_display.plant_tags;
 
 	var today = new Date();
-	today_wk = today.getWeek(); // align to week 0
-	today_yr = today.getFullYear().toString();
+	var today_wk = today.getWeek(); // align to week 0
+	var today_yr = today.getFullYear().toString();
 
 	//Sort location color key popover
 	color_loc = [];
@@ -240,7 +240,7 @@ function drawGardenChart(notes_to_display) {
 
 	var HTML_row = [];
 
-	notes_to_display = notes_to_display.diary;
+	var notes_to_display = notes_to_display.diary;
 
 	for(plant in notes_to_display) {
 		if (!notes_to_display.hasOwnProperty(plant)) continue;
@@ -253,19 +253,18 @@ function drawGardenChart(notes_to_display) {
 		for(plant_no in notes_to_display[plant]) {
 			if (!notes_to_display[plant].hasOwnProperty(plant_no)) continue;
 
-			// Collate all years and if current year not there then add it
-			years = Object.keys(notes_to_display[plant][plant_no]['timeline']);
-						
-			if (years.indexOf(today_yr) == -1 && 
-				notes_to_display[plant][plant_no]['status'] != 'dead') {
-				years.push(today_yr);
-			}
+			// Collate all years to today
+			var years = Object.keys(notes_to_display[plant][plant_no]['timeline']);
+			years = years.map(Number);
+			var year_first = Math.min.apply(null, years);
 
 			// Loop through the years
-			for (i=0, i_len=years.length; i<i_len; i++) {
+			for (var year=year_first; year<=today_yr; year++) {
 
-				year = years[i];
+				// Exit loop if plant has died and no more notes in the timeline
+				if ((years.indexOf(year) == -1) && plant_dead) break;
 
+				// Populate row contents
 				HTML_row.push('<tr><td nowrap>');
 				HTML_row.push(plants[plant].replace(/#/g, ''));
 				HTML_row.push('</td><td nowrap>');
@@ -276,19 +275,16 @@ function drawGardenChart(notes_to_display) {
 				HTML_row.push(year);
 				HTML_row.push('</td>');
 
-				// Exit loop is year is not in records
-
 				// Loop through each week
 				for (var week=1, week_len=53; week<=week_len; week++) {
 
 					var week_entry = '';
-					
 					if (notes_to_display[plant][plant_no]['timeline'].hasOwnProperty(year)){
 						week_entry = notes_to_display[plant][plant_no]['timeline'][year][week-1];
 					} 
 					
+					// Clear week colors for future weeks or if plant has died
 					if ((week >= today_wk+1 && year == today_yr) || plant_dead) {
-						// Clear week colors for future weeks
 						cell_colour = '';
 						this_border_colour = '';
 					}			
@@ -297,37 +293,28 @@ function drawGardenChart(notes_to_display) {
 
 					if (week_entry) {
 
-						// Reset variables
 						var plant_dead  = false;
+						if( week_entry.event == 'dead' ) plant_dead  = true;
 
 						// Set cell color depending on plant state
 						if( week_entry.color.length > 0 ) {
 							var idx = 0;
-							if(week_entry.color.length > 1 && week_entry.color[idx] == "lgreen") {
-								if( week_entry.event == 'end' ) cell_colour = week_entry.color[idx];
-								idx++;
-							}
-
-							this_cell_colour = 'bgcolor="';
-							this_cell_colour += colors[week_entry.color[idx]] + '"';
-						
+							if(week_entry.color.length > 1 && week_entry.color[idx] == "lgreen") idx++;
+							this_cell_colour = colors[week_entry.color[idx]];
+							if( week_entry.event == 'end' ) cell_colour = colors["lgreen"];
 							if( week_entry.event == 'continous' ) cell_colour = this_cell_colour;
-							if( week_entry.event == 'dead' ) plant_dead  = true;								
 						}
-
-						var idx = 0;
-						if(week_entry.locations.length > 1 && week_entry.locations[idx] == this_location) {
-							idx++;
-						}
-
-						// Set location
-						this_location = week_entry.locations[idx];
 
 						// Set border colour for location
-						this_border_colour = 'style="border-bottom: 5px solid '+ colors[location_colors[this_location]]+';"';
+						if (week_entry.locations.length > 0  && (week_entry.symbols.indexOf('m') != -1 || this_border_colour == '')) {
+							var idx = 0;
+							if(week_entry.locations.length > 1 && week_entry.locations[idx] == this_location) idx++;
+							this_location = week_entry.locations[idx];
+							this_border_colour = 'style="border-bottom: 5px solid '+ colors[location_colors[this_location]]+';"';
+						}
 
 						// Draw cell
-						var popover_body  = '';
+						var popover_body  = ''; 
 						for (var t=0, t_len=week_entry.body.length; t<t_len; t++){
 							popover_body += HTML_popover_link.replace('%url%', week_entry.body[t][1]);
 							popover_body  = popover_body.replace('%link_text%', week_entry.body[t][0]);
@@ -336,7 +323,7 @@ function drawGardenChart(notes_to_display) {
 						var popover_img = HTML_popover_img.replace('%res_link%', week_entry.image);
 
 						formatted_HTML_cell = HTML_cell.replace('%cell_contents%', HTML_cell_content);
-						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_title%', week_entry.title);
+						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_title%', locations[this_location]);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', week_entry.symbols.join(' '));
 					} else {
@@ -344,7 +331,7 @@ function drawGardenChart(notes_to_display) {
 					}
 	 
 					formatted_HTML_cell = formatted_HTML_cell.replace('%border%',  this_border_colour);
-					formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  this_cell_colour);
+					formatted_HTML_cell = formatted_HTML_cell.replace('%cell_colour%',  'bgcolor="'+this_cell_colour+'"');
 					HTML_row.push(formatted_HTML_cell);
 				}
 
