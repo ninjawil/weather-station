@@ -522,7 +522,7 @@ def web_format(data, state_data):
         # Get note information
         image_link = note['res'][0] if note['res'] else ''
         
-        note_plants_no =    [plant_no[tag] for tag in note['tags'] if tag in plant_no]
+        note_plants_no =    [float(plant_no[tag].replace('+p', '')) for tag in note['tags'] if tag in plant_no]
         note_states =       [tag for tag in note['tags'] if tag in states]
         note_symbols =      [state_data[tag]['symbol'] for tag in note['tags'] if tag in states]
         note_color =        [state_data[tag]['color'] for tag in note['tags'] if tag in states if state_data[tag]['color']]
@@ -533,12 +533,21 @@ def web_format(data, state_data):
             continue
         
         if not note_plants_no:
-            note_plants_no = ['+p01.00']
+            note_plants_no = [float('01.00')]
 
         note_event = [state_data[state]['event'] for state in note_states if state_data[state]['event'] is not 'single']
 
-        # These are ordered in priority of event        
-        if 'dead' in note_event:      
+        # These are ordered in priority of event 
+
+        if 'division' in note_event:
+            for symbol in note_symbols:
+                if type(symbol) is dict:
+                    parent = symbol['parent']
+                    child = symbol['child']
+                    note_symbols.remove(symbol)
+                    break
+            note_event = 'division'
+        elif 'dead' in note_event:      
             note_event = 'dead'
         elif 'end' in note_event:      
             note_event = 'end'
@@ -555,7 +564,13 @@ def web_format(data, state_data):
                 #     d[tag][p]['status'] = 'dead'
 
                 for p in note_plants_no:
-                    
+
+                    if note_event is 'division':
+                        if p is min(note_plants_no):
+                            note_symbols = [parent]
+                        else:
+                            note_symbols = [child]
+
                     # Create new record if not present
                     if year not in d[tag][p]['timeline'].keys():
                         d[tag][p]['timeline'][year] = [None]*53

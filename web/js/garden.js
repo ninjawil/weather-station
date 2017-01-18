@@ -303,9 +303,10 @@ function drawGardenChart(notes_to_display) {
 							var idx = 0;
 							if(week_entry.color.length > 1 && week_entry.color[idx] == "lgreen") idx++;
 							this_cell_colour = colors[week_entry.color[idx]];
-							if( week_entry.event == 'end' ) cell_colour = colors["lgreen"];
-							if( week_entry.event == 'continous' ) cell_colour = this_cell_colour;
 						}
+
+						if( week_entry.event == 'end' ) cell_colour = colors["lgreen"];
+						if( week_entry.event == 'continous' ||  week_entry.event == 'division' ) cell_colour = this_cell_colour;
 
 						// Set border colour for location
 						if (week_entry.locations.length > 0  && (week_entry.symbols.indexOf('m') != -1 || this_border_colour == '')) {
@@ -325,7 +326,7 @@ function drawGardenChart(notes_to_display) {
 						var popover_img = HTML_popover_img.replace('%res_link%', week_entry.image);
 
 						formatted_HTML_cell = HTML_cell.replace('%cell_contents%', HTML_cell_content);
-						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_title%', locations[this_location]);
+						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_title%', "<span class='ion-android-pin'></span> "+locations[this_location]);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', week_entry.symbols.join(' '));
 					} else {
