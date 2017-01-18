@@ -268,7 +268,7 @@ function drawGardenChart(notes_to_display) {
 				HTML_row.push('<tr><td nowrap>');
 				HTML_row.push(plants[plant].replace(/#/g, ''));
 				HTML_row.push('</td><td nowrap>');
-				HTML_row.push(plant_no);
+				HTML_row.push(Number(plant_no).toFixed(2));
 				HTML_row.push('</td><td nowrap>');
 				HTML_row.push('%location%');
 				HTML_row.push('</td><td>');
@@ -292,6 +292,8 @@ function drawGardenChart(notes_to_display) {
 					this_cell_colour = cell_colour;
 
 					if (week_entry) {
+
+						if (this_cell_colour == '') this_cell_colour =  colors["lgreen"];
 
 						var plant_dead  = false;
 						if( week_entry.event == 'dead' ) plant_dead  = true;
