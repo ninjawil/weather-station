@@ -153,7 +153,7 @@ function drawGardenChart(notes_to_display) {
 	for(plant in notes_to_display) {
 		if (!notes_to_display.hasOwnProperty(plant)) continue;
 
-		if (plant != 'eaae0e6d-f694-458a-a4ea-d4f44f4e92d6') continue;
+		// if (plant != 'eaae0e6d-f694-458a-a4ea-d4f44f4e92d6') continue;
 
 		var this_cell_colour = '',
 			cell_colour = '',
@@ -216,8 +216,9 @@ function drawGardenChart(notes_to_display) {
 						}
 
 						if( week_entry.event == 'end' ) cell_colour = colors["lgreen"];
-						if( week_entry.event == 'continous' ) cell_colour = this_cell_colour;
-						// if( week_entry.event == 'continous' ||  week_entry.event == 'division' ) cell_colour = this_cell_colour;
+						if( (week_entry.event == 'continous')||(week_entry.event == 'start') ) {
+							cell_colour = this_cell_colour;
+						}
 
 						var previous_location = '';
 						if (week_entry.symbols.indexOf('m') != -1) {

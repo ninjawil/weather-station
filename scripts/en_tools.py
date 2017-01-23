@@ -545,10 +545,11 @@ def web_format(data, state_data):
                     child = symbol['child']
                     note_symbols.remove(symbol)
                     break
-            #note_event = 'division'
             note_event = 'merge' if 'merge' in note_event else 'division'
         elif 'dead' in note_event:      
             note_event_display = 'dead'
+        elif 'start' in note_event:      
+            note_event_display = 'start'
         elif 'end' in note_event:      
             note_event_display = 'end'
         elif 'continous' in note_event:      
@@ -568,8 +569,7 @@ def web_format(data, state_data):
                             note_symbols = [parent]
                         else:
                             note_symbols = [child]
-                        #if p is max(note_plants_no): 
-                            note_event_display = 'dead' if note_event is 'merge' else 'continous'
+                            note_event_display = 'dead' if note_event is 'merge' else 'start'
 
                     # Create new record if not present
                     if year not in d[tag][p]['timeline'].keys():
@@ -605,11 +605,21 @@ def web_format(data, state_data):
                         if not week_d['image']:
                             week_d['image'] = image_link
 
+    f = nested_dict()
+    for plant in d:
+        for n in d[plant]:
+            events = [d[plant][n]['timeline'][y][w]['event'] for y in d[plant][n]['timeline'] for w in range(53) if d[plant][n]['timeline'][y][w]]
+            if 'start' in events:
+                f[plant][n] = d[plant][n]
+
+
+
+            
+
     routine_end = datetime.datetime.now()
 
     logger.debug('Time taken {duration}'.format(duration= routine_end-routine_start))
 
-    #print d['644f1488-5a31-458a-b2e1-921a92243048'] # acer palmantum
 
     return d
 
