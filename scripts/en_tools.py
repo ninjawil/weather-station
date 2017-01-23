@@ -538,38 +538,38 @@ def web_format(data, state_data):
         note_event = [state_data[state]['event'] for state in note_states if state_data[state]['event'] is not 'single']
 
         # These are ordered in priority of event 
-
-        if 'division' in note_event:
+        if 'division' in note_event or 'merge' in note_event:
             for symbol in note_symbols:
                 if type(symbol) is dict:
                     parent = symbol['parent']
                     child = symbol['child']
                     note_symbols.remove(symbol)
                     break
-            note_event = 'division'
+            #note_event = 'division'
+            note_event = 'merge' if 'merge' in note_event else 'division'
         elif 'dead' in note_event:      
-            note_event = 'dead'
+            note_event_display = 'dead'
         elif 'end' in note_event:      
-            note_event = 'end'
+            note_event_display = 'end'
         elif 'continous' in note_event:      
-            note_event = 'continous'
+            note_event_display = 'continous'
         else:
-            note_event = ''
+            note_event_display = ''
 
         # Create a timeline for each plant tagged in a note
         for tag in note['tags']:
             if tag in plants:
 
-                # if note_event == 'dead':
-                #     d[tag][p]['status'] = 'dead'
-
                 for p in note_plants_no:
 
-                    if note_event is 'division':
+                    # Add symbol for states with multiple symbols
+                    if note_event is 'division' or note_event is 'merge':
                         if p is min(note_plants_no):
                             note_symbols = [parent]
                         else:
                             note_symbols = [child]
+                        #if p is max(note_plants_no): 
+                            note_event_display = 'dead' if note_event is 'merge' else 'continous'
 
                     # Create new record if not present
                     if year not in d[tag][p]['timeline'].keys():
@@ -586,7 +586,7 @@ def web_format(data, state_data):
                             'states':       note_states,
                             'locations':    note_locations,
                             'color':        note_color,
-                            'event':        note_event,    
+                            'event':        note_event_display,    
                             'symbols':      note_symbols,
                             'image':        image_link
                         }
@@ -600,8 +600,8 @@ def web_format(data, state_data):
                         week_d['locations'] = list(set(week_d['locations'])|set(note_locations))
                         week_d['symbols']   = list(set(week_d['symbols'])|set(note_symbols))
                         week_d['color']     = list(set(week_d['color'])|set(note_color))
-                        if note_event:
-                            week_d['event'] = note_event
+                        if note_event_display:
+                            week_d['event'] = note_event_display
                         if not week_d['image']:
                             week_d['image'] = image_link
 

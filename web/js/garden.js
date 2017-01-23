@@ -64,98 +64,6 @@ function minimumSearchBar(garden_data) {
 
 }
 
-
-//-------------------------------------------------------------------------------
-// Draw garden search bar
-//-------------------------------------------------------------------------------
-function drawGardenSearchBar(garden_data) {
-
-	console.time("search_bar");
-
-	var HTMLPlantFilter = '<div id="bar1" class="col-md-4">%bar1%</div><div id="bar2" class="col-md-2">%bar2%</div><div id="bar3" class="col-md-1">%bar3%</div><div id="bar4" class="col-md-1" style="top: 25px;">%bar4%</div><div id="bar5" class="col-md-4"></div>',
-		HTMLplantList = '<form><div class="form-group"><label for="plant_sel">Plant:</label><select multiple class="form-control" id="plant_sel"><option selected>All</option><option>%plant_list%</option></select><br></div></form>',
-		HTMLlocList = '<form><div class="form-group"><label for="loc_sel">Location:</label><select multiple class="form-control" id="loc_sel"><option selected>All</option><option>%loc_list%</option></select><br></div></form>',
-		HTMLdateList = '<form><div class="form-group"><label for="date_sel">Year:</label><select multiple class="form-control" id="date_sel"><option selected>All</option><option>%date_list%</option></select><br></div></form>',
-		HTMLoptionsList = '<form><div class="form-group"><label for="options_sel">Options:</label><div class="checkbox"><label><input type="checkbox" value="" checked="checked" id="alive_check">Alive</label></div><div class="checkbox"><label><input type="checkbox" value="" id="watering_check">Watering</label></div></div></form>',
-		HTMLfilterButton = '<button type="button" class="btn btn-secondary" id="filter-btn" style="margin-bottom: 10px"><span class="glyphicon glyphicon-filter"></span></button>';
-		HTMLstateButton = '<button type="button" class="btn btn-secondary" id="state-btn"><span class="glyphicon glyphicon-th-list" data-toggle="modal" data-target="#modal_plant_state"></span></button>';
-
-
-	// Prepare plant list
-   	var plants_by_name = {};
-   	for(var key in garden_data.plant_tags) {
-   		plants_by_name[garden_data.plant_tags[key]] = key;
-	}
-    var plants = Object.keys(plants_by_name).sort();
-
-	// Prepare location list
-   	var locations_by_name = {};
-   	for(var key in garden_data.location_tags) {
-   		locations_by_name[garden_data.location_tags[key]] = key;
-  	}
-    var locations = Object.keys(locations_by_name).sort();
-
-	// Prepare date list
-   	var year_list = [];
-    for (var note in garden_data.notes) {
-    	var year = new Date(Number(garden_data.notes[note]['created'])).getFullYear().toString();
-    	if ($.inArray(year, year_list) == -1) {
-     		year_list.push(year);
-    	}
-    }
-
-	// Draw filter options
-	var f_HTMLPlantFilter 	=   HTMLPlantFilter.replace('%bar1%', HTMLplantList.replace("%plant_list%", plants.join('</option><option>')));
-	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar2%', HTMLdateList.replace("%date_list%", year_list.join('</option><option>')));
-	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar3%', HTMLoptionsList)
-	f_HTMLPlantFilter 		= f_HTMLPlantFilter.replace('%bar4%', HTMLfilterButton)
-
-	$('#garden-input-bar-section').empty();
-	$(f_HTMLPlantFilter).appendTo('#garden-input-bar-section');
-
-	console.timeEnd("search_bar");
-
-	$("#filter-btn").click(function(){
-
-		var search_data = {
-			"plant": 	$( "#plant_sel" ).val(),
-			"location": 'All', //$( "#loc_sel" ).val(),
-			"year": 	$( "#date_sel" ).val(),
-			"alive": 	$('#alive_check').is(':checked') ? "checked" : "unchecked",
-			"watering": $('#watering_check').is(':checked') ? "checked" : "unchecked"
-		}
-
-		// Return plant guid
-		if($.inArray('All', search_data.plant) !== -1) {
-			search_data.plant = Object.keys(garden_data.plant_tags); 
-		} else {
-			for (var i=0, len=search_data.plant.length; i<len; i++) {
-				search_data.plant[i] = plants_by_name[search_data.plant[i]];
-			}
-		}
-
-		// Return location guid
-		if($.inArray('All', search_data.location) !== -1) {
-			search_data.location = Object.keys(garden_data.location_tags); 
-		} else {
-			for (var i=0, len=search_data.location.length; i<len; i++) {
-				search_data.location[i] = locations_by_name[search_data.location[i]];
-			}
-		}
-
-		if($.inArray('All', search_data.year) !== -1) {
-			search_data.year = year_list; 
-		}
-
-        //var sorted_data = sortGardenData(garden_data);
-
-        getFileData('weather_data/state_tags.json', 'json', drawGardenChart, [garden_data.diary, garden_data]);
-
-    }); 
-
-}
-
-
 //-------------------------------------------------------------------------------
 // Draw charts
 //-------------------------------------------------------------------------------
@@ -245,6 +153,8 @@ function drawGardenChart(notes_to_display) {
 	for(plant in notes_to_display) {
 		if (!notes_to_display.hasOwnProperty(plant)) continue;
 
+		if (plant != 'eaae0e6d-f694-458a-a4ea-d4f44f4e92d6') continue;
+
 		var this_cell_colour = '',
 			cell_colour = '',
 			this_border_colour = '',
@@ -306,7 +216,13 @@ function drawGardenChart(notes_to_display) {
 						}
 
 						if( week_entry.event == 'end' ) cell_colour = colors["lgreen"];
-						if( week_entry.event == 'continous' ||  week_entry.event == 'division' ) cell_colour = this_cell_colour;
+						if( week_entry.event == 'continous' ) cell_colour = this_cell_colour;
+						// if( week_entry.event == 'continous' ||  week_entry.event == 'division' ) cell_colour = this_cell_colour;
+
+						var previous_location = '';
+						if (week_entry.symbols.indexOf('m') != -1) {
+							previous_location = locations[this_location] + " <span class='glyphicon glyphicon-arrow-right'></span> ";
+						}
 
 						// Set border colour for location
 						if (week_entry.locations.length > 0  && (week_entry.symbols.indexOf('m') != -1 || this_border_colour == '')) {
@@ -315,6 +231,8 @@ function drawGardenChart(notes_to_display) {
 							this_location = week_entry.locations[idx];
 							this_border_colour = 'style="border-bottom: 5px solid '+ colors[location_colors[this_location]]+';"';
 						}
+
+						var note_title = "<span class='ion-android-pin'></span> " + previous_location + locations[this_location];
 
 						// Draw cell
 						var popover_body  = ''; 
@@ -326,7 +244,7 @@ function drawGardenChart(notes_to_display) {
 						var popover_img = HTML_popover_img.replace('%res_link%', week_entry.image);
 
 						formatted_HTML_cell = HTML_cell.replace('%cell_contents%', HTML_cell_content);
-						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_title%', "<span class='ion-android-pin'></span> "+locations[this_location]);
+						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_title%', note_title);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', week_entry.symbols.join(' '));
 					} else {
