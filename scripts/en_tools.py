@@ -759,11 +759,7 @@ def main():
                 continue
 
             if opt in ("-c", "--created"):
-                if 'W' in arg:
-                    date = get_thrs_date_from_iso_week(arg)
-                else:
-                    date = datetime.datetime.strptime(arg, '%Y-%m-%d')
-                note_data['created'] = int(date.strftime("%s")) * 1000
+                note_data['created'] = arg
                 continue
 
         config, key =   get_config_data(cfg_file= '{fl}data/config.json'.format(fl= folder_loc), 
@@ -783,19 +779,29 @@ def main():
                     data = list(reader)
                 records = []
                 for row in data:
-                    new_data = note_data.copy()
-                    new_data['created'] = row[0]
-                    new_data['title'] = row[1]
-                    new_data['tags'] = [row[tag] for tag in range(2,len(row))]
-                    records.append(new_data)
+                    if row:
+                        new_data = note_data.copy()
+                        new_data['created'] = row[0]
+                        new_data['title'] = row[1]
+                        new_data['tags'] = [row[tag] for tag in range(2,len(row))]
+                        records.append(new_data)
             else:
                 records = [note_data]
 
             for item in records:
+
+                # Sort out dates
+                if 'W' in item['created']:
+                    date = get_thrs_date_from_iso_week(item['created'])
+                else:
+                    date = datetime.datetime.strptime(item['created'], '%Y-%m-%d')
+                item['created'] = int(date.strftime("%s")) * 1000
+
                 logger.info('New note date: {d}'.format(d=item['created']))
                 logger.info('New note title: {t}'.format(t=item['title']))
                 logger.info('New note tags: {t}'.format(t=item['tags']))
-                # note = EnAcc.new_entry(item)
+
+                note = EnAcc.new_entry(item)
 
             sys.exit()
 
