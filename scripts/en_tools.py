@@ -11,6 +11,7 @@ import time
 import json
 import getopt
 import collections
+import csv
 
 # Third party modules
 import hashlib
@@ -56,6 +57,23 @@ def get_tag_children(tag_list, parent_guid):
     '''
 
     return {tag.guid: tag.name for tag in tag_list if tag.parentGuid == parent_guid}
+
+
+#---------------------------------------------------------------------------
+# Get date from ISO week
+#---------------------------------------------------------------------------
+def get_thrs_date_from_iso_week(date_str):
+    '''
+    Function returns date of the Thursday of the week passed
+
+    https://stackoverflow.com/questions/5882405/get-date-from-iso-week-number-in-python
+
+    Thanks to Uwe Kleine-Konig
+    '''
+    ret = datetime.datetime.strptime(date_str + '-4', "%Y-W%W-%w")
+    if datetime.date(int(ret.year), 1, 4).isoweekday() > 4:
+        ret -= datetime.timedelta(days=7)
+    return ret
 
 
 #---------------------------------------------------------------------------
@@ -184,6 +202,7 @@ class EvernoteAcc:
         ourNote.title       = note_data['title']
         ourNote.content     = nBody 
         ourNote.created     = note_data['created'] 
+        ourNote.tagNames    = note_data['tags']
 
         # ## parentNotebook is optional; if omitted, default notebook is used
         # if note_data['notebook'] and hasattr(note_data['notebook'], 'guid'):
@@ -621,7 +640,7 @@ def web_format(data, state_data):
     logger.debug('Time taken {duration}'.format(duration= routine_end-routine_start))
 
 
-    return d
+    return f
 
 
 
@@ -632,6 +651,12 @@ def main():
 
     '''
     Syncronizes data from evernote locally
+
+    Passed arguments:
+
+        -c or --created=""      - Date for note to be created. Format 2017-12-31 
+                                  or in week number 2017-W38 which will pick the 
+                                  Thursday date in that week
     '''
    
     script_name = os.path.basename(sys.argv[0])
@@ -675,16 +700,18 @@ def main():
         force_sync = False
         new_note = False
         format_into_web = False
+        file_csv = False
         note_data = {
                 'created':  int(datetime.datetime.now().strftime("%s")) * 1000,
                 'title':    'new note',
                 'body':     '',
+                'tags':     [],
                 'notebook': None
             }
  
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hxwfbt:c:',
-                ['help', 'sync-off', 'web', 'force-sync', 'sandbox', 'new', 'title=', 'created='])
+            opts, args = getopt.getopt(sys.argv[1:],'hxf:wst:g:c:',
+                ['help', 'sync-off', 'csv=', 'web', 'force-sync', 'sandbox', 'title=', 'tags=', 'created='])
         except getopt.GetoptError:
             usage()
             sys.exit(2)
@@ -696,7 +723,7 @@ def main():
                 sand_box = True 
                 continue
 
-            if opt in ('-f', '--force-sync'):
+            if opt in ('-s', '--force-sync'):
                 logger.info('Force sync requested')
                 force_sync = True
                 break
@@ -714,15 +741,30 @@ def main():
                 usage()
                 sys.exit()
 
+            if opt in ('-f', '--csv'):
+                csv_file_name = arg
+                sync = False
+                new_note = True
+                file_csv = True
+                break
+
             if opt in ('-t', '--title'):
                 note_data['title'] = arg
                 sync = False
                 new_note = True
                 continue
 
+            if opt in ("-g", "--tags"):
+                note_data['tags'] = arg.split(',')
+                continue
+
             if opt in ("-c", "--created"):
-                note_data['created'] = int(datetime.datetime.strptime(arg, '%Y-%m-%d').strftime("%s")) * 1000
-                break
+                if 'W' in arg:
+                    date = get_thrs_date_from_iso_week(arg)
+                else:
+                    date = datetime.datetime.strptime(arg, '%Y-%m-%d')
+                note_data['created'] = int(date.strftime("%s")) * 1000
+                continue
 
         config, key =   get_config_data(cfg_file= '{fl}data/config.json'.format(fl= folder_loc), 
                                         key_file= '{fl}keys/{fk}'.format(fl= folder_loc, 
@@ -735,9 +777,26 @@ def main():
         # WRITE ENTRY OTHERWISE UPDATE DATA FILE
         #---------------------------------------------------------------------------
         if new_note:
-            logger.info('New note date: {d}'.format(d=note_data['created']))
-            logger.info('New note title: {t}'.format(t=note_data['title']))
-            note = EnAcc.new_entry(note_data)
+            if file_csv:
+                with open('{fl}data/{file}'.format(fl= folder_loc, file= csv_file_name), 'rb') as f:
+                    reader = csv.reader(f)
+                    data = list(reader)
+                records = []
+                for row in data:
+                    new_data = note_data.copy()
+                    new_data['created'] = row[0]
+                    new_data['title'] = row[1]
+                    new_data['tags'] = [row[tag] for tag in range(2,len(row))]
+                    records.append(new_data)
+            else:
+                records = [note_data]
+
+            for item in records:
+                logger.info('New note date: {d}'.format(d=item['created']))
+                logger.info('New note title: {t}'.format(t=item['title']))
+                logger.info('New note tags: {t}'.format(t=item['tags']))
+                # note = EnAcc.new_entry(item)
+
             sys.exit()
 
 
