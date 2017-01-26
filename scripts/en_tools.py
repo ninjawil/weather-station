@@ -535,8 +535,13 @@ def web_format(data, state_data):
 
         # Prepare dates
         date = datetime.datetime.fromtimestamp(note['created']/1000)
-        year = date.strftime('%Y')
+        year = int(date.strftime('%Y'))
+        month = date.strftime('%m')
         week = date.isocalendar()[1]
+
+        # If week 53 and month is January then it should be the previous year line
+        if week > 4 and month == '01':
+            year -= 1
 
         # Get note information
         image_link = note['res'][0] if note['res'] else ''
@@ -619,7 +624,7 @@ def web_format(data, state_data):
                         week_d['locations'] = list(set(week_d['locations'])|set(note_locations))
                         week_d['symbols']   = list(set(week_d['symbols'])|set(note_symbols))
                         week_d['color']     = list(set(week_d['color'])|set(note_color))
-                        if note_event_display:
+                        if note_event_display and week_d['event'] not in ['start', 'dead', 'end']:
                             week_d['event'] = note_event_display
                         if not week_d['image']:
                             week_d['image'] = image_link
@@ -630,10 +635,6 @@ def web_format(data, state_data):
             events = [d[plant][n]['timeline'][y][w]['event'] for y in d[plant][n]['timeline'] for w in range(53) if d[plant][n]['timeline'][y][w]]
             if 'start' in events:
                 f[plant][n] = d[plant][n]
-
-
-
-            
 
     routine_end = datetime.datetime.now()
 
