@@ -213,7 +213,7 @@ function drawGardenChart(notes_to_display) {
 						if( week_entry.color.length > 0 ) {
 							var idx = 0;
 							//if(week_entry.color.length > 1 && week_entry.color[idx] == "lgreen") idx++;
-							if(week_entry.color.indexOf("lgreen") != -1) idx = week_entry.color.indexOf("lgreen");
+							// if(week_entry.color.indexOf("lgreen") != -1) idx = week_entry.color.indexOf("lgreen");
 							if(week_entry.color.indexOf("green") != -1) idx = week_entry.color.indexOf("green");
 							if(week_entry.color.indexOf("light_purple") != -1) idx = week_entry.color.indexOf("light_purple");
 							if(week_entry.color.indexOf("brown") != -1) idx = week_entry.color.indexOf("brown");
