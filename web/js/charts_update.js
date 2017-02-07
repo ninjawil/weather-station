@@ -472,7 +472,7 @@ function displayCharts(file_ref) {
 	$('#' + file_ref).parent().addClass('active');
 
 	// Display charts
-	if(file_ref === '1y') {
+	if(['1d', '2d', '1w', '1m', '3m'].indexOf(file_ref) == -1) {
 		chart_names = ['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Switch Power (W)'];
 
 		//Gets max data, then min data, then displayYearCharts
@@ -530,7 +530,8 @@ var dir = 'weather',
 				 '1w': 'wd_avg_1w.xml',
 				 '1m': 'wd_avg_1m.xml',
 				 '3m': 'wd_avg_3m.xml',
-				 '1y': 'wd_all_'+ n + '.xml'
+				 '1y': 'wd_all_'+ n + '.xml',
+				 '2016': 'wd_all_2016.xml'
 			    },
 	sensor_setup = { 'outside_temp': {
 					description: 'Outside Temperature',
