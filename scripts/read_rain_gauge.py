@@ -218,6 +218,9 @@ def main():
             if sleep_length > 0:
                 time.sleep(sleep_length)
 
+            # Check time sleep has counted correctly
+            if next_reading - time.time() > 0:
+                continue
 
             #-------------------------------------------------------------------
             # Get loop start time
