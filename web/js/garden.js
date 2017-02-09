@@ -297,8 +297,9 @@ function drawGardenChart(notes_to_display) {
 
 	$(document).ready(function() {
 	    $('#diary').DataTable( {
-			"scrollY": 400,
+			"scrollY": 650,
 			"scrollX": 400,
+			"lengthMenu": [25, 50, 100],
 			"fixedHeader": {
 				header: true
 			},
