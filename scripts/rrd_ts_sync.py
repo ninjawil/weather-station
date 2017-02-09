@@ -17,7 +17,7 @@ import json
 import thingspeak.thingspeak as thingspeak
 import rrd_tools
 import settings as s
-import log
+import log, logging
 import check_process
 import watchdog as wd
 
@@ -25,7 +25,7 @@ import watchdog as wd
 #===============================================================================
 # SYNC
 #===============================================================================
-def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
+def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file, send_sync_err, err_file):
 
     '''
     Synchronizes thingspeak account with the data in the local Round Robin
@@ -45,37 +45,17 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
         sensors        - list of names of each sensor
         rrd_res        - rrd resolution in seconds
         rrd_file       - rrd file location
+        sync_err       - reporting of sync errors 
     '''
    
    
-    script_name = os.path.basename(sys.argv[0])
-    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
-    folder_loc  = folder_loc.replace('scripts', '')
-
-
     #---------------------------------------------------------------------------
-    # Set up logger
+    # SET UP WATCHDOG & LOGGER
     #---------------------------------------------------------------------------
-    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
-                                                    folder= folder_loc,
-                                                    script= script_name[:-3]))
-
-    logger.info('')
-    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
+    logger = logging.getLogger('root')
     
-
-    #---------------------------------------------------------------------------
-    # SET UP WATCHDOG
-    #---------------------------------------------------------------------------
-    err_file    = '{fl}/data/error.json'.format(fl= folder_loc)
     wd_err      = wd.ErrorCode(err_file, '0007')
-
-
-    #---------------------------------------------------------------------------
-    # CHECK SCRIPT IS NOT ALREADY RUNNING
-    #---------------------------------------------------------------------------    
-    if check_process.is_running(script_name):
-        sys.exit()
+    sync_err    = wd.ErrorCode(err_file, '0008')
   
     
     try:
@@ -97,6 +77,7 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
                 logger.error(ch_feed["channel"].values())
                 logger.error(sensors)
                 logger.error('Exiting...')
+                wd_err.set()
                 sys.exit()
             else:
                 sensor_to_field[sensor] = ch_feed["channel"].keys()[ch_feed["channel"].values().index(sensor.replace('_', ' '))]
@@ -109,12 +90,7 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
         # CHECK RRD FILE
         #-----------------------------------------------------------------------
         rrd = rrd_tools.RrdFile(rrd_file)
-        
-        if check_process.is_running(script_name):
-            wd_err.set()
-            sys.exit()
-
-              
+                     
         #-----------------------------------------------------------------------
         # Get last feed update from thingspeak and RRD
         #-----------------------------------------------------------------------
@@ -187,16 +163,18 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
 
                 if n >= 3:
                     logger.error('Failed to update Thingspeak. Exiting...')
-                    wd_err.set()
+                    if send_sync_err: sync_err.set()
                     sys.exit()          
                 else:
                     #Thingspeak update rate is limited to 15s per entry
                     time.sleep(20)
 
+    except gaierror, e:
+        logger.error('Unable to connect ({error_v}). Exiting...'.format(
+            error_v=e), exc_info=True)
+        if send_sync_err: sync_err.set()
+        sys.exit()
         
-        logger.info('--- Script Finished ---')
-
-
     except Exception, e:
         logger.error('Update failed ({error_v}). Exiting...'.format(
             error_v=e), exc_info=True)
@@ -208,36 +186,81 @@ def sync(ts_host, ts_key, ts_channel_id, sensors, rrd_res, rrd_file):
 # MAIN
 #===============================================================================
 def main():
+    
+    '''
+    Passed arguments:
+        --syncerr     - disables reporting of sync errors 
+    '''
 
-    #-------------------------------------------------------------------
-    # Get data from config file
-    #-------------------------------------------------------------------
-    try:
+    script_name = os.path.basename(sys.argv[0])
+    folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+    folder_loc  = folder_loc.replace('scripts', '')
+
+    
+    #---------------------------------------------------------------------------
+    # Set up logger
+    #---------------------------------------------------------------------------
+    logger = log.setup('root', '{folder}/logs/{script}.log'.format(
+                                                    folder= folder_loc,
+                                                    script= script_name[:-3]))
+    
+    logger.info('')
+    logger.info('--- Script {script} Started ---'.format(script= script_name)) 
+
+    
+    #---------------------------------------------------------------------------
+    # CHECK SCRIPT IS NOT ALREADY RUNNING
+    #---------------------------------------------------------------------------    
+    if check_process.is_running(script_name):
+        logger.error('Script already running.')
+        sys.exit()
+            
+    try:       
+        #-------------------------------------------------------------------
+        # Check and action passed arguments
+        #-------------------------------------------------------------------
+        sync_err = False
+        if len(sys.argv) > 1:
+            if '--syncerr' in sys.argv:
+                logger.info('User requested NO ERROR feedback.')
+                sync_err = True
+ 
+
+        #-------------------------------------------------------------------
+        # Get data from config file
+        #-------------------------------------------------------------------               
         with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
             config = json.load(f)
 
         ts_host_addr  = config['thingspeak']['THINGSPEAK_HOST_ADDR']
         ts_channel_id = config['thingspeak']['THINGSPEAK_CHANNEL_ID']
         ts_api_key    = config['thingspeak']['THINGSPEAK_API_KEY']
+
         
+        #-------------------------------------------------------------------
+        # Sync data
+        #-------------------------------------------------------------------   
+        sync(   ts_host_addr, 
+                ts_api_key, 
+                ts_channel_id,
+                list(s.SENSOR_SET.keys()), 
+                s.UPDATE_RATE, 
+                '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
+                                        fd2= s.DATA_FOLDER,
+                                        fl= s.RRDTOOL_RRD_FILE),
+                sync_err,
+                '{fl}/data/error.json'.format(fl= folder_loc))
+
     except Exception, e:
-        print(e)
+        logger.error('Update failed ({error_v}). Exiting...'.format(
+            error_v=e), exc_info=True)
         sys.exit()
+        
+    finally:
+        logger.info('--- Script Finished ---')
 
 
-    #-------------------------------------------------------------------
-    # Sync data
-    #-------------------------------------------------------------------   
-    sync(   ts_host_addr, 
-            ts_api_key, 
-            ts_channel_id,
-            list(s.SENSOR_SET.keys()), 
-            s.UPDATE_RATE, 
-            '{fd1}{fd2}{fl}'.format(fd1= s.SYS_FOLDER,
-                                    fd2= s.DATA_FOLDER,
-                                    fl= s.RRDTOOL_RRD_FILE))
 
-    
 #===============================================================================
 # Boiler plate
 #===============================================================================

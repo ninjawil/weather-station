@@ -118,41 +118,46 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 	var output_data = {};
 
 	xhttp.onreadystatechange = function() {
-	    if (xhttp.readyState == 4 && xhttp.status == 200) {
+	    if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
 
-			var xml = xhttp.responseXML,
-				xml_sensors  = xml.getElementsByTagName("entry"),
-				xmlValue = xml.getElementsByTagName("row");
+				var xml = xhttp.responseXML,
+					xml_sensors  = xml.getElementsByTagName("entry"),
+					xmlValue = xml.getElementsByTagName("row");
 
-			for(var i=0, i_len=xml_sensors.length; i<i_len; i++) {
+				for(var i=0, i_len=xml_sensors.length; i<i_len; i++) {
 
-				output_data[xml_sensors[i].childNodes[0].nodeValue] = [];
+					output_data[xml_sensors[i].childNodes[0].nodeValue] = [];
 
-				for(var j=0, j_len=xmlValue.length; j<j_len; j++) {
-					var xmlEntryValue = xmlValue[j].childNodes[i+1].childNodes[0].nodeValue,
-						xmlEntryTime = xmlValue[j].childNodes[0].childNodes[0].nodeValue;
+					for(var j=0, j_len=xmlValue.length; j<j_len; j++) {
+						var xmlEntryValue = xmlValue[j].childNodes[i+1].childNodes[0].nodeValue,
+							xmlEntryTime = xmlValue[j].childNodes[0].childNodes[0].nodeValue;
 
-					if(xmlEntryValue != 'NaN'){
-						output_data[xml_sensors[i].childNodes[0].nodeValue].push([Number(xmlEntryTime*1000), Number(xmlEntryValue)]); 
+						if(xmlEntryValue != 'NaN'){
+							output_data[xml_sensors[i].childNodes[0].nodeValue].push([Number(xmlEntryTime*1000), Number(xmlEntryValue)]); 
+						}
 					}
 				}
-			}
 
-			// If sensor object passed then return it otherwise return raw data
-			if (sensors_array !== ""){
-				for(var sensor in output_data) {
-					sensors_array[sensor].readings = output_data[sensor];
+				// If sensor object passed then return it otherwise return raw data
+				if (sensors_array !== ""){
+					for(var sensor in output_data) {
+						sensors_array[sensor].readings = output_data[sensor];
+					}
+					args.push(sensors_array);
+				} else {
+					args.push(output_data);
 				}
-				args.push(sensors_array);
-			} else {
-				args.push(output_data);
+
+				//args.push(true); // Display day and night color
+
+				functionCall.apply(this, args);
+
 			}
-
-			//args.push(true); // Display day and night color
-
-			functionCall.apply(this, args);
-
-	    }
+			else{
+				console.log("Error: ", xhttp.statusText);
+			}
+		}
 	 };
 
 	xhttp.open("GET", filename, true);
@@ -179,10 +184,11 @@ function displayHeatMap(sensor_id) {
 	$('#graph-container').empty();
 
     // Set up chart screen sections
-    $('<div id="title-section"></div>').appendTo('#graph-container');
-    $('<div id="charts-section"><div id="charts-col1" class="col-md-1"></div><div id="charts-col2" class="col-md-11"></div></div>').appendTo('#graph-container');
+	var title = '<div id="title-section"><div class="row"><h4>%name%</h4></div><div id="cal-heatmap"></div></div><div id="charts-section"></div>';
+    $(title.replace("%name%", sensor_setup[sensor_id].description)).appendTo('#graph-container');
 
-	xmlGetData(dir + '_data/' + dataFiles['1y'], '', drawHeatMap, [sensor_id]);
+	xmlGetData(dir + '_data/' + 'wd_all_2016.xml', '', drawHeatMap, ['2016', sensor_id]);
+	xmlGetData(dir + '_data/' + 'wd_all_2017.xml', '', drawHeatMap, ['2017', sensor_id]);
     
 }
 
@@ -190,16 +196,11 @@ function displayHeatMap(sensor_id) {
 //-------------------------------------------------------------------------------
 // Draw heat map
 //-------------------------------------------------------------------------------
-function drawHeatMap(sensor_name, value_array) {
+function drawHeatMap(year, sensor_name, value_array) {
 
+	var draw_row = '<div class="row"><div class="col-md-1"><div class="vertical-text"><h4>%year%</h4></div></div><div id="charts-col2-%year%" class="col-md-11"></div></div>'	
 
-	// Create chart
-	var title = '<div class="row"><h4>%name%</h4></div><div id="cal-heatmap"></div>';
-    $(title.replace("%name%", sensor_setup[sensor_name].description)).appendTo('#title-section');
-
-	var date = '<div class="vertical-text"><h4>%date%</h4></div>';
-    $(date.replace("%date%", '2016')).appendTo('#charts-col1');
-
+    $(draw_row.replace(/%year%/g, year)).appendTo('#graph-container');
 
     var parser = function(data) {
 		var stats = {};
@@ -215,21 +216,25 @@ function drawHeatMap(sensor_name, value_array) {
 	}
 
 	var min_of_array = Math.min.apply(Math, data_array);
+	var max_of_array = Math.max.apply(Math, data_array);
 	var legend_range = [0,0,0,0];
 
-	legend_range[3] = average(data_array) + standardDeviation(data_array);
+	// legend_range[3] = average(data_array) + standardDeviation(data_array);
+	legend_range[3] = 0.75*max_of_array;
 	legend_range[2] = min_of_array + 0.75*(legend_range[3] - min_of_array);
 	legend_range[1] = min_of_array + 0.50*(legend_range[3] - min_of_array);
 	legend_range[0] = min_of_array + 0.25*(legend_range[3] - min_of_array);
 
+	var item = "#charts-col2-%year%".replace("%year%", year);
+
 
 	var calendar = new CalHeatMap();
 	calendar.init({
-		itemSelector: "#charts-col2",
+		itemSelector: item,
 		data: value_array[sensor_name],
 		afterLoadData: parser,
 		itemName: [sensor_setup[sensor_name].unit, sensor_setup[sensor_name].unit],
-		start: new Date(2016, 0),
+		start: new Date(year, 0),
 		domain : "month",			// Group data by month
 		subDomain : "day",			// Split each month by days
 		cellsize: 20,
@@ -474,7 +479,7 @@ function displayCharts(file_ref) {
 	$('#' + file_ref).parent().addClass('active');
 
 	// Display charts
-	if(file_ref === '1y') {
+	if(['1d', '2d', '1w', '1m', '3m'].indexOf(file_ref) == -1) {
 		chart_names = ['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Switch Power (W)'];
 
 		//Gets max data, then min data, then displayYearCharts
@@ -535,7 +540,8 @@ var dir = 'weather',
 				 '1w': 'wd_avg_1w.xml',
 				 '1m': 'wd_avg_1m.xml',
 				 '3m': 'wd_avg_3m.xml',
-				 '1y': 'wd_all_'+ n + '.xml'
+				 '1y': 'wd_all_'+ n + '.xml',
+				 '2016': 'wd_all_2016.xml'
 			    },
 	sensor_setup = { 'outside_temp': {
 					description: 'Outside Temperature',

@@ -655,7 +655,13 @@ def main():
 
     Passed arguments:
 
-        -c or --created=""      - Date for note to be created. Format 2017-12-31 
+        -b, --sandbox           - Use sandbox account
+        -s, --force-sync        - Force complete sync with evernote. Replaces all
+                                  existing data. Allows no other commands to run
+                                  except --sandbox.
+        -x, --sync-off          - Run script wihout partial syncing to evernote 
+                                  account. 
+        -c, --created=""        - Date for note to be created. Format 2017-12-31 
                                   or in week number 2017-W38 which will pick the 
                                   Thursday date in that week
     '''
