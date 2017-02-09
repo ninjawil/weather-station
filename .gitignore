@@ -3,6 +3,7 @@
 #########################
 **/rrd/**
 **/schematics/**
+**/.vscode/**
 
 # Compiled source #
 ###################
@@ -33,6 +34,10 @@
 *.sql
 *.sqlite
 
+# Other #
+#########
+*.csv
+
  
 # OS generated files #
 ######################
@@ -46,3 +51,5 @@ Thumbs.db
 =======
 *.py[cod]
 *$py.class
+/keys/
+/.project

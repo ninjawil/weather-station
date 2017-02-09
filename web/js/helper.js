@@ -10,17 +10,9 @@
 //===============================================================================
 // HTML Values
 //===============================================================================
-var HTMLerrorMSG		= '<div class="alert alert-danger alert-mod" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><span id="err_table_link" class="glyphicon glyphicon-new-window" aria-hidden="true" data-toggle="modal" data-target="#modal_errors"></span><strong>%error_type%</strong>%error_msg%</div>';
-
-var HTMLupdateTime = '<div class="row">%time%</div>';
-var HTMLupdateDate = '<div class="row">%date%</div>';
-
-var HTMLvalueBox = '<div id="%id%" class="row reading-group"><div class="row reading-name">%description%</div></div>';
-var HTMLvalue = '<div class="row reading-value">%value%<span class="reading-unit"> %unit%</span></div>';
+var HTMLerrorMSG = '<div class="alert alert-danger alert-mod" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><span id="err_table_link" class="glyphicon glyphicon-new-window" aria-hidden="true" data-toggle="modal" data-target="#modal_errors"></span><strong>%error_type%</strong>%error_msg%</div>';
 
 var HTMLerrorTable = '<tr><td>%date%</td><td>%errornumber%</td><td>%message%</td><td>%notified%</td><td>%count%</td></tr>';
-
-var HTMLallDropdown = '<li><a href="#" onclick="displayHeatMap(%id%)">%name%</a></li>';
 
 var HTMLirrig = '<div class="panel panel-default" style="margin-top: 20px;"><div class="panel-heading">Irrigation Amount</div><div class="panel-body"><div class="row"><div class="col-md-2">%col1%</div><div class="col-md-10"><div class="irrig-bar">%col2%</div></div></div></div>';
 var HTMLirrigButton = '<div class="btn-group" role="group" aria-label="..."><button id="irrig-minus-btn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></button> <button id="irrig-plus-btn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button><button id="irrig-save-btn" type="button" class="btn btn-default"><span class="%disk_icon%" aria-hidden="true"></span></button></div>';

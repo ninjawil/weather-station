@@ -6,13 +6,19 @@
 	<title>Weather Station</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<link rel="stylesheet" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.10.12/css/dataTables.bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/3.2.2/css/fixedColumns.dataTables.min.css">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
 	<link rel="stylesheet" type="text/css" href="css/cal-heatmap.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+	<script src="https://cdn.datatables.net/1.10.12/js/dataTables.bootstrap.min.js"></script>
+	<script src="https://cdn.datatables.net/fixedcolumns/3.2.2/js/dataTables.fixedColumns.min.js"></script>
     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="js/helper.js"></script>
-    <script src="js/maths_functions.js"></script>
+    <script src="js/misc_functions.js"></script>
     <script src="js/cal-heatmap.min.js"></script>
     <script src="http://code.highcharts.com/highcharts.js"></script>
     <script src="http://code.highcharts.com/highcharts-more.js"></script>
@@ -51,6 +57,8 @@
 								        <li><a href="#" id="1m" onclick="displayCharts('1m')">1 month</a></li>
 								        <li><a href="#" id="3m" onclick="displayCharts('3m')">3 months</a></li>
 								        <li><a href="#" id="1y" onclick="displayCharts('1y')">1 year</a></li>
+										<li role="separator" class="divider"></li>
+								        <li><a href="#" id="2016" onclick="displayCharts('2016')">2016</a></li>
 								    </ul>
 						        </li>
 						        <li class="dropdown">
@@ -62,6 +70,7 @@
 					      	</ul>
 						    <ul class="nav navbar-nav">
 						        <li><a href="#" id="irrig" onclick="displayIrrigation()"><span class="glyphicon glyphicon-tint" aria-hidden="true"></span></a></li>
+						        <li><a href="#" id="garden" onclick="displayGarden()"><span class="glyphicon glyphicon-leaf" aria-hidden="true"></span></a></li>
 					      	</ul>
 					      	<ul class="nav navbar-nav navbar-right">
 						        <li><a href="http://suncalc.net/#/53.0128,-1.7325,18">SunCalc</a></li>
@@ -74,6 +83,7 @@
 						          	<ul class="dropdown-menu">
 							            <li><a href="#" id="modal_log" onclick="displayLogData()">View Logs</a></li>
 							            <li><a href="#" data-toggle="modal" data-target="#modal_errors">Errors</a></li>
+							            <li><a href="#" data-toggle="modal" data-target="#modal_plant_state">Plant States</a></li>
 							            <li role="separator" class="divider"></li>
 							            <li><a href="#" data-toggle="modal" data-target="#modal_settings">Settings</a></li>
 						          	</ul>
@@ -222,10 +232,41 @@
 							<div class="panel panel-default">
 		                		<div class="panel-heading">
 									<h4 class="panel-title">
-								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse6">WATER LEVEL PREDICTION</a>
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse6">EVERNOTE</a>
 								    </h4>
 							    </div>
 							    <div id="collapse6" class="panel-collapse collapse">
+									<div class="panel-body">
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon16">Gardening Tag</span>
+										  	<input id="garden-tag" name="garden-tag" type="text" class="form-control" aria-describedby="basic-addon16">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon17">Plant Tag Identifier</span>
+										  	<input id="plant-tag-id" name="plant-tag-id" type="text" class="form-control" aria-describedby="basic-addon17">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon18">Location Tag Identifier</span>
+										  	<input id="location-tag-id" name="location-tag-id" type="text" class="form-control" aria-describedby="basic-addon18">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon19">State Tag Identifier</span>
+										  	<input id="state-tag-id" name="state-tag-id" type="text" class="form-control" aria-describedby="basic-addon19">
+										</div>
+										<div class="input-group">
+											<span class="input-group-addon" id="basic-addon20">Notebook</span>
+										  	<input id="notebook" name="notebook" type="text" class="form-control" aria-describedby="basic-addon20">
+										</div>
+									</div>
+								</div> <!-- collapse6 -->
+							</div> <!-- MAKER CHANNEL panel -->
+							<div class="panel panel-default">
+		                		<div class="panel-heading">
+									<h4 class="panel-title">
+								        <a data-toggle="collapse" data-parent="#accordion" href="#collapse7">WATER LEVEL PREDICTION</a>
+								    </h4>
+							    </div>
+							    <div id="collapse7" class="panel-collapse collapse">
 									<div class="panel-body">
 					                	<div class="row">
 											<div id="on_temp" class="col-md-6">
@@ -287,7 +328,7 @@
 											</div>
 										</div> <!-- row -->
 									</div>
-								</div> <!-- collapse6 -->
+								</div> <!-- collapse7 -->
 							</div> <!-- WATER LEVEL PREDICTION panel -->
 						</div> <!-- panel-group -->
 	                </div> <!-- modal-body -->
@@ -326,6 +367,33 @@
 	            </div>
 	        </div>
 	    </div> <!-- modal_errors -->
+
+	    <div id="modal_plant_state" class="modal fade" role="dialog">
+	        <div class="modal-dialog modal-lg">
+	            <div class="modal-content">
+	                <div class="modal-header">
+	                    <h4 class="modal-title">Plant States</h4>
+	                </div>
+	                <div class="modal-body">
+	                	<table class="table">
+					  		<thead>
+						      	<tr>
+							        <th>Name</th>
+							        <th>GUID</th>
+							        <th>Color</th>
+							        <th>Symbol</th>
+						      	</tr>
+						    </thead>
+						    <tbody id="plant_state"></tbody>
+					  	</table>
+	                </div> <!-- modal-body -->
+	                <div class="modal-footer">
+	                	<button type="button" class="btn btn-default" onclick="saveStates()">Save</button>
+	                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	                </div> <!-- modal-footer -->
+	            </div>
+	        </div>
+	    </div> <!-- modal_plant_state -->
     </div>
 
     <script src="js/suncalc.js"></script>
@@ -334,6 +402,8 @@
     <script src="js/config_data.js"></script>
     <script src="js/error_msg.js"></script>
     <script src="js/irrigation.js"></script>
+    <script src="js/plant_state.js"></script>
+    <script src="js/garden.js"></script>
 
 </body>
 </html>  

@@ -7,32 +7,25 @@
 // 
 
 //-------------------------------------------------------------------------------
-// Return passed object
-//-------------------------------------------------------------------------------
-function cloneObject(obj) {
-    return jQuery.extend(true, {}, obj);
-}
-
-
-//-------------------------------------------------------------------------------
 // Converts time since last epoch and displays it on the webpage
 //-------------------------------------------------------------------------------
 function displayTime(timeSinceEpoch) {
 
+	var HTMLupdateTime = '<div class="row">%time%</div><div class="row">%date%</div>';
+
 	//Convert time since epoch to human dates (time needs to be in milliseconds)
 	var datetime = new Date(timeSinceEpoch);
-	// datetime = datetime.toString();
-	// datetime = datetime.toUTCString();
-
-	var time = datetime.toLocaleTimeString();
+	var time 	 = datetime.toLocaleTimeString();
 
 	if(datetime.getTimezoneOffset() == "-60") {
-		time = time.concat(" &#x263C;");
+		time += " &#x263C;";
 	}
 
+	var f_HTMLupdateTime =   HTMLupdateTime.replace("%time%", time)
+	f_HTMLupdateTime 	 = f_HTMLupdateTime.replace("%date%", datetime.toUTCString().slice(0, 17));
+
 	//Display time and date
-	$('#update_time').append(HTMLupdateTime.replace("%time%", time));	
-	$('#update_time').append(HTMLupdateDate.replace("%date%", datetime.toUTCString().slice(0, 17)));
+	$('#update_time').append(f_HTMLupdateTime);	
 }
 
 
@@ -41,13 +34,17 @@ function displayTime(timeSinceEpoch) {
 //-------------------------------------------------------------------------------
 function sidebarData(sensors) {
 
-	var formattedValueBox,
-		formattedValue;
+	
+	var HTMLvalueBox = '<div id="%id%" class="row reading-group"><div class="row reading-value">%value%<span class="reading-unit"> %unit%</span></div><div class="row reading-name">%description%</div></div>';
+	//var HTMLvalue = '<div class="row reading-value">%value%<span class="reading-unit"> %unit%</span></div>';
+
+	var f_HTMLvalueBox = '',
+		f_HTMLvalue    = '';
 
 	for(var sensor in sensors) {
 
-		formattedValueBox = HTMLvalueBox.replace("%id%", sensor);
-		formattedValueBox = formattedValueBox.replace("%description%", sensors[sensor].description);
+		f_HTMLvalueBox = HTMLvalueBox.replace("%id%", sensor);
+		f_HTMLvalueBox = f_HTMLvalueBox.replace("%description%", sensors[sensor].description);
 
 		var arrayLength = sensors[sensor].readings.length,
 			value = 0;
@@ -68,14 +65,18 @@ function sidebarData(sensors) {
 					value = sensors[sensor].readings[arrayLength-1][1].toPrecision(4);
 			}
 
-			formattedValue = HTMLvalue.replace("%value%", value);
-			formattedValue = formattedValue.replace("%unit%", sensors[sensor].unit);
+			f_HTMLvalueBox = f_HTMLvalueBox.replace("%value%", value);
+			f_HTMLvalueBox = f_HTMLvalueBox.replace("%unit%", sensors[sensor].unit);
 
-			//Display data
-			$("#sidebar").append(formattedValueBox);		
-			$('#' + sensor).prepend(formattedValue);
+
 		}
+		
+		f_HTMLvalue += f_HTMLvalueBox;
 	}
+
+	//Display data
+	$("#sidebar").append(f_HTMLvalue);		
+		// $('#' + sensor).prepend(f_HTMLvalue);
 
 	// Display last update time
 	displayTime(sensors['door_open'].readings[sensors['door_open'].readings.length-1][0]);
@@ -87,16 +88,22 @@ function sidebarData(sensors) {
 //-------------------------------------------------------------------------------
 function formatAllDropdown(sensors) {
 
-	var formattedDropdown;
+	var HTMLallDropdown = '<li><a href="#" onclick="displayHeatMap(%id%)">%name%</a></li>';
+
+	var f_Dropdown,
+		f_Dropdown_list = [];
 
 	for(var sensor in sensors) {
+		if (!sensors.hasOwnProperty(sensor)) continue;
 
-		formattedDropdown = HTMLallDropdown.replace("%id%", "'" + sensor + "'");
-		formattedDropdown = formattedDropdown.replace("%name%", sensors[sensor].description);
+		f_Dropdown = HTMLallDropdown.replace("%id%", "'" + sensor + "'");
+		f_Dropdown = f_Dropdown.replace("%name%", sensors[sensor].description);
 
-		//Display data		
-		$('#allDropdown').append(formattedDropdown);
+		f_Dropdown_list.push(f_Dropdown);
 	}
+
+	//Display data		
+	$('#allDropdown').append(f_Dropdown_list.join(''));
 }
 
 
@@ -118,11 +125,11 @@ function xmlGetData(filename, sensors_array, functionCall, args) {
 					xml_sensors  = xml.getElementsByTagName("entry"),
 					xmlValue = xml.getElementsByTagName("row");
 
-				for(var i = 0; i < xml_sensors.length; i++) {
+				for(var i=0, i_len=xml_sensors.length; i<i_len; i++) {
 
 					output_data[xml_sensors[i].childNodes[0].nodeValue] = [];
 
-					for(var j = 0; j < xmlValue.length; j++) {
+					for(var j=0, j_len=xmlValue.length; j<j_len; j++) {
 						var xmlEntryValue = xmlValue[j].childNodes[i+1].childNodes[0].nodeValue,
 							xmlEntryTime = xmlValue[j].childNodes[0].childNodes[0].nodeValue;
 
@@ -204,7 +211,7 @@ function drawHeatMap(year, sensor_name, value_array) {
 	};
 
 	var data_array = [];
-	for(var i = 0; i<value_array[sensor_name].length; i++){
+	for(var i=0, len=value_array[sensor_name].length; i<len; i++){
 		data_array.push(value_array[sensor_name][i][1]);
 	}
 
@@ -323,7 +330,7 @@ function drawCharts(chart_names, drawDayNight, sensors) {
     }
 
     //Create a chart per unit type
-    for (chart_no = 0; chart_no < chart_names.length; chart_no++) { 
+    for (chart_no=0, chart_len=chart_names.length; chart_no<chart_len; chart_no++) { 
 
     	//Populate each graph
     	var	valueSeries = [];		
@@ -472,7 +479,7 @@ function displayCharts(file_ref) {
 	$('#' + file_ref).parent().addClass('active');
 
 	// Display charts
-	if(file_ref === '1y') {
+	if(['1d', '2d', '1w', '1m', '3m'].indexOf(file_ref) == -1) {
 		chart_names = ['Outside Temp (°C)', 'Inside Temp (°C)', 'Humidity (%)', 'Rainfall (mm)', 'Switch Power (W)'];
 
 		//Gets max data, then min data, then displayYearCharts
@@ -489,12 +496,15 @@ function displayCharts(file_ref) {
 //-------------------------------------------------------------------------------
 function main() {
 
+	console.time('main');
+
 	formatAllDropdown(sensor_setup);
 
 	xmlGetData(dir + '_data/' + dataFiles['1d'], sensor_setup, sidebarData, []);
 
 	displayCharts('1d');
 
+	console.timeEnd('main');
 }
 
 
@@ -530,7 +540,8 @@ var dir = 'weather',
 				 '1w': 'wd_avg_1w.xml',
 				 '1m': 'wd_avg_1m.xml',
 				 '3m': 'wd_avg_3m.xml',
-				 '1y': 'wd_all_'+ n + '.xml'
+				 '1y': 'wd_all_'+ n + '.xml',
+				 '2016': 'wd_all_2016.xml'
 			    },
 	sensor_setup = { 'outside_temp': {
 					description: 'Outside Temperature',

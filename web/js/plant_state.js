@@ -1,84 +1,51 @@
 //
-// config_data.js
+// plant_state.js
 // Will De Freitas
 //
-// Reads and writes weather station configuration data
-//
-// 
-
 
 
 //-------------------------------------------------------------------------------
-// Once config data is loaded, draw it in Settings Modal
+// Once state data is loaded, draw it in State Modal
 //-------------------------------------------------------------------------------
-function updateSettingsModal(config_data) {
+function updateStateModal(states) {
+
+	console.log('run');
 
 
-	$('#ip1').attr('value', config_data.network.ROUTER_IP);
+	var HTMLformState 	= '<form class="form-inline">%form%</form>',
+		HTMLformItem 	= '<div class="form-group row"><label class="sr-only" for="%item_id%">%item_name%</label><div class="%size%"><input class="form-control form-control-sm" type="text" value="%value%" id="%item_id%" placeholder="%item_name%"></div></div>';
 
-	if(config_data.heater.HEATER_ENABLE == 1){
-		$('#heater-enable').prop('checked', true);
-		$('#heater-on-temp').prop('disabled', false);
-		$('#heater-on-hyst').prop('disabled', false);
-		$('#miplug-id').prop('disabled', false);
-	} else {
-		$('#heater-enable').prop('checked', false);
-		$('#heater-on-temp').prop('disabled', true);
-		$('#heater-on-hyst').prop('disabled', true);
-		$('#miplug-id').prop('disabled', true);	
-	}
+	var f_HTMLformItem = '';
 
-	$('#heater-on-temp').attr('value', config_data.heater.TEMP_HEATER_ON);
-	$('#heater-on-hyst').attr('value', config_data.heater.TEMP_HYSTERISIS);
-	$('#miplug-id').attr('value', config_data.heater.MIPLUG_SENSOR_ID);
+	for (guid in states){
 
-	$('#rain-gauge').attr('value', config_data.rain_gauge.PRECIP_TICK_MEASURE);
+		f_HTMLformItem += 	HTMLformItem.replace(	'%item_id%', 	states[guid].name+'-name');
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%item_name%', 'State Name');
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%value%', 		states[guid].name); 
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%size%', 		'col-sm-3'); 
 
-	$('#ts-host-addr').attr('value', config_data.thingspeak.THINGSPEAK_HOST_ADDR);
-	$('#ts-api-key').attr('value', config_data.thingspeak.THINGSPEAK_API_KEY);
-	$('#ts-ch-id').attr('value', config_data.thingspeak.THINGSPEAK_CHANNEL_ID);
+		f_HTMLformItem += 	HTMLformItem.replace(	'%item_id%', 	states[guid].name+'-guid');
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%item_name%', 'GUID');
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%value%', 		guid);
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%size%', 		'col-sm-5'); 
 
-	$('#garden-tag').attr('value', config_data.evernote.GARDENING_TAG);
-	$('#plant-tag-id').attr('value', config_data.evernote.PLANT_TAG_ID);
-	$('#location-tag-id').attr('value', config_data.evernote.LOCATION_TAG_ID);
-	$('#state-tag-id').attr('value', config_data.evernote.STATE_TAG_ID);
-	$('#notebook').attr('value', config_data.evernote.NOTEBOOK);
+		f_HTMLformItem += 	HTMLformItem.replace(	'%item_id%', 	states[guid].name+'-symbol');
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%item_name%', 'Symbol');
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%value%', 		states[guid].symbol);
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%size%', 		'col-sm-2'); 
 
-	$('#mk-addr').attr('value', config_data.maker_channel.MAKER_CH_ADDR);
-	$('#mk-key').attr('value', config_data.maker_channel.MAKER_CH_KEY);
+		f_HTMLformItem += 	HTMLformItem.replace(	'%item_id%', 	states[guid].name+'-color');
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%item_name%', 'Color');
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%value%', 		states[guid].color);
+		f_HTMLformItem = 	f_HTMLformItem.replace(	'%size%', 		'col-sm-2'); 
 
 	
-	if(config_data.irrigation.ALARM_ENABLE == 1){
-		$('#irrig_alarm_en').prop('checked', true);
-	} else {
-		$('#irrig_alarm_en').prop('checked', false);
 	}
 
-	$('#irrig_alarm_lvl').attr('value', config_data.irrigation.ALARM_LEVEL);
-	$('#irrig_coord_n').attr('value', config_data.irrigation.COORD_NORTH);
-	$('#irrig_coord_s').attr('value', config_data.irrigation.COORD_SOUTH);
-	$('#irrig_days').attr('value', config_data.irrigation.RECOMMENDED_WATERING_DAYS);
-	$('#irrig_soil_type').val(config_data.irrigation.SOIL_TYPE);
-	$('#irrig_crop_factor').attr('value', config_data.irrigation.CROP_FACTOR_KC);
-	$('#irrig_root_depth').attr('value', config_data.irrigation.ROOT_DEPTH);
-	$('#irrig_full').attr('value', config_data.irrigation.IRRIG_FULL);
-	$('#irrig_partial').attr('value', config_data.irrigation.IRRIG_PARTIAL);
+	// Clear modal body area
+	$('#modal_plant_state_body').empty();
+	$('#modal_plant_state_body').append(HTMLformState.replace('%form%', f_HTMLformItem));
 
-    $(function(){
-        $('#checkbox input:checkbox').on('change', function(){
-            if($(this).is(':checked')) {
-                $('#heater-enable').prop('checked', true);
-                $('#heater-on-hyst').prop('disabled', false);
-                $('#miplug-id').prop('disabled', false);
-                $('#heater-on-temp').prop('disabled', false);
-            } else {
-                $('#heater-enable').prop('checked', false);
-                $('#heater-on-hyst').prop('disabled', true);
-                $('#miplug-id').prop('disabled', true);
-                $('#heater-on-temp').prop('disabled', true);                
-            }
-        });
-    });
 
 }
 
@@ -86,7 +53,7 @@ function updateSettingsModal(config_data) {
 //-------------------------------------------------------------------------------
 // Save data to JSON file
 //-------------------------------------------------------------------------------
-function saveSettings() {
+function saveState() {
 
     var heaterEnabled = 0;
     if ($('#heater-enable').is(":checked"))
@@ -144,8 +111,7 @@ function saveSettings() {
 		  	"GARDENING_TAG": 		$('#settingsForm').find('[name="garden-tag"]').val(),
 		  	"PLANT_TAG_ID": 		$('#settingsForm').find('[name="plant-tag-id"]').val(),
 		  	"LOCATION_TAG_ID": 		$('#settingsForm').find('[name="location-tag-id"]').val(),
-		  	"STATE_TAG_ID": 		$('#settingsForm').find('[name="state-tag-id"]').val(),
-		  	"NOTEBOOK": 			$('#settingsForm').find('[name="notebook"]').val()
+		  	"STATE_TAG_ID": 		$('#settingsForm').find('[name="state-tag-id"]').val()
   		}
 	};
 
@@ -153,9 +119,10 @@ function saveSettings() {
     var encoded = btoa(json);
 
 	$.ajax({
-		url: 'php/save_settings.php',
-		type: "post",
-		data: 'json=' + encoded,
+		url: 	'php/save_file.php',
+		type: 	"post",
+		data: 	'file=' + '/weather_data/state_tags.json' +
+				'json=' + encoded,
 		success: function(rxData) {
 			alert(rxData);
 	  }
@@ -171,7 +138,7 @@ function main() {
 
 	// grabConfigData();
 
-	getFileData('weather_data/config.json', 'json', updateSettingsModal, []);
+	getFileData('weather_data/state_tags.json', 'json', updateStateModal, []);
 
 }
 
