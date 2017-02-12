@@ -15,9 +15,19 @@
 	font-family: inherit;
 }
 
-.sidebar {
-    font-family: Verdana, Geneva, sans-serif;
-    color: #616161;
+@media (min-width: 480px) {
+	.sidebar {
+		font-family: Verdana, Geneva, sans-serif;
+		color: #616161;
+		max-width:200px;
+	}
+}
+
+@media (max-width: 480px) {
+	.sidebar {
+		font-family: Verdana, Geneva, sans-serif;
+		color: #616161;
+	}
 }
 
 .reading-group {
