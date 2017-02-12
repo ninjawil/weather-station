@@ -74,12 +74,12 @@ function drawGardenChart(notes_to_display) {
 	// https://material.google.com/style/color.html#color-color-palette
 	var colors = {
 		"light_purple": "#E1BEE7", 
-		"purple": "#9C27B0", 
+		"purple": "#C1A5E1", 
 		"red": "#EF5350", 
 		"lgreen": "#C5E1A5",
 		"green": "#7CB342",
 		"yellow": "#FFF176",
-		"brown": "#BCAAA4",
+		"brown": "#CE8544",
 		"orange": "#FFB74D",
 		"blue": "#3949AB",
 		"grey": "#E0E0E0",
@@ -111,7 +111,11 @@ function drawGardenChart(notes_to_display) {
 
 	console.time("sort_data");
 
-	var HTMLtable 			= '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
+	var HTMLtable 			= '<div class="table-responsive"><table id="diary" class="table table-condensed" cellspacing="0">';
+	HTMLtable += '<thead><tr><th rowspan="2">Plant Name</th><th rowspan="2">No.</th><th rowspan="2">Location</th><th rowspan="2">Year</th><th style="text-align:center" ';
+	HTMLtable += ['colspan="5">Jan','colspan="3">Feb','colspan="5">Mar','colspan="4">Apr','colspan="4">May','colspan="4">Jun','colspan="5">Jul','colspan="5">Aug','colspan="4">Sep','colspan="5">Oct','colspan="4">Nov','colspan="5">Dec'].join('</th><th style="text-align:center" ');
+	HTMLtable += '</th></tr><tr>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
+
 	var HTML_cell 			= '<td %cell_colour% %border% nowrap>%cell_contents%</td>'
 	var HTML_cell_content 	= '<div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
 	var HTML_loc_popover 	= '<a href="#" style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>Location Color Key</b>" data-content="<dl>%popover_body%</dl>">KEY</a>';
@@ -142,8 +146,8 @@ function drawGardenChart(notes_to_display) {
 	for (i = 1; i < 54; i++) {
 		week_numbers.push('00'.substring(i.toString().length) + i.toString());
 	}
-	var HTML_header_week_no  = '<th>';
-	HTML_header_week_no 	+= week_numbers.join('</th><th>');
+	var HTML_header_week_no  = '<th style="text-align:center">';
+	HTML_header_week_no 	+= week_numbers.join('</th><th style="text-align:center">');
 	HTML_header_week_no 	+= '</th>';
 
 	var HTML_row = [];
@@ -299,7 +303,7 @@ function drawGardenChart(notes_to_display) {
 	    $('#diary').DataTable( {
 			"scrollY": 650,
 			"scrollX": 400,
-			"lengthMenu": [25, 50, 100],
+			"lengthMenu": [15, 25, 50, 100],
 			"fixedHeader": {
 				header: true
 			},
@@ -312,7 +316,7 @@ function drawGardenChart(notes_to_display) {
 			//     "leftColumns": 2
 			// },
 			"columnDefs": [
-				{ "targets": [0, 1, 2], "orderable": true},
+				{ "targets": [0, 1, 2,3], "orderable": true},
 				{ "targets": '_all', 	"orderable": false }
 			]
 		} );
