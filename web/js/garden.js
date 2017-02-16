@@ -111,10 +111,13 @@ function drawGardenChart(notes_to_display) {
 
 	console.time("sort_data");
 
-	var HTMLtable 			= '<div class="table-responsive"><table id="diary" class="table table-condensed" cellspacing="0">';
-	HTMLtable += '<thead><tr><th rowspan="2">Plant Name</th><th rowspan="2">No.</th><th rowspan="2">Location</th><th rowspan="2">Year</th><th style="text-align:center" ';
+	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed" cellspacing="0">';
+	HTMLtable += '<thead><tr bgcolor="#E0E0E0"><th colspan="4" style="text-align:right">Month</th><th style="text-align:center" ';
 	HTMLtable += ['colspan="5">Jan','colspan="3">Feb','colspan="5">Mar','colspan="4">Apr','colspan="4">May','colspan="4">Jun','colspan="5">Jul','colspan="5">Aug','colspan="4">Sep','colspan="5">Oct','colspan="4">Nov','colspan="5">Dec'].join('</th><th style="text-align:center" ');
-	HTMLtable += '</th></tr><tr>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
+	HTMLtable += '</th></tr>';
+	HTMLtable += '<tr bgcolor="#E0E0E0"><th colspan="4" style="text-align:right">Week Number</th>%week_no%</tr>';
+	HTMLtable += '<tr bgcolor="#E0E0E0"><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%avg_temps%</tr></thead>';
+	HTMLtable += '<tbody id="plant-table">%plants%</tbody></table></div>';
 
 	var HTML_cell 			= '<td %cell_colour% %border% nowrap>%cell_contents%</td>'
 	var HTML_cell_content 	= '<div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
@@ -149,6 +152,13 @@ function drawGardenChart(notes_to_display) {
 	var HTML_header_week_no  = '<th style="text-align:center">';
 	HTML_header_week_no 	+= week_numbers.join('</th><th style="text-align:center">');
 	HTML_header_week_no 	+= '</th>';
+
+	// Create average temperatures table header
+	var avgs = Array(53).fill('0.00');
+	var HTML_header_avgs  = '<th bgcolor="#FF5722" style="text-align:center">';
+	HTML_header_avgs 	+= avgs.join('</th><th bgcolor="#FF5722" style="text-align:center">');
+	HTML_header_avgs 	+= '</th>';
+
 
 	var HTML_row = [];
 
@@ -286,6 +296,7 @@ function drawGardenChart(notes_to_display) {
 
 	// Draw table
     formattedHTMLtable = HTMLtable.replace('%week_no%', HTML_header_week_no);
+    formattedHTMLtable = formattedHTMLtable.replace('%avg_temps%', HTML_header_avgs);
     formattedHTMLtable = formattedHTMLtable.replace('%plants%', HTML_row.join(''));
     formattedHTMLtable = formattedHTMLtable.replace(/@/g, '');
     formattedHTMLtable = formattedHTMLtable.replace(/\+p/g, '');
@@ -303,6 +314,7 @@ function drawGardenChart(notes_to_display) {
 	    $('#diary').DataTable( {
 			"scrollY": 650,
 			"scrollX": 400,
+			"autoWidth": false,
 			"lengthMenu": [15, 25, 50, 100],
 			"fixedHeader": {
 				header: true
