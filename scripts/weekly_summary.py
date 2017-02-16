@@ -137,9 +137,6 @@ def main():
         logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
         year_data = []
 
-    print year_data
-
-    
     try:
   
         #-----------------------------------------------------------------------
