@@ -10,6 +10,7 @@ import datetime
 import time
 import collections
 import json
+import csv
 
 # Third party modules
 
@@ -89,11 +90,12 @@ def main():
         logger.error('Exiting...')
         sys.exit()
 
+
     #-------------------------------------------------------------------
     # Get data from config file
     #-------------------------------------------------------------------
     try:
-        with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
+        with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
 
         maker_ch_addr  = config['maker_channel']['MAKER_CH_ADDR']
@@ -103,6 +105,39 @@ def main():
         logger.error('Failed to load config data ({error_v}). Exiting...'.format(
         error_v=e))
         sys.exit()
+
+
+    #-------------------------------------------------------------------
+    # Get data from week summary file
+    #-------------------------------------------------------------------
+    try:
+        date = datetime.datetime.now()
+        date_since_epoch = int(date.strftime("%s"))
+        
+        with open('{fl}/data/weekly_summary_{year}.csv'.format(fl= folder_loc, year= date.year), 'rb') as f:
+            reader = csv.reader(f)
+            data = list(reader)
+
+        # Remove header
+        data[0] = None
+
+        # Grab data
+        year_data = []
+        for row in data:
+            if row:
+                new_data = {
+                    'date': row[0],
+                    'Outside_MIN': row[1],
+                    'Outside_AVG': row[2],
+                    'Precip_TOTAL': row[3]
+                }
+                year_data.append(new_data)
+
+    except Exception, e:
+        logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
+        year_data = []
+
+    print year_data
 
     
     try:
@@ -132,6 +167,25 @@ def main():
                             value2= '{0:.2f}'.format(outside_min), 
                             value3= '{0:.2f}'.format(precip_tot))
 
+
+        #-----------------------------------------------------------------------
+        # WRITE DATA LOCALLY
+        #-----------------------------------------------------------------------
+        new_data = {
+            'date': date_since_epoch,
+            'Outside_MIN':  '{0:.2f}'.format(outside_avg),
+            'Outside_AVG':  '{0:.2f}'.format(outside_min),
+            'Precip_TOTAL': '{0:.2f}'.format(precip_tot)
+        }
+        year_data.append(new_data)
+
+        with open('{fl}/data/weekly_summary_{year}.csv'.format(fl= folder_loc, year= date.year), 'w') as csvfile:
+            fieldnames = ['date', 'Outside_MIN', 'Outside_AVG', 'Precip_TOTAL']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for item in year_data:
+                writer.writerow(item)
+
         logger.info('--- Script Finished ---')
 
 
@@ -140,7 +194,7 @@ def main():
             error_v=e), exc_info=True)
         sys.exit()
 
-    
+
 #===============================================================================
 # Boiler plate
 #===============================================================================
