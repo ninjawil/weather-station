@@ -509,6 +509,22 @@ def nested_dict():
 
 
 #---------------------------------------------------------------------------
+# Nested dictionaries
+#---------------------------------------------------------------------------
+def prepare_dates(time_since_epoch):
+    date = datetime.datetime.fromtimestamp(time_since_epoch)
+    year = int(date.strftime('%Y'))
+    month = date.strftime('%m')
+    week = date.isocalendar()[1]
+
+    # If week 53 and month is January then it should be the previous year line
+    if week > 4 and month == '01':
+        year -= 1
+
+    return week, month, year
+
+
+#---------------------------------------------------------------------------
 # Sort gardening data for web page
 #---------------------------------------------------------------------------
 def web_format(data, state_data):
@@ -534,14 +550,7 @@ def web_format(data, state_data):
         note = data['notes'][note_id]
 
         # Prepare dates
-        date = datetime.datetime.fromtimestamp(note['created']/1000)
-        year = int(date.strftime('%Y'))
-        month = date.strftime('%m')
-        week = date.isocalendar()[1]
-
-        # If week 53 and month is January then it should be the previous year line
-        if week > 4 and month == '01':
-            year -= 1
+        week, month, year = prepare_dates(note['created']/1000)
 
         # Get note information
         image_link = note['res'][0] if note['res'] else ''
@@ -643,6 +652,53 @@ def web_format(data, state_data):
 
     return f
 
+
+#---------------------------------------------------------------------------
+# Grabs weekly weather data from previous 3 years and compiles it into a dictionary
+#---------------------------------------------------------------------------
+def weekly_weather(folder_loc):
+    
+    year_current = datetime.datetime.now().year
+
+    weekly_data = nested_dict()
+
+    # Grab data from csv files    
+    for year in range(year_current, year_current - 2, -1):
+        print year
+        try:
+            with open('{fl}/data/weekly_summary_{year}.csv'.format(fl= folder_loc, year= year), 'rb') as f:
+                reader = csv.reader(f)
+                data = list(reader)
+
+            # Remove header
+            data[0] = None
+
+            # Grab data
+            for row in data:
+                if row:
+                    # Prepare dates
+                    week, month, year = prepare_dates(int(row[0]))
+
+                    weekly_data[week][year] = {
+                        'Outside_MIN':  row[1],
+                        'Outside_AVG':  row[2],
+                        'Precip_TOTAL': row[3]
+                    }
+        
+        except IOError:
+            continue
+
+    # Calculate weekly averages
+    for w in range(1,53):
+        years = weekly_data[w].keys()
+
+        for item in ['Outside_MIN', 'Outside_AVG', 'Precip_TOTAL']:
+            try:
+                weekly_data[w]['AVG'][item] = sum(float(weekly_data[w][y][item]) for y in years) / len(years)
+            except Exception, e:
+                weekly_data[w]['AVG'][item] = None
+        
+    return weekly_data
 
 
 #===============================================================================
@@ -862,6 +918,7 @@ def main():
             formatted_gardening_notes['diary'] = web_format(gardening_notes, state_config)
             formatted_gardening_notes['plant_tags'] = gardening_notes['plant_tags']
             formatted_gardening_notes['location_tags'] = gardening_notes['location_tags']
+            formatted_gardening_notes['weekly_weather'] = weekly_weather(folder_loc)
 
 
             with open('{fl}/data/gardening_web.json'.format(fl= folder_loc), 'w') as f:
