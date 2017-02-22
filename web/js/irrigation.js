@@ -24,7 +24,7 @@ function displayIrrigation() {
     $('<div id="irrig-input-bar-section"></div>').appendTo('#graph-container');
 
 
-    getIrrigData(IrrigChart, []);
+    getIrrigData(drawIrrigChart, []);
 
 }
 
