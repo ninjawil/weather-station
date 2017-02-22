@@ -160,9 +160,26 @@ def main():
         # SEND VALUES VIA MAKER CHANNEL
         #-----------------------------------------------------------------------
         mc = maker_ch.MakerChannel(maker_ch_addr, maker_ch_key, 'WS_weekly_report')
-        mc.trigger_an_event(value1= '{0:.2f}'.format(outside_avg), 
-                            value2= '{0:.2f}'.format(outside_min), 
-                            value3= '{0:.2f}'.format(precip_tot))
+
+        message_not_sent = True
+        attempt = 0
+        while message_not_sent and attempt < 3:
+            try:
+                mc.trigger_an_event(value1= '{0:.2f}'.format(outside_avg), 
+                                    value2= '{0:.2f}'.format(outside_min), 
+                                    value3= '{0:.2f}'.format(precip_tot))
+            except Exception, e:
+                logger.error('Message not sent ({att}/3) {error_v}'.format(
+                    error_v=e, att=attempt+1), exc_info=True)
+                message_not_received = True
+                attempt += 1
+                if attempt >= 3:
+                    logger.error('All attempts failed. Continue without sending data')
+                    break
+                time.sleep(600)
+            else:
+                message_not_sent = False
+                logger.error('Message sent OK')
 
 
         #-----------------------------------------------------------------------
