@@ -157,6 +157,25 @@ def main():
 
 
         #-----------------------------------------------------------------------
+        # WRITE DATA LOCALLY
+        #-----------------------------------------------------------------------
+        new_data = {
+            'date': date_since_epoch,
+            'Outside_MIN':  '{0:.2f}'.format(outside_avg),
+            'Outside_AVG':  '{0:.2f}'.format(outside_min),
+            'Precip_TOTAL': '{0:.2f}'.format(precip_tot)
+        }
+        year_data.append(new_data)
+
+        with open('{fl}/data/weekly_summary_{year}.csv'.format(fl= folder_loc, year= date.year), 'w') as csvfile:
+            fieldnames = ['date', 'Outside_MIN', 'Outside_AVG', 'Precip_TOTAL']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for item in year_data:
+                writer.writerow(item)
+                
+                
+        #-----------------------------------------------------------------------
         # SEND VALUES VIA MAKER CHANNEL
         #-----------------------------------------------------------------------
         mc = maker_ch.MakerChannel(maker_ch_addr, maker_ch_key, 'WS_weekly_report')
@@ -181,24 +200,6 @@ def main():
                 message_not_sent = False
                 logger.error('Message sent OK')
 
-
-        #-----------------------------------------------------------------------
-        # WRITE DATA LOCALLY
-        #-----------------------------------------------------------------------
-        new_data = {
-            'date': date_since_epoch,
-            'Outside_MIN':  '{0:.2f}'.format(outside_avg),
-            'Outside_AVG':  '{0:.2f}'.format(outside_min),
-            'Precip_TOTAL': '{0:.2f}'.format(precip_tot)
-        }
-        year_data.append(new_data)
-
-        with open('{fl}/data/weekly_summary_{year}.csv'.format(fl= folder_loc, year= date.year), 'w') as csvfile:
-            fieldnames = ['date', 'Outside_MIN', 'Outside_AVG', 'Precip_TOTAL']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for item in year_data:
-                writer.writerow(item)
 
         logger.info('--- Script Finished ---')
 
