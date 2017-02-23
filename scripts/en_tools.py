@@ -689,7 +689,7 @@ def weekly_weather(folder_loc):
             continue
 
     # Calculate weekly averages
-    for w in range(1,53):
+    for w in range(1,54):
         years = weekly_data[w].keys()
 
         for item in ['Outside_MIN', 'Outside_AVG', 'Precip_TOTAL']:
