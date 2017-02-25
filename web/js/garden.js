@@ -127,7 +127,6 @@ function drawGardenChart(notes_to_display) {
 	var HTML_popover_img 	= "<img src='%res_link%' width='200' />";
 	var HTML_popover_link 	= "<dd><a href='%url%'>• %link_text%</a></dd>";
 
-
 	var locations = notes_to_display.location_tags;
 	var plants = notes_to_display.plant_tags;
 	var week_weather = notes_to_display.weekly_weather;
@@ -168,7 +167,15 @@ function drawGardenChart(notes_to_display) {
 
 		if (temp) {
 
-			//var HTML_cell_content_formatted = HTML_cell_content.replace('')
+			var HTML_cell_content_formatted = HTML_cell_content.replace('%symbol%', temp);
+			HTML_cell_content_formatted = HTML_cell_content_formatted.replace('%popover_title%', 'Week ' + week + ' Averages');
+
+			var pop_body = '<p>Precip TOTAL: ' + week_weather[week]['AVG']['Precip_TOTAL'] + 'mm</p>';
+			pop_body += "<span id='inlinesparkline'>5.09,2.7,3.77</span>";
+			pop_body += "<script type='text/javascript'>$('#inlinesparkline').sparkline('html',{ type:'bar', barColor:'blue', chartRangeMin: 0, barWidth: '15px' });</script>";
+			pop_body += '<p>Outisde Temp: ' + week_weather[week]['AVG']['Outside_AVG'] + '°C</p>';
+			pop_body += '<p>Outside MIN: ' + week_weather[week]['AVG']['Outside_MIN'] + '°C</p>';
+			HTML_cell_content_formatted = HTML_cell_content_formatted.replace('%popover_body%', pop_body);
 
 			if (temp < -5) {
 				temp_color = 'darker_blue';
@@ -185,7 +192,7 @@ function drawGardenChart(notes_to_display) {
 			}
 
 			avgs.push('bgcolor="' + colors[temp_color] + '">');
-			avgs.push(temp);
+			avgs.push(HTML_cell_content_formatted);
 		} else {
 			avgs.push('> ')
 		}
@@ -337,15 +344,19 @@ function drawGardenChart(notes_to_display) {
     formattedHTMLtable = formattedHTMLtable.replace(/\+p/g, '');
 	$('#chart-section').append(formattedHTMLtable);
 
-	// Enable popover
+	// Once html drawings finish, enable controls
 	$(document).ready(function() {
+
+		// Enable popovers
 	    $("#chart-section").popover({ 
 	    	selector: '[data-toggle=popover]',
 	    	container : 'body'
 	     });
-	});
 
-	$(document).ready(function() {
+		// Draw sparklines
+		$('#inlinesparkline').sparkline('html', {disableHiddenCheck: true}); 
+
+		// Draw DataTable
 	    $('#diary').DataTable( {
 			"scrollY": 650,
 			"scrollX": 400,
