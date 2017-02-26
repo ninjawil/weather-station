@@ -1,0 +1,88 @@
+
+.header {
+	margin-top: 5px;
+	padding: 5px;
+}
+
+.alert-mod {
+	margin-bottom: 0px;
+}
+
+.date {
+	font-size: medium;
+	text-align: center;
+	font-weight: bold;
+	font-family: inherit;
+}
+
+@media (min-width: 480px) {
+	.sidebar {
+		font-family: Verdana, Geneva, sans-serif;
+		color: #616161;
+		max-width:200px;
+	}
+}
+
+@media (max-width: 480px) {
+	.sidebar {
+		font-family: Verdana, Geneva, sans-serif;
+		color: #616161;
+	}
+}
+
+.reading-group {
+    background-color: #eee;
+    border-radius: .8em;
+    padding: 5px;
+    margin: 0px;
+    margin-bottom: 10px;
+}
+
+.reading-value {
+	font-weight: bold;
+    font-size: xx-large;
+}
+
+.reading-unit {
+	font-size: large;
+	font-weight: normal;
+}
+
+.reading-name {
+	font-style: italic;
+    font-size: small;
+}
+
+.log-display {
+	background-color: black;
+	color: #bfbfbf;
+	overflow: hidden;
+	word-wrap: normal;
+	text-align: left;
+	overflow-x: scroll;
+	overflow-y: scroll;
+	height: 270px;
+}
+
+.input-group {
+	margin-top: 5px;
+	margin-bottom: 5px;
+	margin-left: 15px;
+}
+
+.irrig-bar {
+    padding-top: 10px;
+    padding-left: 0px;
+    padding-right: 30px;
+}
+
+.vertical-text {
+	transform: rotate(270deg);
+	transform-origin: right center 0;
+	margin-left: 20px;
+}
+
+.text-left {
+	text-align: left;
+}
+
