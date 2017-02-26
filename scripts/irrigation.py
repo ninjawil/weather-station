@@ -292,7 +292,7 @@ def main():
             if len(sys.argv) > 1:
                 if '--irrigated' in sys.argv:
                     print('Plot irrigated')
-                    irrigation_amount = irrig_dasudo ta['irrig_amount'][0]
+                    irrigation_amount = irrig_data['irrig_amount'][0]
                     logger.info('User request update')
 
             previous_depth = irrig_data['depth'][0]
