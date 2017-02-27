@@ -10,6 +10,7 @@ import datetime
 import time
 import collections
 import json
+import csv
 
 # Third party modules
 
@@ -89,11 +90,12 @@ def main():
         logger.error('Exiting...')
         sys.exit()
 
+
     #-------------------------------------------------------------------
     # Get data from config file
     #-------------------------------------------------------------------
     try:
-        with open('{fl}/data/config.json'.format(fl= s.SYS_FOLDER), 'r') as f:
+        with open('{fl}/data/config.json'.format(fl= folder_loc), 'r') as f:
             config = json.load(f)
 
         maker_ch_addr  = config['maker_channel']['MAKER_CH_ADDR']
@@ -104,7 +106,37 @@ def main():
         error_v=e))
         sys.exit()
 
-    
+
+    #-------------------------------------------------------------------
+    # Get data from week summary file
+    #-------------------------------------------------------------------
+    try:
+        date = datetime.datetime.now()
+        date_since_epoch = int(date.strftime("%s"))
+        
+        with open('{fl}/data/weekly_summary_{year}.csv'.format(fl= folder_loc, year= date.year), 'rb') as f:
+            reader = csv.reader(f)
+            data = list(reader)
+
+        # Remove header
+        data[0] = None
+
+        # Grab data
+        year_data = []
+        for row in data:
+            if row:
+                new_data = {
+                    'date': row[0],
+                    'Outside_MIN': row[1],
+                    'Outside_AVG': row[2],
+                    'Precip_TOTAL': row[3]
+                }
+                year_data.append(new_data)
+
+    except Exception, e:
+        logger.warning('Warning ({error_v}).'.format(error_v=e), exc_info=True)
+        year_data = []
+
     try:
   
         #-----------------------------------------------------------------------
@@ -125,12 +157,49 @@ def main():
 
 
         #-----------------------------------------------------------------------
+        # WRITE DATA LOCALLY
+        #-----------------------------------------------------------------------
+        new_data = {
+            'date': date_since_epoch,
+            'Outside_MIN':  '{0:.2f}'.format(outside_avg),
+            'Outside_AVG':  '{0:.2f}'.format(outside_min),
+            'Precip_TOTAL': '{0:.2f}'.format(precip_tot)
+        }
+        year_data.append(new_data)
+
+        with open('{fl}/data/weekly_summary_{year}.csv'.format(fl= folder_loc, year= date.year), 'w') as csvfile:
+            fieldnames = ['date', 'Outside_MIN', 'Outside_AVG', 'Precip_TOTAL']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for item in year_data:
+                writer.writerow(item)
+                
+                
+        #-----------------------------------------------------------------------
         # SEND VALUES VIA MAKER CHANNEL
         #-----------------------------------------------------------------------
         mc = maker_ch.MakerChannel(maker_ch_addr, maker_ch_key, 'WS_weekly_report')
-        mc.trigger_an_event(value1= '{0:.2f}'.format(outside_avg), 
-                            value2= '{0:.2f}'.format(outside_min), 
-                            value3= '{0:.2f}'.format(precip_tot))
+
+        message_not_sent = True
+        attempt = 0
+        while message_not_sent and attempt < 3:
+            try:
+                mc.trigger_an_event(value1= '{0:.2f}'.format(outside_avg), 
+                                    value2= '{0:.2f}'.format(outside_min), 
+                                    value3= '{0:.2f}'.format(precip_tot))
+            except Exception, e:
+                logger.error('Message not sent ({att}/3) {error_v}'.format(
+                    error_v=e, att=attempt+1), exc_info=True)
+                message_not_received = True
+                attempt += 1
+                if attempt >= 3:
+                    logger.error('All attempts failed. Continue without sending data')
+                    break
+                time.sleep(600)
+            else:
+                message_not_sent = False
+                logger.error('Message sent OK')
+
 
         logger.info('--- Script Finished ---')
 
@@ -140,7 +209,7 @@ def main():
             error_v=e), exc_info=True)
         sys.exit()
 
-    
+
 #===============================================================================
 # Boiler plate
 #===============================================================================

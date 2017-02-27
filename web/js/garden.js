@@ -74,14 +74,16 @@ function drawGardenChart(notes_to_display) {
 	// https://material.google.com/style/color.html#color-color-palette
 	var colors = {
 		"light_purple": "#E1BEE7", 
-		"purple": "#9C27B0", 
+		"purple": "#C1A5E1", 
 		"red": "#EF5350", 
 		"lgreen": "#C5E1A5",
 		"green": "#7CB342",
 		"yellow": "#FFF176",
-		"brown": "#BCAAA4",
+		"brown": "#CE8544",
 		"orange": "#FFB74D",
-		"blue": "#3949AB",
+		"darker_blue": "#95CAFD",
+		"dark_blue": "#BDDEFE",
+		"blue": "#E5F2FF",
 		"grey": "#E0E0E0",
 		"teal": "#009688",
 		"lime": "#CDDC39",
@@ -111,16 +113,23 @@ function drawGardenChart(notes_to_display) {
 
 	console.time("sort_data");
 
-	var HTMLtable 			= '<div class="table-responsive"><table id="diary" class="table table-condensed"><thead><tr><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%week_no%</tr></thead><tbody id="plant-table">%plants%</tbody></table></div>';
+	var HTMLtable = '<div class="table-responsive"><table id="diary" class="table table-condensed" cellspacing="0">';
+	HTMLtable += '<thead><tr bgcolor="#E0E0E0"><th colspan="4" style="text-align:right">Month</th><th style="text-align:center" ';
+	HTMLtable += ['colspan="5">Jan','colspan="3">Feb','colspan="5">Mar','colspan="4">Apr','colspan="4">May','colspan="4">Jun','colspan="5">Jul','colspan="5">Aug','colspan="4">Sep','colspan="5">Oct','colspan="4">Nov','colspan="5">Dec'].join('</th><th style="text-align:center" ');
+	HTMLtable += '</th></tr>';
+	HTMLtable += '<tr bgcolor="#E0E0E0"><th colspan="4" style="text-align:right">Week Number</th>%week_no%</tr>';
+	HTMLtable += '<tr bgcolor="#E0E0E0"><th>Plant Name</th><th>No.</th><th>Location</th><th>Year</th>%avg_temps%</tr></thead>';
+	HTMLtable += '<tbody id="plant-table">%plants%</tbody></table></div>';
+
 	var HTML_cell 			= '<td %cell_colour% %border% nowrap>%cell_contents%</td>'
-	var HTML_cell_content 	= '<div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%plant_symbol%</div>';
+	var HTML_cell_content 	= '<div style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>%popover_title%</b>" data-content="<dl>%popover_body%</dl>">%symbol%</div>';
 	var HTML_loc_popover 	= '<a href="#" style="cursor:pointer" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" title="<b>Location Color Key</b>" data-content="<dl>%popover_body%</dl>">KEY</a>';
 	var HTML_popover_img 	= "<img src='%res_link%' width='200' />";
 	var HTML_popover_link 	= "<dd><a href='%url%'>• %link_text%</a></dd>";
 
-
 	var locations = notes_to_display.location_tags;
 	var plants = notes_to_display.plant_tags;
+	var week_weather = notes_to_display.weekly_weather;
 
 	var today = new Date();
 	var today_wk = today.getWeek(); // align to week 0
@@ -142,9 +151,56 @@ function drawGardenChart(notes_to_display) {
 	for (i = 1; i < 54; i++) {
 		week_numbers.push('00'.substring(i.toString().length) + i.toString());
 	}
-	var HTML_header_week_no  = '<th>';
-	HTML_header_week_no 	+= week_numbers.join('</th><th>');
+	var HTML_header_week_no  = '<th style="text-align:center">';
+	HTML_header_week_no 	+= week_numbers.join('</th><th style="text-align:center">');
 	HTML_header_week_no 	+= '</th>';
+
+	// Create average temperatures table header
+	var avgs = [];
+	var temp, temp_color;
+	for (week in week_weather) {
+		if (!week_weather.hasOwnProperty(week)) continue;
+
+		avgs.push('<th style="text-align:center" ');
+
+		temp = week_weather[week]['AVG']['Outside_AVG'];
+
+		if (temp) {
+
+			var HTML_cell_content_formatted = HTML_cell_content.replace('%symbol%', temp);
+			HTML_cell_content_formatted = HTML_cell_content_formatted.replace('%popover_title%', 'Week ' + week + ' Averages');
+
+			var pop_body = '<p>Precip TOTAL: ' + week_weather[week]['AVG']['Precip_TOTAL'] + 'mm</p>';
+			pop_body += "<span id='inlinesparkline'>5.09,2.7,3.77</span>";
+			pop_body += "<script type='text/javascript'>$('#inlinesparkline').sparkline('html',{ type:'bar', barColor:'blue', chartRangeMin: 0, barWidth: '15px' });</script>";
+			pop_body += '<p>Outisde Temp: ' + week_weather[week]['AVG']['Outside_AVG'] + '°C</p>';
+			pop_body += '<p>Outside MIN: ' + week_weather[week]['AVG']['Outside_MIN'] + '°C</p>';
+			HTML_cell_content_formatted = HTML_cell_content_formatted.replace('%popover_body%', pop_body);
+
+			if (temp < -5) {
+				temp_color = 'darker_blue';
+			} else if (temp >= -5 && temp < 0 ) {
+				temp_color = 'dark_blue';
+			} else if (temp >= 0 && temp < 5 ) {
+				temp_color = 'blue';
+			} else if (temp >= 5 && temp < 10 ) {
+				temp_color = 'yellow'; 
+			} else if (temp >= 10 && temp < 20 ) {
+				temp_color = 'orange'; 
+			} else if (temp >= 30 ) {
+				temp_color = 'deep_orange';
+			}
+
+			avgs.push('bgcolor="' + colors[temp_color] + '">');
+			avgs.push(HTML_cell_content_formatted);
+		} else {
+			avgs.push('> ')
+		}
+
+		avgs.push('</th>');
+	}
+
+	var HTML_header_avgs  = avgs.join('');
 
 	var HTML_row = [];
 
@@ -254,7 +310,7 @@ function drawGardenChart(notes_to_display) {
 						formatted_HTML_cell = HTML_cell.replace('%cell_contents%', HTML_cell_content);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_title%', note_title);
 						formatted_HTML_cell = formatted_HTML_cell.replace('%popover_body%', popover_body + popover_img);
-						formatted_HTML_cell = formatted_HTML_cell.replace('%plant_symbol%', week_entry.symbols.join(' '));
+						formatted_HTML_cell = formatted_HTML_cell.replace('%symbol%', week_entry.symbols.join(' '));
 					} else {
 						formatted_HTML_cell = HTML_cell.replace('%cell_contents%', '');
 					}
@@ -282,23 +338,30 @@ function drawGardenChart(notes_to_display) {
 
 	// Draw table
     formattedHTMLtable = HTMLtable.replace('%week_no%', HTML_header_week_no);
+    formattedHTMLtable = formattedHTMLtable.replace('%avg_temps%', HTML_header_avgs);
     formattedHTMLtable = formattedHTMLtable.replace('%plants%', HTML_row.join(''));
     formattedHTMLtable = formattedHTMLtable.replace(/@/g, '');
     formattedHTMLtable = formattedHTMLtable.replace(/\+p/g, '');
 	$('#chart-section').append(formattedHTMLtable);
 
-	// Enable popover
+	// Once html drawings finish, enable controls
 	$(document).ready(function() {
+
+		// Enable popovers
 	    $("#chart-section").popover({ 
 	    	selector: '[data-toggle=popover]',
 	    	container : 'body'
 	     });
-	});
 
-	$(document).ready(function() {
+		// Draw sparklines
+		$('#inlinesparkline').sparkline('html', {disableHiddenCheck: true}); 
+
+		// Draw DataTable
 	    $('#diary').DataTable( {
-			"scrollY": 400,
+			"scrollY": 650,
 			"scrollX": 400,
+			"autoWidth": false,
+			"lengthMenu": [15, 25, 50, 100],
 			"fixedHeader": {
 				header: true
 			},
@@ -311,8 +374,10 @@ function drawGardenChart(notes_to_display) {
 			//     "leftColumns": 2
 			// },
 			"columnDefs": [
-				{ "targets": [0, 1, 2], "orderable": true},
-				{ "targets": '_all', 	"orderable": false }
+				{ "targets": [0, 1, 2, 3], "orderable": true},
+				{ "targets": '_all', 	"orderable": false },
+				{ "targets": [0, 1, 2, 3], "searchable": true},
+				{ "targets": '_all', 	"searchable": false }
 			]
 		} );
 	} );
