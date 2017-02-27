@@ -41,7 +41,7 @@ Download and install from http://www.python-requests.org/en/latest/user/install/
 ####RRDtool
 To install:
 ```
-pip install python-rrdtool
+sudo apt-get install python-rrdtool
 ```
 
 #### DS18B20
