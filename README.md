@@ -37,6 +37,7 @@ make install
 
 #### Requests
 Download and install from http://www.python-requests.org/en/latest/user/install/
+pip install requests
 
 ####RRDtool
 To install:
