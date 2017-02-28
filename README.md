@@ -37,11 +37,12 @@ make install
 
 #### Requests
 Download and install from http://www.python-requests.org/en/latest/user/install/
+pip install requests
 
 ####RRDtool
 To install:
 ```
-pip install python-rrdtool
+sudo apt-get install python-rrdtool
 ```
 
 #### DS18B20
@@ -67,6 +68,9 @@ Add the following line to 'sudo crontab -e'
 @reboot sleep 60 && python /home/pi/weather/scripts/read_rain_gauge.py & # weather station job
 0-55/5 * * * * python /home/pi/weather/scripts/read_sensors.py # weather station job
 1-56/5 * * * * python /home/pi/weather/scripts/rrd_switch.py # weather station miplug job
-2-32/30 * * * * python /home/pi/weather/scripts/rrd_ts_sync.py # weather station thingspeak job
-17-47/30 * * * * python /home/pi/weather/scripts/rrd_export.py # weather station xml export job
+1-56/5 * * * * python /home/pi/weather/scripts/rrd_export.py # weather station xml export job
+3-33/30 * * * * python /home/pi/weather/scripts/rrd_ts_sync.py # weather station thingspeak job
+4-59/15 * * * * python /home/pi/weather/scripts/watchdog.py # weather station watchdog job
+0 9 * * 1 python /home/pi/weather/scripts/weekly_summary.pi # weather station weekly summary
+2-57/5 * * * * /usr/bin/rsync -avze "/usr/bin/ssh -i /home/pi/.ssh/id_rsa -o StrictHostKayChecking=no -o UserKnownHostsFile=/dev/null" /home/pi/weather/data username@ip.addr:/home/username/weather/data
 ```
