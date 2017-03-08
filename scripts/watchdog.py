@@ -29,7 +29,6 @@ class AllErrors:
         self.logger     = logging.getLogger('root')
         self.file_loc   = filename
 
-
     #---------------------------------------------------------------------------
     # Open file
     #---------------------------------------------------------------------------
@@ -43,7 +42,7 @@ class AllErrors:
     # Open file
     #---------------------------------------------------------------------------
     def write_data(self, data):
-
+       
         with open(self.file_loc, 'w') as f:
             json.dump(data, f)
         
@@ -115,6 +114,14 @@ class ErrorCode(AllErrors):
         AllErrors.__init__(self, filename)
         self.err_code   = error_code
 
+        script_name = os.path.basename(sys.argv[0])
+        folder_loc  = os.path.dirname(os.path.realpath(sys.argv[0]))
+        folder_loc  = folder_loc.replace('scripts', '')
+        self.error_log  = log.setup('error', '{folder}/logs/error.log'.format(
+                                                    folder= folder_loc,
+                                                    script= script_name[:-3]))
+
+
 
     #---------------------------------------------------------------------------
     # Check watchdog counter is being incremented then reset
@@ -168,6 +175,8 @@ class ErrorCode(AllErrors):
 
         errors = self.read_data()
 
+        self.error_log.error(errors[self.err_code]['msg'])
+
         if errors[self.err_code]['time'] == 0:
             errors[self.err_code]['time'] = int(time.time())
             errors[self.err_code]['notified'] = 0
@@ -185,6 +194,8 @@ class ErrorCode(AllErrors):
         '''Removes timestamp from error record'''
 
         errors = self.read_data()
+
+        self.error_log.info('Errors cleared.')
 
         errors[self.err_code]['time'] = 0
         errors[self.err_code]['notified'] = 0
