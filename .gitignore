@@ -53,3 +53,5 @@ Thumbs.db
 *$py.class
 /keys/
 /.project
+
+*.json
