@@ -127,8 +127,8 @@ def main():
             if row:
                 new_data = {
                     'date': row[0],
-                    'Outside_MIN': row[1],
-                    'Outside_AVG': row[2],
+                    'Outside_AVG': row[1],
+                    'Outside_MIN': row[2],
                     'Precip_TOTAL': row[3]
                 }
                 year_data.append(new_data)
