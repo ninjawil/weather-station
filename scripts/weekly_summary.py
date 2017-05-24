@@ -127,8 +127,8 @@ def main():
             if row:
                 new_data = {
                     'date': row[0],
-                    'Outside_AVG': row[1],
-                    'Outside_MIN': row[2],
+                    'Outside_MIN': row[1],
+                    'Outside_AVG': row[2],
                     'Precip_TOTAL': row[3]
                 }
                 year_data.append(new_data)
@@ -161,8 +161,8 @@ def main():
         #-----------------------------------------------------------------------
         new_data = {
             'date': date_since_epoch,
-            'Outside_AVG':  '{0:.2f}'.format(outside_avg),
             'Outside_MIN':  '{0:.2f}'.format(outside_min),
+            'Outside_AVG':  '{0:.2f}'.format(outside_avg),
             'Precip_TOTAL': '{0:.2f}'.format(precip_tot)
         }
         year_data.append(new_data)
