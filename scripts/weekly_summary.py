@@ -161,9 +161,9 @@ def main():
         #-----------------------------------------------------------------------
         new_data = {
             'date': date_since_epoch,
-            'Outside_MIN':  '{0:.2f}'.format(outside_min),
-            'Outside_AVG':  '{0:.2f}'.format(outside_avg),
-            'Precip_TOTAL': '{0:.2f}'.format(precip_tot)
+            'Outside_MIN':  '{0:.1f}'.format(outside_min),
+            'Outside_AVG':  '{0:.1f}'.format(outside_avg),
+            'Precip_TOTAL': '{0:.1f}'.format(precip_tot)
         }
         year_data.append(new_data)
 
