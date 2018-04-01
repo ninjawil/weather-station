@@ -85,7 +85,7 @@ def rrd_export(rrd_file, data_sources, rra_list, output_xml_folder):
     #---------------------------------------------------------------------------
     # Check Rrd File
     #---------------------------------------------------------------------------
-    rrd = rrd_tools.RrdFile('{fd1}/data/{fl}'.format(fd1= folder_loc,
+    rrd = rrd_tools.RrdFile('{fd1}data/{fl}'.format(fd1= folder_loc,
                                                     fl= s.RRDTOOL_RRD_FILE))
         
     if not rrd.check_ds_list_match(list(s.SENSOR_SET.keys())):
