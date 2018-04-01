@@ -206,7 +206,7 @@ class RrdFile:
 
         try:
             if ds_list:
-                exp_cmd = ['rrdtool','xport',
+                exp_cmd = ['rrdtool','xport','--showtime',
                            '-s', '{start_t}'.format(start_t=start),
                            '-e', '{end_t}'.format(end_t=end),
                            '--step', '{res}'.format(res= step)]
